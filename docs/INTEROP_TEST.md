@@ -7,10 +7,12 @@
 
 - Android：`cp dev.properties.example dev.properties`，填 `demoAuth.email` / `demoAuth.password`
   （只用于模拟器的测试账号，不要用真实密码）。`dev.properties` 已被 gitignore。
-- iOS：Xcode → Edit Scheme → Run → Environment Variables（**只在本机改，不要提交**）：
-  - 勾选 `FIREBASE_USE_EMULATORS = 1`
-  - 勾选 `FIREBASE_EMULATOR_HOST = 127.0.0.1`
-  - `KGS_DEMO_AUTH_EMAIL` / `KGS_DEMO_AUTH_PASSWORD` 改成和 Android `dev.properties` **同一个**测试账号
+- iOS：账号密码**不要**写进共享的 `KnowGrowShow` 方案（它在 `xcshareddata` 里，会被提交）。改用一份私有方案：
+  1. Product → Scheme → Manage Schemes… → 选中 `KnowGrowShow` → 齿轮 → Duplicate，命名如 `KnowGrowShow (Local)`
+  2. 在列表里**取消勾选 Shared**（私有方案存在 `xcuserdata`，已被 gitignore）
+  3. Edit Scheme → Run → Environment Variables：
+     - `FIREBASE_USE_EMULATORS = 1`、`FIREBASE_EMULATOR_HOST = 127.0.0.1`（勾选）
+     - 新增 `KGS_DEMO_AUTH_EMAIL` / `KGS_DEMO_AUTH_PASSWORD` = Android `dev.properties` 里**同一个**测试账号
 
 ## 1. 启动
 
