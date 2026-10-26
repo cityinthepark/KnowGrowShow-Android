@@ -7,12 +7,14 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.stoneofhope.stoneofhope.ui.account.AccountScreen
 import com.stoneofhope.stoneofhope.ui.theme.KnowGrowShowThemeSurface
 import com.stoneofhope.stoneofhope.ui.welcome.WelcomeScreen
 
 private object Routes {
     const val Welcome = "welcome"
     const val Home = "home"
+    const val Account = "account"
 }
 
 @Composable
@@ -38,7 +40,10 @@ fun KnowGrowShowApp() {
                 )
             }
             composable(Routes.Home) {
-                HomePlaceholderScreen()
+                HomePlaceholderScreen(onOpenAccount = { navController.navigate(Routes.Account) })
+            }
+            composable(Routes.Account) {
+                AccountScreen(onBack = { navController.popBackStack() })
             }
         }
     }

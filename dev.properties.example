@@ -1,0 +1,18 @@
+# Copy to dev.properties (gitignored) for local development. Only debug builds read these.
+# Android counterpart of the iOS Run-scheme env vars FIREBASE_USE_EMULATORS / KGS_DEMO_AUTH_*.
+
+# Use the Firebase Local Emulator Suite (auth + firestore) instead of production.
+# Start it from the iOS repo: ./Scripts/start-firebase-emulators.sh
+firebase.useEmulators=true
+
+# Host Mac as seen from the Android emulator. On a physical phone use the Mac's LAN IP
+# (and add it to app/src/debug/res/xml/network_security_config.xml).
+firebase.emulatorHost=10.0.2.2
+
+# Must match the iOS app's project so both share the same emulator data.
+firebase.projectId=knowgrowshow-d3609
+
+# Debug "demo sign-in" account. With the emulator it is created on first sign-in.
+# Use a throwaway test account — never a real password.
+demoAuth.email=
+demoAuth.password=

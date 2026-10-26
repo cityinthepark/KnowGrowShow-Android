@@ -23,6 +23,14 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+// Developer-only switches (gitignored; see dev.properties.example). Debug builds only —
+// the Android counterpart of the iOS scheme env vars FIREBASE_USE_EMULATORS / KGS_DEMO_AUTH_*.
+val devProperties = Properties().apply {
+    rootProject.file("dev.properties").takeIf { it.exists() }?.let { f -> FileInputStream(f).use(::load) }
+}
+fun devString(key: String, default: String = "") =
+    "\"" + (devProperties.getProperty(key) ?: default).replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
 android {
     namespace = "com.stoneofhope.stoneofhope"
     compileSdk = 36
@@ -38,6 +46,13 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Release values: never the emulator, never demo credentials.
+        buildConfigField("boolean", "FIREBASE_USE_EMULATORS", "false")
+        buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"\"")
+        buildConfigField("String", "FIREBASE_EMULATOR_PROJECT_ID", "\"\"")
+        buildConfigField("String", "DEMO_AUTH_EMAIL", "\"\"")
+        buildConfigField("String", "DEMO_AUTH_PASSWORD", "\"\"")
     }
 
     signingConfigs {
@@ -52,6 +67,18 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField(
+                "boolean", "FIREBASE_USE_EMULATORS",
+                (devProperties.getProperty("firebase.useEmulators") == "true").toString(),
+            )
+            // 10.0.2.2 is the host Mac as seen from the Android emulator; a physical phone needs the Mac's LAN IP.
+            buildConfigField("String", "FIREBASE_EMULATOR_HOST", devString("firebase.emulatorHost", "10.0.2.2"))
+            // Must equal the iOS project id so both simulators share the same emulator data.
+            buildConfigField("String", "FIREBASE_EMULATOR_PROJECT_ID", devString("firebase.projectId", "knowgrowshow-d3609"))
+            buildConfigField("String", "DEMO_AUTH_EMAIL", devString("demoAuth.email"))
+            buildConfigField("String", "DEMO_AUTH_PASSWORD", devString("demoAuth.password"))
+        }
         release {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
@@ -69,6 +96,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     testOptions {
@@ -101,6 +129,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -117,7 +146,7 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
 

@@ -20,3 +20,4 @@ google-services.json
 keystore.properties
 *.keystore
 !debug.keystore
+dev.properties

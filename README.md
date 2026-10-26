@@ -39,11 +39,22 @@ git push -u origin main
 
 Create the **local folder first**, commit, then add GitHub remote — order does not matter much as long as you push before collaborating.
 
-## Firebase (Phase 1)
+## Firebase
 
-1. Firebase Console → add **Android** app, package `com.stoneofhope.stoneofhope`.
-2. Download `google-services.json` → `app/google-services.json` (gitignored).
-3. Uncomment Firebase plugin + deps in `app/build.gradle.kts`.
+**Local emulator (no Blaze, no production data)** — debug builds only:
+
+1. `cp dev.properties.example dev.properties` and fill in a throwaway test account.
+2. Start the emulators from the iOS repo: `./Scripts/start-firebase-emulators.sh`.
+3. Run the debug app → Home → **Account & Sync** → Sign in.
+
+iOS ↔ Android test steps: [docs/INTEROP_TEST.md](docs/INTEROP_TEST.md). Data layer and sync design:
+[docs/DATA_LAYER.md](docs/DATA_LAYER.md).
+
+**Production** (later):
+
+1. Firebase Console → add **Android** app, package `com.stoneofhope.stoneofhope` (+ SHA-1 for Google sign-in).
+2. Download `google-services.json` → `app/google-services.json` (gitignored). The build applies the
+   google-services plugin automatically when the file exists.
 
 ## Play Internal testing
 
