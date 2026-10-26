@@ -1,5 +1,6 @@
 package com.stoneofhope.stoneofhope
 
+import android.net.Uri
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -9,6 +10,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.stoneofhope.stoneofhope.ui.ComingSoonScreen
 import com.stoneofhope.stoneofhope.ui.RootViewModel
 import com.stoneofhope.stoneofhope.ui.account.AccountScreen
 import com.stoneofhope.stoneofhope.ui.main.MainScreen
@@ -19,6 +21,9 @@ private object Routes {
     const val Welcome = "welcome"
     const val Main = "main"
     const val Account = "account"
+    const val ComingSoon = "comingSoon/{title}"
+
+    fun comingSoon(title: String) = "comingSoon/" + Uri.encode(title)
 }
 
 @Composable
@@ -49,10 +54,16 @@ fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel()) {
                 )
             }
             composable(Routes.Main) {
-                MainScreen(onOpenAccount = { navController.navigate(Routes.Account) })
+                MainScreen(
+                    onOpenAccount = { navController.navigate(Routes.Account) },
+                    onOpenPlaceholder = { title -> navController.navigate(Routes.comingSoon(title)) },
+                )
             }
             composable(Routes.Account) {
                 AccountScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.ComingSoon) { entry ->
+                ComingSoonScreen(title = entry.arguments?.getString("title").orEmpty(), onBack = { navController.popBackStack() })
             }
         }
     }

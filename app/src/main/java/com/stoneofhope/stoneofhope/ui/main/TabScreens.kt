@@ -17,7 +17,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -25,9 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.stoneofhope.stoneofhope.BuildConfig
 import com.stoneofhope.stoneofhope.R
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 // Tab shells. Each tab's real content is ported from iOS in later steps; until then these show
 // the tab title so the navigation can be tried end to end.
@@ -55,15 +51,6 @@ private fun ComingSoon() {
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    }
-}
-
-@Composable
-fun TodayTab() {
-    val date = remember { LocalDate.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)) }
-    Column(Modifier.fillMaxSize()) {
-        TabHeader(stringResource(R.string.tab_today), trailing = date)
-        ComingSoon()
     }
 }
 

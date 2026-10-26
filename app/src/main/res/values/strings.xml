@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">StoneOfHope</string>
+    <string name="app_name" translatable="false">StoneOfHope</string>
 
     <!-- Welcome onboarding: same copy as iOS Localizable.strings ("Welcome …" keys). -->
     <string name="welcome_slide_1_title">Welcome</string>
@@ -28,4 +28,55 @@
     <string name="tab_placeholder">Coming soon</string>
     <string name="settings_account_sync">Account &amp; Sync</string>
     <string name="settings_version">Version</string>
+
+    <!-- Today tab: iOS Localizable.strings (zh-Hant simplified-char slips fixed). -->
+    <string name="today_good_morning">Good morning</string>
+    <string name="today_good_afternoon">Good afternoon</string>
+    <string name="today_good_evening">Good evening</string>
+    <string name="today_profile">Profile</string>
+    <string name="reading_by_books">Reading by Books</string>
+    <string name="reading_by_last_read">By Last Read</string>
+    <string name="reading_by_book_order">By Book Order</string>
+    <string name="reading_start_prompt">Do you want to start a reading plan today? Or just mark a chapter that you read.</string>
+    <string name="reading_mark_progress">Mark your progress now!</string>
+    <string name="quick_add">Quick add</string>
+    <string name="note_type_prayer">Prayer</string>
+    <string name="note_type_note">Note</string>
+    <string name="note_type_sermon">Sermon</string>
+    <string name="note_type_video">Video</string>
+    <string name="flashcard">Flashcard</string>
+    <string name="today_activity">Today\'s activity</string>
+    <string name="today_review">Review</string>
+    <string name="tile_pinned">Pinned</string>
+    <string name="tile_starred">Starred</string>
+    <string name="tile_study_note">Study Note</string>
+    <string name="tile_bible">Bible</string>
+    <string name="tile_answered_prayers">Answered Prayers</string>
+    <string name="tile_image">Image</string>
+    <string name="card_chapter_read">Chapter Read</string>
+    <string name="card_sermons">Sermons</string>
+    <string name="card_videos">Videos</string>
+    <string name="action_notes">Notes</string>
+    <string name="action_unread">Unread</string>
+    <string name="action_open">Open</string>
+    <string name="prayer_new">New Prayer</string>
+    <string name="prayer_subtitle">What\'s on your heart today?</string>
+    <string name="prayer_placeholder">Write your prayer…</string>
+    <string name="prayer_save">Save Prayer</string>
+    <string name="note_placeholder">Write your note…</string>
+    <string name="note_save">Save Note</string>
+    <string name="tag_add">+ Tag</string>
+    <string name="cancel">Cancel</string>
+    <plurals name="today_chapters_subtitle">
+        <item quantity="one">%d chapter today</item>
+        <item quantity="other">%d chapters today</item>
+    </plurals>
+    <plurals name="today_sermons_subtitle">
+        <item quantity="one">%d sermon today</item>
+        <item quantity="other">%d sermons today</item>
+    </plurals>
+    <plurals name="today_videos_subtitle">
+        <item quantity="one">%d video today</item>
+        <item quantity="other">%d videos today</item>
+    </plurals>
 </resources>

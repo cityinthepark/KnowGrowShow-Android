@@ -6,6 +6,7 @@ import androidx.room.Upsert
 import com.stoneofhope.stoneofhope.data.local.entity.SermonEntity
 import com.stoneofhope.stoneofhope.data.local.entity.SermonSeriesEntity
 import com.stoneofhope.stoneofhope.data.local.entity.YouTubeVideoEntity
+import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -45,6 +46,10 @@ interface SermonDao {
     @Query("SELECT * FROM sermons WHERE deletedAt IS NULL ORDER BY preachedOn DESC, createdAt DESC")
     fun observeActive(): Flow<List<SermonEntity>>
 
+    /** iOS `getSermons(on:)`: `preachedOn` day key (`yyyyMMdd`), church imports included. */
+    @Query("SELECT * FROM sermons WHERE preachedOn = :dayKey AND deletedAt IS NULL")
+    fun observePreachedOn(dayKey: String): Flow<List<SermonEntity>>
+
     /**
      * Members of a series in the order pushed as `sermonSeries.sermonIds`.
      * Includes soft-deleted rows, like iOS `series.sermons` (LinkingObjects ignore `deletedAt`).
@@ -81,6 +86,13 @@ interface YouTubeVideoDao {
     /** Personal catalog only: sermon dedup-index rows (`sermonId` set) stay out of Video UI. */
     @Query("SELECT * FROM youtubeVideos WHERE deletedAt IS NULL AND sermonId IS NULL ORDER BY createdAt DESC")
     fun observePersonalCatalog(): Flow<List<YouTubeVideoEntity>>
+
+    /** iOS `getYouTubeVideos(on:)`: personal rows created in [start, end), newest first. */
+    @Query(
+        "SELECT * FROM youtubeVideos WHERE deletedAt IS NULL AND sermonId IS NULL " +
+            "AND createdAt >= :start AND createdAt < :end ORDER BY createdAt DESC"
+    )
+    fun observeCreatedBetween(start: Instant, end: Instant): Flow<List<YouTubeVideoEntity>>
 
     @Query("SELECT * FROM youtubeVideos WHERE needsSync = 1")
     suspend fun dirty(): List<YouTubeVideoEntity>

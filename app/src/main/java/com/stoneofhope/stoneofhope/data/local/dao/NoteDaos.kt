@@ -8,6 +8,7 @@ import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.PinLogEntity
 import com.stoneofhope.stoneofhope.data.local.entity.PinLogPendingDeleteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
+import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 // "Active" = not soft-deleted: `deletedAt IS NULL` (plus `isDeleted = 0` where the table has it),
@@ -23,6 +24,26 @@ interface NoteDao {
 
     @Query("SELECT * FROM notes WHERE deletedAt IS NULL AND isDeleted = 0 ORDER BY createdAt DESC")
     fun observeActive(): Flow<List<NoteEntity>>
+
+    /** Active notes created in [start, end) — iOS day matching uses `createdAt`, never `updatedAt`. */
+    @Query(
+        "SELECT * FROM notes WHERE deletedAt IS NULL AND isDeleted = 0 " +
+            "AND createdAt >= :start AND createdAt < :end ORDER BY createdAt"
+    )
+    fun observeCreatedBetween(start: Instant, end: Instant): Flow<List<NoteEntity>>
+
+    @Query("SELECT * FROM notes WHERE deletedAt IS NULL AND isDeleted = 0 AND id IN (:ids)")
+    fun observeByIds(ids: List<String>): Flow<List<NoteEntity>>
+
+    /** iOS `getPinnedNotes()`: every pinned, non-deleted note, any date. */
+    @Query("SELECT * FROM notes WHERE isPinned = 1 AND deletedAt IS NULL AND isDeleted = 0")
+    fun observePinned(): Flow<List<NoteEntity>>
+
+    @Query("SELECT * FROM notes WHERE deletedAt IS NULL AND isDeleted = 0 AND sermonId IN (:sermonIds)")
+    fun observeForSermons(sermonIds: List<String>): Flow<List<NoteEntity>>
+
+    @Query("SELECT * FROM notes WHERE deletedAt IS NULL AND isDeleted = 0 AND youtubeID IN (:videoIds)")
+    fun observeForVideos(videoIds: List<String>): Flow<List<NoteEntity>>
 
     @Query(
         "SELECT * FROM notes WHERE deletedAt IS NULL AND isDeleted = 0 " +
@@ -64,6 +85,12 @@ interface NoteCommentDao {
     )
     fun observeActiveForNote(noteId: String): Flow<List<NoteCommentEntity>>
 
+    @Query(
+        "SELECT * FROM noteComments WHERE deletedAt IS NULL AND isDeleted = 0 " +
+            "AND createdAt >= :start AND createdAt < :end"
+    )
+    fun observeCreatedBetween(start: Instant, end: Instant): Flow<List<NoteCommentEntity>>
+
     @Query("SELECT * FROM noteComments WHERE needsSync = 1")
     suspend fun dirty(): List<NoteCommentEntity>
 
@@ -94,6 +121,14 @@ interface TagDao {
 
     @Query("SELECT * FROM tags WHERE deletedAt IS NULL ORDER BY name")
     fun observeActive(): Flow<List<TagEntity>>
+
+    /** iOS `getAllTagNames()` order. */
+    @Query("SELECT * FROM tags WHERE deletedAt IS NULL ORDER BY createdAt")
+    fun observeActiveByCreation(): Flow<List<TagEntity>>
+
+    /** Case-insensitive match, like iOS `name ==[c] %@`. */
+    @Query("SELECT * FROM tags WHERE deletedAt IS NULL AND name = :name COLLATE NOCASE LIMIT 1")
+    suspend fun findActiveByName(name: String): TagEntity?
 
     @Query("SELECT * FROM tags WHERE needsSync = 1")
     suspend fun dirty(): List<TagEntity>

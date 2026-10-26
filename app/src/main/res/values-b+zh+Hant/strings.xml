@@ -25,4 +25,52 @@
     <string name="tab_placeholder">即將推出</string>
     <string name="settings_account_sync">帳號與同步</string>
     <string name="settings_version">版本</string>
+
+    <!-- Today tab: iOS Localizable.strings (zh-Hant simplified-char slips fixed). -->
+    <string name="today_good_morning">早安</string>
+    <string name="today_good_afternoon">午安</string>
+    <string name="today_good_evening">晚安</string>
+    <string name="today_profile">個人資料</string>
+    <string name="reading_by_books">按書卷閱讀</string>
+    <string name="reading_by_last_read">按最近閱讀</string>
+    <string name="reading_by_book_order">依書卷順序</string>
+    <string name="reading_start_prompt">你想今天開始一個讀經計劃嗎？或者只標記你讀過的一章。</string>
+    <string name="reading_mark_progress">立即標記進度</string>
+    <string name="quick_add">快速新增</string>
+    <string name="note_type_prayer">禱告</string>
+    <string name="note_type_note">筆記</string>
+    <string name="note_type_sermon">講道</string>
+    <string name="note_type_video">影片</string>
+    <string name="flashcard">記憶卡片</string>
+    <string name="today_activity">今日動態</string>
+    <string name="today_review">回顧</string>
+    <string name="tile_pinned">置頂</string>
+    <string name="tile_starred">加星標</string>
+    <string name="tile_study_note">學習筆記</string>
+    <string name="tile_bible">聖經</string>
+    <string name="tile_answered_prayers">已應允禱告</string>
+    <string name="tile_image">圖片</string>
+    <string name="card_chapter_read">閱讀章節</string>
+    <string name="card_sermons">講道</string>
+    <string name="card_videos">影片</string>
+    <string name="action_notes">筆記</string>
+    <string name="action_unread">取消已讀</string>
+    <string name="action_open">打開</string>
+    <string name="prayer_new">新增禱告</string>
+    <string name="prayer_subtitle">今天你心裡有什麼？</string>
+    <string name="prayer_placeholder">寫下你的禱告…</string>
+    <string name="prayer_save">儲存禱告</string>
+    <string name="note_placeholder">寫下你的筆記…</string>
+    <string name="note_save">儲存筆記</string>
+    <string name="tag_add">+ 標籤</string>
+    <string name="cancel">取消</string>
+    <plurals name="today_chapters_subtitle">
+        <item quantity="other">今日閱讀 %d 章</item>
+    </plurals>
+    <plurals name="today_sermons_subtitle">
+        <item quantity="other">今日 %d 篇講道</item>
+    </plurals>
+    <plurals name="today_videos_subtitle">
+        <item quantity="other">今日 %d 個影片</item>
+    </plurals>
 </resources>

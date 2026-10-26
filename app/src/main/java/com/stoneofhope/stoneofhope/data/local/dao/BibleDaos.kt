@@ -25,6 +25,10 @@ interface FlashCardDao {
     @Query("SELECT * FROM flashCards WHERE deletedAt IS NULL ORDER BY updatedAt DESC")
     fun observeActive(): Flow<List<FlashCardEntity>>
 
+    /** iOS `flashCardActiveAndTotalCounts().active`. */
+    @Query("SELECT COUNT(*) FROM flashCards WHERE deletedAt IS NULL AND isArchived = 0")
+    fun observeActiveCount(): Flow<Int>
+
     @Query("SELECT * FROM flashCards WHERE needsSync = 1")
     suspend fun dirty(): List<FlashCardEntity>
 
@@ -51,6 +55,9 @@ interface ChapterLogDao {
     @Query("SELECT * FROM chapterLogs WHERE deletedAt IS NULL ORDER BY readOn DESC")
     fun observeActive(): Flow<List<ChapterLogEntity>>
 
+    @Query("SELECT * FROM chapterLogs WHERE bookOrd = :bookOrd AND chapter = :chapter AND deletedAt IS NULL")
+    suspend fun activeFor(bookOrd: Int, chapter: Int): List<ChapterLogEntity>
+
     @Query("SELECT * FROM chapterLogs WHERE needsSync = 1")
     suspend fun dirty(): List<ChapterLogEntity>
 
@@ -76,6 +83,9 @@ interface BookProgressDao {
 
     @Query("SELECT * FROM bookProgress WHERE deletedAt IS NULL ORDER BY lastUpdatedOn DESC")
     fun observeActive(): Flow<List<BookProgressEntity>>
+
+    @Query("SELECT * FROM bookProgress WHERE bookOrd = :bookOrd AND deletedAt IS NULL")
+    suspend fun activeFor(bookOrd: Int): List<BookProgressEntity>
 
     @Query("SELECT * FROM bookProgress WHERE needsSync = 1")
     suspend fun dirty(): List<BookProgressEntity>
