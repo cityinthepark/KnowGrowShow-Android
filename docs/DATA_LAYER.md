@@ -17,8 +17,15 @@ production. Known example: tombstones on the wire are `{isDeleted: true, updated
 | `data.local` | Room: entities (one per iOS Realm class), DAOs, `AppDatabase`, Hilt `DatabaseModule` |
 | `data.remote.wire` | SDK-free Firestore mapping: `WireEncoder` (push), `WireDecoder` (pull), `NoteBodyCodec` |
 | `data.remote.firestore` | `FirestoreWireAdapter` — the only code that touches Firestore SDK types |
+| `data.bible` | Book table (generated from iOS), name matching, `BibleReferenceValidator` (field), `BibleReferenceParser` (note-body shortcut, `vN`), `BibleFormatter`, `BibleVersions`, `BibleAnchor` |
+| `data.bible.text` | `BibleTextDatabase` — read-only bundled KJV/CUV (Room `createFromAsset`), `BibleVerseReader` (iOS `BibleVerseRangeReader`), `OnDemandVerseSource` (NIV/NKJV; not implemented) |
 
 Room is the only store the UI reads. Firestore is a transport; local-only use never touches it.
+
+Bundled Bible text is a second, read-only Room database built at compile time from `app/bible-data/`
+(buildSrc `GenerateBibleTextDb`, schema from `app/schemas/…BibleTextDatabase/`). Its verse text is
+byte-identical to iOS `DownloadedVerse.verseContent` (checked for all 62,202 verses), because it is
+frozen into synced `userVerses`. `AppDatabase.downloadedVerses` stays for future downloaded versions.
 
 ## Storage decisions
 
@@ -67,6 +74,9 @@ peer-gated pulls) against real Room and an in-memory Firestore.
 | Peer watermark after a pull | advanced even if the pull failed | advanced only after a complete pull | a failed / held-back pull is retried on the next auto sync |
 | Pull reads | default source | `Source.SERVER` | Firestore cache is memory-only here; a partial cache must never advance the cursor |
 | Note hard delete cascade | comments in the note's Realm list | every comment with that `noteId` | pulled comments are never in iOS's list |
+| Verse-anchor dedupe with `verseEnd` unset | never matches (duplicate anchor) | read as `verseStart` | IOS_ISSUES F3 |
+| Note-body reference detection | ASCII `:` / `-` only | also full-width `：` `－` | IOS_ISSUES F1 |
+| `vN` shortcut past the chapter end | reference dropped, `vN` text lost | body kept as typed | IOS_ISSUES F2 |
 
 Anything else that differs is a bug: the encoder tests list the exact iOS field set per collection.
 

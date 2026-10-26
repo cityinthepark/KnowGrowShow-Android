@@ -2,12 +2,15 @@ package com.stoneofhope.stoneofhope.ui.today
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.stoneofhope.stoneofhope.data.bible.BibleVersions
 import com.stoneofhope.stoneofhope.data.local.dao.FlashCardDao
 import com.stoneofhope.stoneofhope.data.reading.ReadingModel
 import com.stoneofhope.stoneofhope.data.reading.ReadingRepository
 import com.stoneofhope.stoneofhope.data.repository.NoteRepository
 import com.stoneofhope.stoneofhope.data.today.TodayActivity
+import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
 import com.stoneofhope.stoneofhope.data.today.TodayRepository
+import com.stoneofhope.stoneofhope.ui.bible.BibleRefLanguages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.Duration
@@ -33,6 +36,7 @@ class TodayViewModel @Inject constructor(
     private val notes: NoteRepository,
     private val clock: Clock,
     flashCards: FlashCardDao,
+    bibleVersions: BibleVersionPreferences,
 ) : ViewModel() {
 
     private val zone: ZoneId get() = ZoneId.systemDefault()
@@ -59,6 +63,15 @@ class TodayViewModel @Inject constructor(
 
     val activeFlashCards: StateFlow<Int> =
         flashCards.observeActiveCount().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    /** Book-name languages for the reference fields, from the selected Bible versions. */
+    val bibleRefLanguages: BibleRefLanguages = bibleVersions.selectedVersions().let { selected ->
+        BibleRefLanguages(
+            matching = BibleVersions.bookMatchingLanguages(selected),
+            display = BibleVersions.primaryBookDisplayLanguage(selected),
+            secondary = BibleVersions.secondaryBookDisplayLanguage(selected),
+        )
+    }
 
     val tagNames: StateFlow<List<String>> =
         notes.observeTagNames().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -91,12 +104,12 @@ class TodayViewModel @Inject constructor(
         viewModelScope.launch { reading.toggleChapterRead(bookOrd, chapter, zone) }
     }
 
-    fun savePrayer(content: String, tagName: String?) {
-        viewModelScope.launch { notes.createPrayer(content, tagName) }
+    fun savePrayer(content: String, tagName: String?, bibleRefText: String?) {
+        viewModelScope.launch { notes.savePrayerNote(content, tagName, bibleRefText) }
     }
 
-    fun saveNote(content: String) {
-        viewModelScope.launch { notes.createQuickNote(content) }
+    fun saveNote(content: String, bibleRefText: String?) {
+        viewModelScope.launch { notes.saveNoteFromContent(content, bibleRefText, zone = zone) }
     }
 
     private fun currentDay(): LocalDate = clock.instant().atZone(zone).toLocalDate()

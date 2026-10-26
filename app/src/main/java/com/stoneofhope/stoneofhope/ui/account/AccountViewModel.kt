@@ -77,7 +77,7 @@ class AccountViewModel @Inject constructor(
     fun signOut() = launchReporting("Signed out (local data kept)") { account.signOutKeepingLocalData() }
 
     fun addNote(text: String) = launchReporting(null) {
-        if (text.isNotBlank()) noteRepository.createQuickNote(text.trim())
+        if (text.isNotBlank()) noteRepository.saveNoteFromContent(text, bibleRefText = null)
     }
 
     fun delete(note: NoteEntity) = launchReporting(null) { noteRepository.delete(note) }

@@ -83,4 +83,34 @@
     <!-- Reading Log (iOS BibleBookListView). -->
     <string name="reading_log">Reading Log</string>
     <string name="reading_restart">Restart</string>
+    <!-- Bible reference field (iOS BibleReferenceField / BookPicker). -->
+    <string name="bible_ref_placeholder">Bible Reference</string>
+    <string name="bible_ref_book">Book</string>
+    <string name="bible_ref_close">Close</string>
+    <string name="bible_ref_valid">Valid reference</string>
+    <string name="bible_ref_invalid">Invalid reference</string>
+    <string name="bible_ref_unknown_book">That is not a Bible book name.</string>
+    <plurals name="bible_ref_chapter_out_of_range">
+        <item quantity="one">%1$s has only %2$d chapter.</item>
+        <item quantity="other">%1$s has only %2$d chapters.</item>
+    </plurals>
+    <plurals name="bible_ref_verse_out_of_range">
+        <item quantity="one">%1$s %2$d has only %3$d verse.</item>
+        <item quantity="other">%1$s %2$d has only %3$d verses.</item>
+    </plurals>
+    <string name="bible_ref_reversed_range">The verse range ends before it starts.</string>
+    <string name="bible_ref_range_not_allowed">Enter a single verse here.</string>
+    <string name="bible_ref_invalid_chapter_list">That isn\'t a valid chapter.</string>
+    <string name="bible_ref_needs_chapter">Add a chapter.</string>
+    <string name="bible_ref_needs_verse">Add a verse.</string>
+    <string name="bible_ref_help">Bible reference help</string>
+    <string name="bible_ref_help_title">Bible Reference</string>
+    <string name="bible_ref_help_intro">Type a book, chapter and verse, or pick the book first.</string>
+    <string name="bible_ref_help_example_verse">One verse</string>
+    <string name="bible_ref_help_example_range">Verses 16–18</string>
+    <string name="bible_ref_help_example_chinese">Chinese names and abbreviations work too</string>
+    <string name="bible_ref_help_example_one_chapter">One-chapter books: the number is the verse</string>
+    <string name="bible_ref_help_chapter_only">A chapter alone (John 3) is not saved as a reference — add a verse.</string>
+    <string name="bible_ref_help_note_shortcut">In a note you can also start the text with the reference, e.g. “John 3:16 Thank you, Lord”. With only a chapter in the field (John 3), start the note with “v16” for verse 16.</string>
+    <string name="bible_ref_done">Done</string>
 </resources>

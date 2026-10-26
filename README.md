@@ -48,7 +48,8 @@ Create the **local folder first**, commit, then add GitHub remote — order does
 3. Run the debug app → Home → **Account & Sync** → Sign in.
 
 iOS ↔ Android test steps: [docs/INTEROP_TEST.md](docs/INTEROP_TEST.md). Data layer and sync design:
-[docs/DATA_LAYER.md](docs/DATA_LAYER.md).
+[docs/DATA_LAYER.md](docs/DATA_LAYER.md). iOS issues found while porting, and how Android handles them:
+[docs/IOS_ISSUES.md](docs/IOS_ISSUES.md).
 
 **Production** (later):
 

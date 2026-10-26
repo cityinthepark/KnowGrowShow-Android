@@ -8,6 +8,7 @@ import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.PinLogEntity
 import com.stoneofhope.stoneofhope.data.local.entity.PinLogPendingDeleteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
+import com.stoneofhope.stoneofhope.data.model.NoteType
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 
@@ -50,6 +51,13 @@ interface NoteDao {
             "AND tagIds LIKE '%\"' || :tagId || '\"%' ORDER BY createdAt DESC"
     )
     fun observeActiveWithTag(tagId: String): Flow<List<NoteEntity>>
+
+    /** iOS `findVerseAnchor` candidates, deleted or not; the caller matches end verse, version, bucket and day. */
+    @Query(
+        "SELECT * FROM notes WHERE noteType = :noteType AND bookOrd = :bookOrd AND chapterOrd = :chapterOrd " +
+            "AND verseStart = :verseStart ORDER BY createdAt, id"
+    )
+    suspend fun verseAnchorCandidates(noteType: NoteType, bookOrd: Int, chapterOrd: Int, verseStart: Int): List<NoteEntity>
 
     @Query("SELECT * FROM notes WHERE needsSync = 1")
     suspend fun dirty(): List<NoteEntity>

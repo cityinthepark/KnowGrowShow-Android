@@ -124,6 +124,20 @@ room {
     schemaDirectory("$projectDir/schemas")
 }
 
+// Bundled KJV / CUV text, pre-built into a Room asset so nothing is parsed on first launch.
+val generateBibleTextDb = tasks.register<GenerateBibleTextDb>("generateBibleTextDb") {
+    kjvJson.set(layout.projectDirectory.file("bible-data/KJV.json"))
+    cuvXml.set(layout.projectDirectory.file("bible-data/CUV.xml"))
+    roomSchema.set(layout.projectDirectory.file("schemas/com.stoneofhope.stoneofhope.data.bible.text.BibleTextDatabase/1.json"))
+    outputDir.set(layout.buildDirectory.dir("generated/bibleText"))
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(generateBibleTextDb, GenerateBibleTextDb::outputDir)
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

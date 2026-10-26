@@ -123,12 +123,14 @@ fun TodayScreen(
     when (sheet) {
         TodaySheet.Prayer -> PrayerSheet(
             tagNames = tagNames,
+            bibleRefLanguages = viewModel.bibleRefLanguages,
             onDismiss = { sheet = null },
-            onSave = { content, tag -> viewModel.savePrayer(content, tag); sheet = null },
+            onSave = { content, tag, ref -> viewModel.savePrayer(content, tag, ref); sheet = null },
         )
         TodaySheet.Note -> NoteSheet(
+            bibleRefLanguages = viewModel.bibleRefLanguages,
             onDismiss = { sheet = null },
-            onSave = { content -> viewModel.saveNote(content); sheet = null },
+            onSave = { content, ref -> viewModel.saveNote(content, ref); sheet = null },
         )
         null -> Unit
     }

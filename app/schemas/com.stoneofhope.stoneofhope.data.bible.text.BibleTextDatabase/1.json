@@ -1,0 +1,58 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "32fc92b7a0b27f5db571c9a49cb0e246",
+    "entities": [
+      {
+        "tableName": "verses",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`versionAbbr` TEXT NOT NULL, `bookOrd` INTEGER NOT NULL, `chapterOrd` INTEGER NOT NULL, `verseOrd` INTEGER NOT NULL, `content` TEXT NOT NULL, PRIMARY KEY(`versionAbbr`, `bookOrd`, `chapterOrd`, `verseOrd`))",
+        "fields": [
+          {
+            "fieldPath": "versionAbbr",
+            "columnName": "versionAbbr",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bookOrd",
+            "columnName": "bookOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "chapterOrd",
+            "columnName": "chapterOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "verseOrd",
+            "columnName": "verseOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "versionAbbr",
+            "bookOrd",
+            "chapterOrd",
+            "verseOrd"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '32fc92b7a0b27f5db571c9a49cb0e246')"
+    ]
+  }
+}

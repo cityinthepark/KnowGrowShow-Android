@@ -4,6 +4,10 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.stoneofhope.stoneofhope.data.bible.BibleLanguage
+import com.stoneofhope.stoneofhope.data.bible.text.BibleTextDatabase
+import com.stoneofhope.stoneofhope.data.bible.text.BibleVerseReader
+import com.stoneofhope.stoneofhope.data.bible.text.UnavailableOnDemandVerseSource
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.NoteCommentEntity
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
@@ -12,7 +16,10 @@ import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
 import com.stoneofhope.stoneofhope.data.local.entity.YouTubeVideoEntity
 import com.stoneofhope.stoneofhope.data.model.NoteType
 import com.stoneofhope.stoneofhope.data.reading.ReadingRepository
+import com.stoneofhope.stoneofhope.data.repository.NoteInputSaveResult
 import com.stoneofhope.stoneofhope.data.repository.NoteRepository
+import com.stoneofhope.stoneofhope.data.repository.UserVerseManager
+import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
 import com.stoneofhope.stoneofhope.data.sync.MutableClock
 import com.stoneofhope.stoneofhope.data.today.TodayActivity.TileKind
 import java.time.Instant
@@ -36,7 +43,14 @@ class TodayActivityTest {
     private val db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(), AppDatabase::class.java).build()
     private val today = LocalDate.of(2026, 10, 26)
     private val repo = TodayRepository(db, ReadingRepository(db, clock))
-    private val notes = NoteRepository(db, clock)
+    private val notes = NoteRepository(
+        db, clock, UserVerseManager(db.userVerseDao()),
+        BibleVerseReader(
+            Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(), BibleTextDatabase::class.java).build().verseDao(),
+            db.bibleCacheDao(), UnavailableOnDemandVerseSource(),
+        ),
+        BibleVersionPreferences(ApplicationProvider.getApplicationContext<Context>().getSharedPreferences("today-test", Context.MODE_PRIVATE)) { BibleLanguage.English },
+    )
     private val inDay = Instant.parse("2026-10-26T03:00:00Z")
     private val yesterday = Instant.parse("2026-10-25T03:00:00Z")
     private var n = 0
@@ -134,20 +148,20 @@ class TodayActivityTest {
     @Test
     fun prayerAndNoteSavesMatchIos() = runTest {
         db.tagDao().upsert(TagEntity(id = id(), name = "Family", createdAt = inDay))
-        val prayer = notes.createPrayer("  Lord, guide us  ", "family")!!
+        val prayer = notes.savePrayerNote("  Lord, guide us  ", "family", null)!!
         assertEquals("Lord, guide us", prayer.content)
         assertEquals(NoteType.Prayer, prayer.noteType)
         assertTrue(prayer.needsSync)
         assertEquals("existing tag matched case-insensitively", 1, db.tagDao().observeActive().first().size)
         assertEquals(db.tagDao().findActiveByName("FAMILY")!!.id, prayer.tagIds.single())
 
-        val withNewTag = notes.createPrayer("Thanks", "Joy")!!
+        val withNewTag = notes.savePrayerNote("Thanks", "Joy", null)!!
         val joy = db.tagDao().findActiveByName("Joy")!!
         assertTrue(joy.needsSync)
         assertEquals(listOf(joy.id), withNewTag.tagIds)
 
-        assertEquals(null, notes.createPrayer("   ", null))
-        val quick = notes.createQuickNote(" hello ")!!
+        assertEquals(null, notes.savePrayerNote("   ", null, null))
+        val quick = (notes.saveNoteFromContent(" hello ", null, zone = zone) as NoteInputSaveResult.Plain).note
         assertEquals("hello", quick.content)
         assertEquals(NoteType.Note, quick.noteType)
         assertEquals(3, activity().let { it.count(TileKind.Prayer) + it.count(TileKind.QuickNote) })

@@ -77,4 +77,32 @@
     <!-- Reading Log (iOS BibleBookListView). -->
     <string name="reading_log">阅读记录</string>
     <string name="reading_restart">重新开始</string>
+    <!-- Bible reference field (iOS BibleReferenceField / BookPicker). -->
+    <string name="bible_ref_placeholder">经文参考</string>
+    <string name="bible_ref_book">书卷</string>
+    <string name="bible_ref_close">关闭</string>
+    <string name="bible_ref_valid">参考有效</string>
+    <string name="bible_ref_invalid">参考无效</string>
+    <string name="bible_ref_unknown_book">这不是圣经书卷名。</string>
+    <plurals name="bible_ref_chapter_out_of_range">
+        <item quantity="other">%1$s 只有 %2$d 章。</item>
+    </plurals>
+    <plurals name="bible_ref_verse_out_of_range">
+        <item quantity="other">%1$s %2$d 只有 %3$d 节。</item>
+    </plurals>
+    <string name="bible_ref_reversed_range">节的范围结束早于开始。</string>
+    <string name="bible_ref_range_not_allowed">这里只能输入单节。</string>
+    <string name="bible_ref_invalid_chapter_list">这不是一个有效的章节。</string>
+    <string name="bible_ref_needs_chapter">还需输入章。</string>
+    <string name="bible_ref_needs_verse">还需输入节。</string>
+    <string name="bible_ref_help">经文参考说明</string>
+    <string name="bible_ref_help_title">经文参考</string>
+    <string name="bible_ref_help_intro">输入书卷、章和节，或先选择书卷。</string>
+    <string name="bible_ref_help_example_verse">单节</string>
+    <string name="bible_ref_help_example_range">第 16–18 节</string>
+    <string name="bible_ref_help_example_chinese">中文书名和缩写也可以</string>
+    <string name="bible_ref_help_example_one_chapter">只有一章的书卷：数字就是节</string>
+    <string name="bible_ref_help_chapter_only">只写到章（如 约 3）不会保存为经文引用，请写到节。</string>
+    <string name="bible_ref_help_note_shortcut">笔记也可以直接以经文开头，如“约 3:16 感谢主”。引用框只写到章（如 约 3）时，笔记开头写“v16”即第 16 节。</string>
+    <string name="bible_ref_done">完成</string>
 </resources>

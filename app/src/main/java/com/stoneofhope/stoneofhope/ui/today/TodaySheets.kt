@@ -27,6 +27,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -36,16 +37,27 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.stoneofhope.stoneofhope.R
+import com.stoneofhope.stoneofhope.data.bible.BibleRefConfig
+import com.stoneofhope.stoneofhope.ui.bible.BibleRefHelp
+import com.stoneofhope.stoneofhope.ui.bible.BibleRefLanguages
+import com.stoneofhope.stoneofhope.ui.bible.BibleReferenceField
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 
 /**
- * iOS `PrayerCreateView`: header with a tag menu, prayer text, Save (disabled while blank).
- * The tag menu only offers existing tags, like iOS. Bible reference field: Today plan T2.
+ * iOS `PrayerCreateView`: header with a tag menu, Bible reference (verse level; anything less is
+ * dropped on save, never blocks it), prayer text, Save (disabled while the text is blank).
+ * The tag menu only offers existing tags, like iOS.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PrayerSheet(tagNames: List<String>, onDismiss: () -> Unit, onSave: (content: String, tagName: String?) -> Unit) {
+fun PrayerSheet(
+    tagNames: List<String>,
+    bibleRefLanguages: BibleRefLanguages,
+    onDismiss: () -> Unit,
+    onSave: (content: String, tagName: String?, bibleRefText: String?) -> Unit,
+) {
     var text by rememberSaveable { mutableStateOf("") }
+    var reference by rememberSaveable { mutableStateOf("") }
     // Null = no tag. Kept apart from the "+ Tag" label (iOS compares against the localized text).
     var tag by rememberSaveable { mutableStateOf<String?>(null) }
     var menuOpen by rememberSaveable { mutableStateOf(false) }
@@ -77,6 +89,14 @@ fun PrayerSheet(tagNames: List<String>, onDismiss: () -> Unit, onSave: (content:
                     }
                 }
             }
+            BibleReferenceField(
+                value = reference,
+                onValueChange = { reference = it },
+                config = BibleRefConfig.FlashCard,
+                languages = bibleRefLanguages,
+                help = BibleRefHelp.Prayer,
+                showAbbreviations = false,
+            )
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
@@ -87,23 +107,38 @@ fun PrayerSheet(tagNames: List<String>, onDismiss: () -> Unit, onSave: (content:
                 saveLabel = stringResource(R.string.prayer_save),
                 saveEnabled = text.isNotBlank(),
                 onCancel = onDismiss,
-                onSave = { onSave(text, tag) },
+                onSave = { onSave(text, tag, reference.trim().ifEmpty { null }) },
                 saveTag = "prayerSave",
             )
         }
     }
 }
 
-/** iOS `NoteInputSheetView` without the reference field (Today plan T2): note text and Save. */
+/**
+ * iOS `NoteInputSheetView` (Today, `.flashCard` level): Bible reference, note text, Save. Save needs
+ * either text or a verse-level reference (a verse with no comment is a valid note); a reference that
+ * stops at a chapter is dropped on save. The body may itself start with "John 3:16 …".
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NoteSheet(onDismiss: () -> Unit, onSave: (content: String) -> Unit) {
+fun NoteSheet(bibleRefLanguages: BibleRefLanguages, onDismiss: () -> Unit, onSave: (content: String, bibleRefText: String?) -> Unit) {
     var text by rememberSaveable { mutableStateOf("") }
+    var reference by rememberSaveable { mutableStateOf("") }
+    var referenceIsValid by remember { mutableStateOf(false) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(
             Modifier.padding(horizontal = 20.dp).padding(bottom = 16.dp).imePadding(),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            BibleReferenceField(
+                value = reference,
+                onValueChange = { reference = it },
+                config = BibleRefConfig.FlashCard,
+                languages = bibleRefLanguages,
+                help = BibleRefHelp.Note,
+                showAbbreviations = true,
+                onValidationChange = { referenceIsValid = it.isValid },
+            )
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
@@ -112,9 +147,9 @@ fun NoteSheet(onDismiss: () -> Unit, onSave: (content: String) -> Unit) {
             )
             SheetButtons(
                 saveLabel = stringResource(R.string.note_save),
-                saveEnabled = text.isNotBlank(),
+                saveEnabled = text.isNotBlank() || referenceIsValid,
                 onCancel = onDismiss,
-                onSave = { onSave(text) },
+                onSave = { onSave(text.trim(), reference.trim().ifEmpty { null }) },
                 saveTag = "noteSave",
             )
         }
