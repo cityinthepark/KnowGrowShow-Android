@@ -11,6 +11,7 @@ import com.stoneofhope.stoneofhope.data.crypto.CryptoSession
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.remote.firestore.FirebaseBootstrap
 import com.stoneofhope.stoneofhope.data.repository.NoteRepository
+import com.stoneofhope.stoneofhope.data.settings.OnboardingPreferences
 import com.stoneofhope.stoneofhope.data.sync.CloudSync
 import com.stoneofhope.stoneofhope.data.sync.SyncIdentity
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +29,7 @@ class AccountViewModel @Inject constructor(
     private val cloudSync: CloudSync,
     private val identity: SyncIdentity,
     private val noteRepository: NoteRepository,
+    private val onboarding: OnboardingPreferences,
     session: CryptoSession,
 ) : ViewModel() {
 
@@ -41,18 +43,27 @@ class AccountViewModel @Inject constructor(
     val notes: StateFlow<List<NoteEntity>> =
         noteRepository.observeActive().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val firebaseMode: String = when {
-        bootstrap.emulator != null -> bootstrap.emulator.let { "Firebase emulator · ${it.host} · ${it.projectId}" }
-        bootstrap.isConfigured -> "Firebase production"
-        else -> "Local only (no Firebase configured)"
-    }
+    /** False in "this device only" mode: Firebase was never started. */
+    val cloudEnabled: StateFlow<Boolean> = bootstrap.configured
 
-    val canSignIn: Boolean get() = bootstrap.isConfigured
+    val firebaseMode: String
+        get() = when {
+            !bootstrap.configured.value -> "This device only — notes stay on this phone"
+            bootstrap.emulator != null -> bootstrap.emulator.let { "Firebase emulator · ${it.host} · ${it.projectId}" }
+            else -> "Firebase production"
+        }
     val demoEmail: String = BuildConfig.DEMO_AUTH_EMAIL
     val demoPassword: String = BuildConfig.DEMO_AUTH_PASSWORD
 
     var message by mutableStateOf<String?>(null)
         private set
+
+    /** A local-only user opting into cloud sync later (iOS: register from Account settings). */
+    fun turnOnCloudSync() = launchReporting(null) {
+        onboarding.optIntoCloud()
+        check(bootstrap.configureIfNeeded()) { "Cloud sync isn't available in this build (no google-services.json)" }
+        account.observe()
+    }
 
     fun signIn(email: String, password: String) = launchReporting("Signed in") {
         account.signInWithEmail(email.trim(), password, createIfMissing = bootstrap.emulator != null)

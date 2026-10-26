@@ -23,6 +23,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Firebase starts only when the user opts into cloud sync (FirebaseBootstrap), like iOS. -->
+        <provider
+            android:name="com.google.firebase.provider.FirebaseInitProvider"
+            android:authorities="${applicationId}.firebaseinitprovider"
+            tools:node="remove" />
+
         <!-- WorkManager is initialised by StoneOfHopeApplication with the Hilt worker factory. -->
         <provider
             android:name="androidx.startup.InitializationProvider"

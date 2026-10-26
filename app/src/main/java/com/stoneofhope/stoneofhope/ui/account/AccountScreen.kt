@@ -46,6 +46,7 @@ fun AccountScreen(onBack: () -> Unit, viewModel: AccountViewModel = hiltViewMode
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
     val unlockedUid by viewModel.unlockedUid.collectAsStateWithLifecycle()
     val notes by viewModel.notes.collectAsStateWithLifecycle()
+    val cloudEnabled by viewModel.cloudEnabled.collectAsStateWithLifecycle()
 
     var email by rememberSaveable { mutableStateOf(viewModel.demoEmail) }
     var password by rememberSaveable { mutableStateOf(viewModel.demoPassword) }
@@ -67,22 +68,29 @@ fun AccountScreen(onBack: () -> Unit, viewModel: AccountViewModel = hiltViewMode
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(viewModel.firebaseMode, style = MaterialTheme.typography.bodyMedium)
-                    Text(
-                        user?.let { "Signed in: ${it.email ?: "(no email)"}" } ?: "Not signed in",
-                        modifier = Modifier.testTag("signedInStatus"),
-                    )
-                    user?.let { Text("uid: ${it.uid}", style = MaterialTheme.typography.bodySmall) }
-                    Text(
-                        if (user != null && unlockedUid == user?.uid) "Note key: unlocked" else "Note key: locked",
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+                    if (cloudEnabled) {
+                        Text(
+                            user?.let { "Signed in: ${it.email ?: "(no email)"}" } ?: "Not signed in",
+                            modifier = Modifier.testTag("signedInStatus"),
+                        )
+                        user?.let { Text("uid: ${it.uid}", style = MaterialTheme.typography.bodySmall) }
+                        Text(
+                            if (user != null && unlockedUid == user?.uid) "Note key: unlocked" else "Note key: locked",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                     viewModel.message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
                 }
             }
         }
 
         item {
-            if (user == null) {
+            if (!cloudEnabled) {
+                OutlinedButton(
+                    onClick = viewModel::turnOnCloudSync,
+                    modifier = Modifier.fillMaxWidth().testTag("turnOnCloud"),
+                ) { Text("Turn on cloud sync") }
+            } else if (user == null) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = email, onValueChange = { email = it }, label = { Text("Email") },
@@ -97,7 +105,7 @@ fun AccountScreen(onBack: () -> Unit, viewModel: AccountViewModel = hiltViewMode
                     )
                     Button(
                         onClick = { viewModel.signIn(email, password) },
-                        enabled = viewModel.canSignIn && email.isNotBlank() && password.isNotBlank(),
+                        enabled = email.isNotBlank() && password.isNotBlank(),
                         modifier = Modifier.fillMaxWidth().testTag("signInButton"),
                     ) { Text("Sign in") }
                 }

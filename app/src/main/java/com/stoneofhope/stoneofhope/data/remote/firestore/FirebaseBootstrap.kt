@@ -12,15 +12,22 @@ import com.stoneofhope.stoneofhope.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * iOS `FirebaseBootstrap` + `FirebaseEmulatorBootstrap`.
  *
- * - Production: Firebase is configured only when `google-services.json` was present at build time
- *   (the google-services plugin auto-initialises it). Without it the app is local-only.
- * - Emulator (debug builds with `firebase.useEmulators=true` in `dev.properties`): Firebase is
- *   initialised here with the iOS project id — no `google-services.json` needed — and Auth and
- *   Firestore talk to the Local Emulator Suite on the host Mac.
+ * Like iOS, Firebase is **not** started at process launch (auto-init is removed in the manifest).
+ * [configureIfNeeded] runs only when the user opted into cloud sync — "Register" on the welcome
+ * screen, turning sync on later, or a returning signed-in user. "This device only" never touches it.
+ *
+ * - Production: initialised from `google-services.json` resources. Without the file, it can't
+ *   be configured and the app stays local-only.
+ * - Emulator (debug builds with `firebase.useEmulators=true` in `dev.properties`): initialised with
+ *   the iOS project id, no `google-services.json` needed; Auth and Firestore use the Local Emulator
+ *   Suite on the host Mac.
  */
 @Singleton
 class FirebaseBootstrap @Inject constructor(@param:ApplicationContext private val context: Context) {
@@ -38,33 +45,46 @@ class FirebaseBootstrap @Inject constructor(@param:ApplicationContext private va
             null
         }
 
-    private var configured = false
+    private val _configured = MutableStateFlow(false)
+
+    /** Becomes true once Firebase is up; sign-in and sync listeners attach on that edge. */
+    val configured: StateFlow<Boolean> = _configured.asStateFlow()
 
     val isConfigured: Boolean get() = FirebaseApp.getApps(context).isNotEmpty()
 
-    /** Call once from `Application.onCreate`, before anything touches Firebase. */
-    fun configureIfNeeded() {
-        if (configured) return
-        configured = true
-        val emulator = emulator ?: return
-        if (FirebaseApp.getApps(context).isEmpty()) {
-            FirebaseApp.initializeApp(
-                context,
-                FirebaseOptions.Builder()
-                    .setProjectId(emulator.projectId)
-                    // Placeholders: the emulator accepts any app id / API key.
-                    .setApplicationId("1:000000000000:android:0000000000000000")
-                    .setApiKey("emulator-api-key")
-                    .build(),
-            )
+    /** Starts Firebase if this build can. Returns false when neither production config nor emulator exists. */
+    @Synchronized
+    fun configureIfNeeded(): Boolean {
+        if (_configured.value) return true
+        val emulator = emulator
+        if (!isConfigured) {
+            if (emulator != null) {
+                FirebaseApp.initializeApp(
+                    context,
+                    FirebaseOptions.Builder()
+                        .setProjectId(emulator.projectId)
+                        // Placeholders: the emulator accepts any app id / API key.
+                        .setApplicationId("1:000000000000:android:0000000000000000")
+                        .setApiKey("emulator-api-key")
+                        .build(),
+                )
+            } else {
+                // Reads google-services.json resources; returns null when the file wasn't there.
+                FirebaseApp.initializeApp(context)
+            }
         }
-        FirebaseAuth.getInstance().useEmulator(emulator.host, emulator.authPort)
-        Log.i(TAG, "Firebase emulator — Auth ${emulator.host}:${emulator.authPort} | Firestore ${emulator.host}:${emulator.firestorePort} | project ${emulator.projectId}")
+        if (!isConfigured) return false
+        if (emulator != null) {
+            FirebaseAuth.getInstance().useEmulator(emulator.host, emulator.authPort)
+            Log.i(TAG, "Firebase emulator — Auth ${emulator.host}:${emulator.authPort} | Firestore ${emulator.host}:${emulator.firestorePort} | project ${emulator.projectId}")
+        }
+        _configured.value = true
+        return true
     }
 
     /** Firestore with a memory-only cache: Room is the offline store, Firestore is transport only. */
     val firestore: FirebaseFirestore by lazy {
-        check(isConfigured) { "Firebase is not configured" }
+        check(_configured.value) { "Firebase is not configured" }
         FirebaseFirestore.getInstance().apply {
             // Must precede any other Firestore call, settings included.
             emulator?.let { useEmulator(it.host, it.firestorePort) }
@@ -76,7 +96,7 @@ class FirebaseBootstrap @Inject constructor(@param:ApplicationContext private va
 
     val auth: FirebaseAuth
         get() {
-            check(isConfigured) { "Firebase is not configured" }
+            check(_configured.value) { "Firebase is not configured" }
             return FirebaseAuth.getInstance()
         }
 

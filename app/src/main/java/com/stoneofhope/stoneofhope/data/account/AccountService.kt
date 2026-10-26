@@ -40,7 +40,7 @@ class AccountService @Inject constructor(
 
     /** Starts mirroring Firebase's current user into [user]. Safe to call repeatedly. */
     fun observe() {
-        if (listening || !bootstrap.isConfigured) return
+        if (listening || !bootstrap.configured.value) return
         listening = true
         bootstrap.auth.addAuthStateListener(FirebaseAuth.AuthStateListener { auth ->
             _user.value = auth.currentUser?.let { SignedInUser(it.uid, it.email) }

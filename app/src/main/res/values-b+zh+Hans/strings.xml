@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome_slide_1_title">欢迎</string>
+    <string name="welcome_slide_1_body">读经、笔记、成长——先从本机开始，一切数据都在你的设备上。</string>
+    <string name="welcome_slide_2_title">笔记与祷告</string>
+    <string name="welcome_slide_2_body">记录想法、祷告、记忆卡，以及与神话语相连的时刻。</string>
+    <string name="welcome_slide_3_title">讲道与节奏</string>
+    <string name="welcome_slide_3_body">跟进系列、写讲道笔记，并保持温和的日常节奏。</string>
+    <string name="welcome_swipe_hint">滑动继续</string>
+    <string name="welcome_sync_choice_headline">请选择</string>
+    <string name="welcome_sync_choice_register">注册以在多台设备间共享数据</string>
+    <string name="welcome_sync_choice_or">或</string>
+    <string name="welcome_sync_choice_local">仅在本机使用</string>
+    <string name="legal_consent_prefix">继续即表示您同意</string>
+    <string name="legal_consent_middle">与</string>
+    <string name="terms_of_use">使用条款</string>
+    <string name="privacy_policy">隐私政策</string>
+
+    <!-- Main tabs: iOS MainTab titles. -->
+    <string name="tab_today">今天</string>
+    <string name="tab_series">系列</string>
+    <string name="tab_moments">时刻</string>
+    <string name="tab_calendar">日历</string>
+    <string name="tab_settings">设置</string>
+    <string name="tab_placeholder">即将推出</string>
+    <string name="settings_account_sync">账号与同步</string>
+    <string name="settings_version">版本</string>
+</resources>

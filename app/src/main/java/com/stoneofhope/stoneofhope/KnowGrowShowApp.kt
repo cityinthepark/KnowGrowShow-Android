@@ -3,23 +3,29 @@ package com.stoneofhope.stoneofhope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.stoneofhope.stoneofhope.ui.RootViewModel
 import com.stoneofhope.stoneofhope.ui.account.AccountScreen
+import com.stoneofhope.stoneofhope.ui.main.MainScreen
 import com.stoneofhope.stoneofhope.ui.theme.KnowGrowShowThemeSurface
 import com.stoneofhope.stoneofhope.ui.welcome.WelcomeScreen
 
 private object Routes {
     const val Welcome = "welcome"
-    const val Home = "home"
+    const val Main = "main"
     const val Account = "account"
 }
 
 @Composable
-fun KnowGrowShowApp() {
+fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel()) {
     val navController = rememberNavController()
+    // Decided once per launch: the welcome flow only until the user has made a choice.
+    val startDestination = remember { if (rootViewModel.showWelcome) Routes.Welcome else Routes.Main }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -27,20 +33,23 @@ fun KnowGrowShowApp() {
     ) {
         NavHost(
             navController = navController,
-            startDestination = Routes.Welcome
+            startDestination = startDestination
         ) {
             composable(Routes.Welcome) {
+                // Like iOS, both choices land on the tabs; cloud sign-in lives under Settings.
                 WelcomeScreen(
-                    onContinueLocal = { navController.navigate(Routes.Home) {
-                        popUpTo(Routes.Welcome) { inclusive = true }
-                    } },
-                    onContinueRegister = { navController.navigate(Routes.Home) {
-                        popUpTo(Routes.Welcome) { inclusive = true }
-                    } }
+                    onContinueLocal = {
+                        rootViewModel.chooseLocalOnly()
+                        navController.navigate(Routes.Main) { popUpTo(Routes.Welcome) { inclusive = true } }
+                    },
+                    onContinueRegister = {
+                        rootViewModel.chooseCloud()
+                        navController.navigate(Routes.Main) { popUpTo(Routes.Welcome) { inclusive = true } }
+                    }
                 )
             }
-            composable(Routes.Home) {
-                HomePlaceholderScreen(onOpenAccount = { navController.navigate(Routes.Account) })
+            composable(Routes.Main) {
+                MainScreen(onOpenAccount = { navController.navigate(Routes.Account) })
             }
             composable(Routes.Account) {
                 AccountScreen(onBack = { navController.popBackStack() })

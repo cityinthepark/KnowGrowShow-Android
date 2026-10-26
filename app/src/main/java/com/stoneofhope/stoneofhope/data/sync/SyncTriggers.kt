@@ -17,6 +17,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -68,7 +69,9 @@ class SyncTriggers @Inject constructor(
             }
         }
 
-        if (bootstrap.isConfigured) {
+        // Firebase may come up later (welcome "Register", or turning sync on from the account screen).
+        scope.launch {
+            bootstrap.configured.first { it }
             bootstrap.auth.addAuthStateListener(FirebaseAuth.AuthStateListener { onAuthChanged() })
         }
     }

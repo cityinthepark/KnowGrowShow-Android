@@ -24,11 +24,11 @@ class FirebaseSyncIdentity @Inject constructor(
 
     override val currentAuthUid: String?
         get() {
-            if (!bootstrap.isConfigured || flags.isCloudSyncPaused) return null
+            if (!bootstrap.configured.value || flags.isCloudSyncPaused) return null
             return bootstrap.auth.currentUser?.uid?.takeIf { it.isNotEmpty() }
         }
 
     override fun signOut() {
-        if (bootstrap.isConfigured) bootstrap.auth.signOut()
+        if (bootstrap.configured.value) bootstrap.auth.signOut()
     }
 }
