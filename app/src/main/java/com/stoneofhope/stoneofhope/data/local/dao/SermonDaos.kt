@@ -27,6 +27,12 @@ interface SermonSeriesDao {
 
     @Query("DELETE FROM sermonSeries WHERE deletedAt IS NOT NULL AND needsSync = 0")
     suspend fun purgeSyncedTombstones(): Int
+
+    @Query("DELETE FROM sermonSeries WHERE deletedAt IS NOT NULL")
+    suspend fun purgeAllTombstones(): Int
+
+    @Query("UPDATE sermonSeries SET needsSync = 1")
+    suspend fun markAllDirty()
 }
 
 @Dao
@@ -57,6 +63,12 @@ interface SermonDao {
 
     @Query("DELETE FROM sermons WHERE deletedAt IS NOT NULL AND needsSync = 0")
     suspend fun purgeSyncedTombstones(): Int
+
+    @Query("DELETE FROM sermons WHERE deletedAt IS NOT NULL")
+    suspend fun purgeAllTombstones(): Int
+
+    @Query("UPDATE sermons SET needsSync = 1")
+    suspend fun markAllDirty()
 }
 
 @Dao
@@ -78,4 +90,10 @@ interface YouTubeVideoDao {
 
     @Query("DELETE FROM youtubeVideos WHERE deletedAt IS NOT NULL AND needsSync = 0")
     suspend fun purgeSyncedTombstones(): Int
+
+    @Query("DELETE FROM youtubeVideos WHERE deletedAt IS NOT NULL")
+    suspend fun purgeAllTombstones(): Int
+
+    @Query("UPDATE youtubeVideos SET needsSync = 1")
+    suspend fun markAllDirty()
 }

@@ -57,7 +57,10 @@ data class NoteEntity(
     val isDeleted: Boolean = false,
     override val needsSync: Boolean = false,
     override val lastSyncedAt: Instant? = null,
-) : SyncedRow
+) : SyncedRow<NoteEntity> {
+    override fun withSyncState(needsSync: Boolean, lastSyncedAt: Instant?) =
+        copy(needsSync = needsSync, lastSyncedAt = lastSyncedAt)
+}
 
 /** Port of iOS `NoteComment`. `note: Note?` becomes the [noteId] FK (wire field `noteId`). */
 @Entity(
@@ -91,7 +94,10 @@ data class NoteCommentEntity(
     val isDeleted: Boolean = false,
     override val needsSync: Boolean = false,
     override val lastSyncedAt: Instant? = null,
-) : SyncedRow
+) : SyncedRow<NoteCommentEntity> {
+    override fun withSyncState(needsSync: Boolean, lastSyncedAt: Instant?) =
+        copy(needsSync = needsSync, lastSyncedAt = lastSyncedAt)
+}
 
 /** Port of iOS `Tag`. */
 @Entity(tableName = "tags", indices = [Index("needsSync")])
@@ -102,7 +108,10 @@ data class TagEntity(
     override val deletedAt: Instant? = null,
     override val needsSync: Boolean = false,
     override val lastSyncedAt: Instant? = null,
-) : SyncedRow
+) : SyncedRow<TagEntity> {
+    override fun withSyncState(needsSync: Boolean, lastSyncedAt: Instant?) =
+        copy(needsSync = needsSync, lastSyncedAt = lastSyncedAt)
+}
 
 /**
  * Port of iOS `PinLog` (FIRESTORE_SYNC_CONTRACT §2.5). Document id = [noteId].

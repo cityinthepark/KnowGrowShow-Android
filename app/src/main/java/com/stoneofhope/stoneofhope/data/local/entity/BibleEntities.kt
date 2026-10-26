@@ -26,7 +26,10 @@ data class FlashCardEntity(
     override val deletedAt: Instant? = null,
     override val needsSync: Boolean = false,
     override val lastSyncedAt: Instant? = null,
-) : SyncedRow
+) : SyncedRow<FlashCardEntity> {
+    override fun withSyncState(needsSync: Boolean, lastSyncedAt: Instant?) =
+        copy(needsSync = needsSync, lastSyncedAt = lastSyncedAt)
+}
 
 /** Port of iOS `ChapterLog`. Field is `chapter` (not `chapterOrd`) on iOS and on the wire. */
 @Entity(tableName = "chapterLogs", indices = [Index("bookOrd"), Index("readOn"), Index("needsSync")])
@@ -38,7 +41,10 @@ data class ChapterLogEntity(
     override val deletedAt: Instant? = null,
     override val needsSync: Boolean = false,
     override val lastSyncedAt: Instant? = null,
-) : SyncedRow
+) : SyncedRow<ChapterLogEntity> {
+    override fun withSyncState(needsSync: Boolean, lastSyncedAt: Instant?) =
+        copy(needsSync = needsSync, lastSyncedAt = lastSyncedAt)
+}
 
 /** Port of iOS `BookProgress`. [readChapters] is one 0/1 flag per chapter, e.g. `[1, 0, 1, 0]`. */
 @Entity(tableName = "bookProgress", indices = [Index("bookOrd"), Index("needsSync")])
@@ -52,7 +58,10 @@ data class BookProgressEntity(
     override val deletedAt: Instant? = null,
     override val needsSync: Boolean = false,
     override val lastSyncedAt: Instant? = null,
-) : SyncedRow {
+) : SyncedRow<BookProgressEntity> {
+    override fun withSyncState(needsSync: Boolean, lastSyncedAt: Instant?) =
+        copy(needsSync = needsSync, lastSyncedAt = lastSyncedAt)
+
     val isCompleted: Boolean get() = 0 !in readChapters
 }
 
@@ -86,7 +95,10 @@ data class UserVerseEntity(
     val isDeleted: Boolean = false,
     override val needsSync: Boolean = false,
     override val lastSyncedAt: Instant? = null,
-) : SyncedRow {
+) : SyncedRow<UserVerseEntity> {
+    override fun withSyncState(needsSync: Boolean, lastSyncedAt: Instant?) =
+        copy(needsSync = needsSync, lastSyncedAt = lastSyncedAt)
+
     val matchesIdInvariant: Boolean get() = id == makeId(versionAbbr, bookOrd, chapterOrd, verseOrd)
 
     companion object {
@@ -123,7 +135,10 @@ data class IndexedTextEntity(
     val isDeleted: Boolean = false,
     override val needsSync: Boolean = false,
     override val lastSyncedAt: Instant? = null,
-) : SyncedRow {
+) : SyncedRow<IndexedTextEntity> {
+    override fun withSyncState(needsSync: Boolean, lastSyncedAt: Instant?) =
+        copy(needsSync = needsSync, lastSyncedAt = lastSyncedAt)
+
     companion object {
         const val SOURCE_TYPE_VERSE = "verse"
         const val DEFAULT_COLOR_KEY = "yellow"

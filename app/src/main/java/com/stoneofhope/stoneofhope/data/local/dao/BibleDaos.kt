@@ -12,6 +12,7 @@ import com.stoneofhope.stoneofhope.data.local.entity.FlashCardEntity
 import com.stoneofhope.stoneofhope.data.local.entity.IndexedTextEntity
 import com.stoneofhope.stoneofhope.data.local.entity.SyncConflictEntity
 import com.stoneofhope.stoneofhope.data.local.entity.UserVerseEntity
+import com.stoneofhope.stoneofhope.data.model.SyncConflictType
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -32,6 +33,12 @@ interface FlashCardDao {
 
     @Query("DELETE FROM flashCards WHERE deletedAt IS NOT NULL AND needsSync = 0")
     suspend fun purgeSyncedTombstones(): Int
+
+    @Query("DELETE FROM flashCards WHERE deletedAt IS NOT NULL")
+    suspend fun purgeAllTombstones(): Int
+
+    @Query("UPDATE flashCards SET needsSync = 1")
+    suspend fun markAllDirty()
 }
 
 @Dao
@@ -52,6 +59,12 @@ interface ChapterLogDao {
 
     @Query("DELETE FROM chapterLogs WHERE deletedAt IS NOT NULL AND needsSync = 0")
     suspend fun purgeSyncedTombstones(): Int
+
+    @Query("DELETE FROM chapterLogs WHERE deletedAt IS NOT NULL")
+    suspend fun purgeAllTombstones(): Int
+
+    @Query("UPDATE chapterLogs SET needsSync = 1")
+    suspend fun markAllDirty()
 }
 
 @Dao
@@ -72,6 +85,12 @@ interface BookProgressDao {
 
     @Query("DELETE FROM bookProgress WHERE deletedAt IS NOT NULL AND needsSync = 0")
     suspend fun purgeSyncedTombstones(): Int
+
+    @Query("DELETE FROM bookProgress WHERE deletedAt IS NOT NULL")
+    suspend fun purgeAllTombstones(): Int
+
+    @Query("UPDATE bookProgress SET needsSync = 1")
+    suspend fun markAllDirty()
 }
 
 @Dao
@@ -95,6 +114,12 @@ interface UserVerseDao {
 
     @Query("DELETE FROM userVerses WHERE deletedAt IS NOT NULL AND needsSync = 0")
     suspend fun purgeSyncedTombstones(): Int
+
+    @Query("DELETE FROM userVerses WHERE deletedAt IS NOT NULL")
+    suspend fun purgeAllTombstones(): Int
+
+    @Query("UPDATE userVerses SET needsSync = 1")
+    suspend fun markAllDirty()
 }
 
 @Dao
@@ -119,6 +144,12 @@ interface IndexedTextDao {
 
     @Query("DELETE FROM indexedTexts WHERE deletedAt IS NOT NULL AND needsSync = 0")
     suspend fun purgeSyncedTombstones(): Int
+
+    @Query("DELETE FROM indexedTexts WHERE deletedAt IS NOT NULL")
+    suspend fun purgeAllTombstones(): Int
+
+    @Query("UPDATE indexedTexts SET needsSync = 1")
+    suspend fun markAllDirty()
 }
 
 @Dao
@@ -127,6 +158,9 @@ interface SyncConflictDao {
 
     @Query("SELECT * FROM syncConflicts WHERE resolvedAt IS NULL ORDER BY detectedAt DESC")
     fun observeUnresolved(): Flow<List<SyncConflictEntity>>
+
+    @Query("SELECT * FROM syncConflicts WHERE recordId = :recordId AND recordType = :recordType AND resolvedAt IS NULL LIMIT 1")
+    suspend fun findUnresolved(recordId: String, recordType: SyncConflictType): SyncConflictEntity?
 }
 
 @Dao

@@ -36,9 +36,18 @@ interface NoteDao {
     @Query("DELETE FROM notes WHERE id = :id")
     suspend fun hardDelete(id: String)
 
-    /** Hard-deletes tombstones already pushed (iOS `LocalTombstonePurge.purgeSyncedTombstones`). */
-    @Query("DELETE FROM notes WHERE deletedAt IS NOT NULL AND needsSync = 0")
-    suspend fun purgeSyncedTombstones(): Int
+    /** Notes need a cascade on hard delete (comments + PinLog), so purge goes through ids. */
+    @Query("SELECT id FROM notes WHERE deletedAt IS NOT NULL AND needsSync = 0")
+    suspend fun syncedTombstoneIds(): List<String>
+
+    @Query("SELECT id FROM notes WHERE deletedAt IS NOT NULL")
+    suspend fun allTombstoneIds(): List<String>
+
+    @Query("SELECT id FROM notes WHERE isPinned = 1 AND deletedAt IS NULL")
+    suspend fun pinnedIds(): List<String>
+
+    @Query("UPDATE notes SET needsSync = 1")
+    suspend fun markAllDirty()
 }
 
 @Dao
@@ -61,8 +70,18 @@ interface NoteCommentDao {
     @Query("DELETE FROM noteComments WHERE id = :id")
     suspend fun hardDelete(id: String)
 
+    /** Cascade from a hard-deleted note. */
+    @Query("DELETE FROM noteComments WHERE noteId = :noteId")
+    suspend fun hardDeleteForNote(noteId: String)
+
     @Query("DELETE FROM noteComments WHERE deletedAt IS NOT NULL AND needsSync = 0")
     suspend fun purgeSyncedTombstones(): Int
+
+    @Query("DELETE FROM noteComments WHERE deletedAt IS NOT NULL")
+    suspend fun purgeAllTombstones(): Int
+
+    @Query("UPDATE noteComments SET needsSync = 1")
+    suspend fun markAllDirty()
 }
 
 @Dao
@@ -84,6 +103,12 @@ interface TagDao {
 
     @Query("DELETE FROM tags WHERE deletedAt IS NOT NULL AND needsSync = 0")
     suspend fun purgeSyncedTombstones(): Int
+
+    @Query("DELETE FROM tags WHERE deletedAt IS NOT NULL")
+    suspend fun purgeAllTombstones(): Int
+
+    @Query("UPDATE tags SET needsSync = 1")
+    suspend fun markAllDirty()
 }
 
 @Dao
@@ -106,4 +131,10 @@ interface PinLogDao {
 
     @Query("DELETE FROM pinLogPendingDeletes WHERE firestoreDocumentId IN (:ids)")
     suspend fun clearPendingDeletes(ids: List<String>)
+
+    @Query("DELETE FROM pinLogPendingDeletes")
+    suspend fun clearAllPendingDeletes()
+
+    @Query("UPDATE PinLog SET needsSync = 1")
+    suspend fun markAllDirty()
 }

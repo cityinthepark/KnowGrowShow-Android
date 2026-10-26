@@ -25,7 +25,10 @@ data class SermonSeriesEntity(
     override val deletedAt: Instant? = null,
     override val needsSync: Boolean = false,
     override val lastSyncedAt: Instant? = null,
-) : SyncedRow
+) : SyncedRow<SermonSeriesEntity> {
+    override fun withSyncState(needsSync: Boolean, lastSyncedAt: Instant?) =
+        copy(needsSync = needsSync, lastSyncedAt = lastSyncedAt)
+}
 
 /** Port of iOS `Sermon`. `series: SermonSeries?` becomes the [seriesId] FK (wire field `seriesId`). */
 @Entity(
@@ -57,7 +60,10 @@ data class SermonEntity(
     override val lastSyncedAt: Instant? = null,
     /** `true` = user-created (may sync). `false` = church import (local only). */
     val isUserData: Boolean = true,
-) : SyncedRow
+) : SyncedRow<SermonEntity> {
+    override fun withSyncState(needsSync: Boolean, lastSyncedAt: Instant?) =
+        copy(needsSync = needsSync, lastSyncedAt = lastSyncedAt)
+}
 
 /**
  * Port of iOS `YouTubeVideo`. Primary key is the YouTube video id itself — the documented
@@ -83,7 +89,10 @@ data class YouTubeVideoEntity(
     override val deletedAt: Instant? = null,
     override val needsSync: Boolean = false,
     override val lastSyncedAt: Instant? = null,
-) : SyncedRow {
+) : SyncedRow<YouTubeVideoEntity> {
+    override fun withSyncState(needsSync: Boolean, lastSyncedAt: Instant?) =
+        copy(needsSync = needsSync, lastSyncedAt = lastSyncedAt)
+
     /** Personal catalog entries only (`sermonId == null`). Sermon index rows stay out of Video UI. */
     val isPersonalCatalogEntry: Boolean get() = sermonId == null
 }

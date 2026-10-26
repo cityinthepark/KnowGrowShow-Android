@@ -22,6 +22,16 @@ class FakeFirestore(var serverNow: Instant = Instant.parse("2026-10-26T12:00:00.
 
     fun get(collection: String, documentId: String): WireData? = docs[collection to documentId]
 
+    /** `where updatedAt >= since` (documents without `updatedAt` never match a filtered query). */
+    fun query(collection: String, since: Instant?): List<Pair<String, WireData>> =
+        docs.filterKeys { it.first == collection }
+            .filterValues { data -> since == null || (data["updatedAt"] as? Instant)?.let { it >= since } == true }
+            .map { (key, data) -> key.second to data }
+
+    fun count(collection: String): Int = docs.keys.count { it.first == collection }
+
+    fun clear() = docs.clear()
+
     /** Seed a document as another client (iOS / Web) would have left it. */
     fun put(collection: String, documentId: String, data: WireData) {
         docs[collection to documentId] = data
