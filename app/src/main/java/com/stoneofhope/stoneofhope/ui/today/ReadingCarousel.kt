@@ -1,6 +1,5 @@
 package com.stoneofhope.stoneofhope.ui.today
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.bible.BibleBooks
 import com.stoneofhope.stoneofhope.data.reading.ReadingModel
+import com.stoneofhope.stoneofhope.ui.reading.readingChipStyle
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 
 fun bookTitle(bookOrd: Int): String = BibleBooks.name(bookOrd)
@@ -168,11 +168,7 @@ private fun BookCard(
 private fun ChapterChip(chip: ReadingModel.Chip, onTap: () -> Unit, onLongPress: () -> Unit, tag: String) {
     val colors = AppTheme.colors
     val haptics = LocalHapticFeedback.current
-    val (fill, text, border) = when (chip.state) {
-        ReadingModel.ChipState.ReadToday -> Triple(colors.blue100, Color.White, null)
-        ReadingModel.ChipState.Read -> Triple(colors.blue20, colors.blue100, BorderStroke(1.dp, colors.blue100.copy(alpha = 0.7f)))
-        ReadingModel.ChipState.Unread -> Triple(colors.readingChipMutedFill, colors.blue100, null)
-    }
+    val (fill, text, border) = readingChipStyle(chip.state)
     Box {
         Box(
             modifier = Modifier

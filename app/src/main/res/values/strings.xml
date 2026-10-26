@@ -79,4 +79,8 @@
         <item quantity="one">%d video today</item>
         <item quantity="other">%d videos today</item>
     </plurals>
+
+    <!-- Reading Log (iOS BibleBookListView). -->
+    <string name="reading_log">Reading Log</string>
+    <string name="reading_restart">Restart</string>
 </resources>

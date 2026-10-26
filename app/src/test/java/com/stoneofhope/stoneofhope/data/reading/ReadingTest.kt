@@ -167,6 +167,35 @@ class ReadingTest {
     }
 
     @Test
+    fun bookLogStatesAndRestart() = runTest {
+        // Finish Obadiah (1 chapter) yesterday.
+        clock.now = Instant.parse("2026-10-25T18:00:00Z")
+        repo.toggleChapterRead(31, 1, zone)
+        clock.now = Instant.parse("2026-10-26T18:00:00Z")
+        var log = repo.observeBookLogs(today, zone).first().getValue(31)
+        assertEquals(ReadingModel.ChipState.Read, log.state(1))
+        assertTrue(log.isCompleted)
+        assertTrue("finished yesterday → can restart today", log.canRestart(today, zone))
+        assertTrue("finished that day → no restart that day", !log.canRestart(LocalDate.of(2026, 10, 25), zone))
+
+        repo.restartProgress(31)
+        log = repo.observeBookLogs(today, zone).first().getValue(31)
+        assertEquals("new cycle is canonical", listOf(0), log.progress!!.readChapters)
+        assertEquals(ReadingModel.ChipState.Unread, log.state(1))
+        assertTrue(!log.isCompleted)
+        assertEquals("old cycle kept as history", 2, db.bookProgressDao().activeFor(31).size)
+
+        // Reading it again today completes the new cycle; like iOS, completedOn becomes today.
+        clock.now = clock.now.plusSeconds(60)
+        repo.toggleChapterRead(31, 1, zone)
+        log = repo.observeBookLogs(today, zone).first().getValue(31)
+        assertEquals(ReadingModel.ChipState.ReadToday, log.state(1))
+        assertEquals(2, log.readCounts[1])
+        assertTrue(log.isCompleted)
+        assertTrue(!log.canRestart(today, zone))
+    }
+
+    @Test
     fun todayLogsAreMatchedByLocalDayNotExactTimestamp() = runTest {
         // A log written by a device in another timezone (start of *its* day) still counts as today.
         db.chapterLogDao().upsert(ChapterLogEntity(id = "64a0000000000000000000f1", bookOrd = john, chapter = 1, readOn = Instant.parse("2026-10-26T04:00:00Z")))

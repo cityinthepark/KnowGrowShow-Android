@@ -40,7 +40,11 @@ enum class MainTab(@param:StringRes val title: Int, val icon: ImageVector) {
 
 /** Main app shell after onboarding (iOS `MainTabView`). */
 @Composable
-fun MainScreen(onOpenAccount: () -> Unit, onOpenPlaceholder: (title: String) -> Unit) {
+fun MainScreen(
+    onOpenAccount: () -> Unit,
+    onOpenPlaceholder: (title: String) -> Unit,
+    onOpenReadingLog: (bookOrd: Int) -> Unit,
+) {
     var selected by rememberSaveable { mutableStateOf(MainTab.Today) }
 
     Scaffold(
@@ -65,7 +69,7 @@ fun MainScreen(onOpenAccount: () -> Unit, onOpenPlaceholder: (title: String) -> 
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (selected) {
-                MainTab.Today -> TodayScreen(onOpen = onOpenPlaceholder)
+                MainTab.Today -> TodayScreen(onOpen = onOpenPlaceholder, onOpenReadingLog = onOpenReadingLog)
                 MainTab.Series -> PlaceholderTab(MainTab.Series)
                 MainTab.Moments -> PlaceholderTab(MainTab.Moments)
                 MainTab.Calendar -> PlaceholderTab(MainTab.Calendar)

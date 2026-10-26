@@ -73,4 +73,8 @@
     <plurals name="today_videos_subtitle">
         <item quantity="other">今日 %d 個影片</item>
     </plurals>
+
+    <!-- Reading Log (iOS BibleBookListView). -->
+    <string name="reading_log">閱讀記錄</string>
+    <string name="reading_restart">重新開始</string>
 </resources>

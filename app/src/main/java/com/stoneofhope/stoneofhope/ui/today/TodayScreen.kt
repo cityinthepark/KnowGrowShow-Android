@@ -60,7 +60,11 @@ private enum class TodaySheet { Prayer, Note }
  * [onOpen] receives the title of a screen that isn't ported yet (shown as "coming soon").
  */
 @Composable
-fun TodayScreen(onOpen: (title: String) -> Unit, viewModel: TodayViewModel = hiltViewModel()) {
+fun TodayScreen(
+    onOpen: (title: String) -> Unit,
+    onOpenReadingLog: (bookOrd: Int) -> Unit,
+    viewModel: TodayViewModel = hiltViewModel(),
+) {
     val day by viewModel.day.collectAsStateWithLifecycle()
     val sort by viewModel.sort.collectAsStateWithLifecycle()
     val carousel by viewModel.carousel.collectAsStateWithLifecycle()
@@ -71,7 +75,6 @@ fun TodayScreen(onOpen: (title: String) -> Unit, viewModel: TodayViewModel = hil
     val context = LocalContext.current
     val comingSoon = stringResource(R.string.tab_placeholder)
     val profileTitle = stringResource(R.string.today_profile)
-    val readingTitle = stringResource(R.string.reading_by_books)
     val flashcardTitle = stringResource(R.string.flashcard)
 
     LifecycleResumeEffect(Unit) {
@@ -91,8 +94,9 @@ fun TodayScreen(onOpen: (title: String) -> Unit, viewModel: TodayViewModel = hil
                 onToggleSort = viewModel::toggleSort,
                 onToggleChapter = viewModel::toggleChapterRead,
                 onOpenChapter = { bookOrd, chapter -> onOpen(chapterTitle(bookOrd, chapter)) },
-                onOpenBook = { bookOrd -> onOpen(bookTitle(bookOrd)) },
-                onStartReading = { onOpen(readingTitle) },
+                onOpenBook = onOpenReadingLog,
+                // iOS opens the Reading Log at Genesis.
+                onStartReading = { onOpenReadingLog(1) },
             )
         }
         item {

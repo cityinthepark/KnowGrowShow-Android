@@ -117,6 +117,50 @@ object ReadingModel {
         return (first..minOf(chapterCount, first + 2)).toList()
     }
 
+    /** One book's state on the Reading Log screen (iOS `BibleBookRowView` / `ChapterGridView`). */
+    data class BookLog(
+        /** Current cycle (canonical row), or null if the book was never started / was cleared. */
+        val progress: BookProgressEntity?,
+        val readToday: Set<Int>,
+        /** All-time non-deleted reads per chapter (the badge). */
+        val readCounts: Map<Int, Int>,
+    ) {
+        fun state(chapter: Int): ChipState = when {
+            chapter in readToday -> ChipState.ReadToday
+            progress?.readChapters?.getOrNull(chapter - 1) == 1 -> ChipState.Read
+            else -> ChipState.Unread
+        }
+
+        val isCompleted: Boolean
+            get() = progress != null && progress.readChapters.isNotEmpty() && 0 !in progress.readChapters
+
+        /** iOS hides "Restart" on the day the book was finished. */
+        fun canRestart(today: LocalDate, zone: ZoneId): Boolean =
+            isCompleted && progress?.completedOn?.let { localDay(it, zone) } != today
+
+        companion object {
+            val Empty = BookLog(null, emptySet(), emptyMap())
+        }
+    }
+
+    fun bookLogs(
+        progressRows: List<BookProgressEntity>,
+        logs: List<ChapterLogEntity>,
+        today: LocalDate,
+        zone: ZoneId,
+    ): Map<Int, BookLog> {
+        val logsByBook = logs.filter { it.deletedAt == null }.groupBy { it.bookOrd }
+        val progressByBook = progressRows.groupBy { it.bookOrd }.mapValues { (_, rows) -> canonical(rows) }
+        return (logsByBook.keys + progressByBook.keys).associateWith { ord ->
+            val bookLogs = logsByBook[ord].orEmpty()
+            BookLog(
+                progress = progressByBook[ord],
+                readToday = bookLogs.filter { localDay(it.readOn, zone) == today }.map { it.chapter }.toSet(),
+                readCounts = bookLogs.groupingBy { it.chapter }.eachCount(),
+            )
+        }
+    }
+
     /** "99+" cap for the per-chapter read-count badge (shown only when > 1). */
     fun readCountBadge(totalReads: Int): String? = when {
         totalReads <= 1 -> null

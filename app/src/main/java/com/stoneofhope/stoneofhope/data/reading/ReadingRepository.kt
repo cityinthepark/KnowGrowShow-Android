@@ -32,6 +32,27 @@ class ReadingRepository @Inject constructor(
             ReadingModel.carousel(progress, logs, today, zone, sort, windowStarts)
         }
 
+    fun observeBookLogs(today: LocalDate, zone: ZoneId): Flow<Map<Int, ReadingModel.BookLog>> =
+        combine(db.bookProgressDao().observeActive(), db.chapterLogDao().observeActive()) { progress, logs ->
+            ReadingModel.bookLogs(progress, logs, today, zone)
+        }
+
+    /**
+     * iOS `restartProgress`: a finished book starts a new cycle. The old cycle stays as history;
+     * the new row wins as canonical because it is the most recently updated. `createdOn` is the
+     * exact moment (as on iOS), so reads earlier today don't count toward the new cycle.
+     */
+    suspend fun restartProgress(bookOrd: Int) {
+        val chapterCount = BibleBooks.book(bookOrd)?.chapterCount ?: return
+        val now = clock.instant()
+        db.bookProgressDao().upsert(
+            BookProgressEntity(
+                id = ObjectIds.newId(), bookOrd = bookOrd, readChapters = List(chapterCount) { 0 },
+                createdOn = now, lastUpdatedOn = now, needsSync = true,
+            )
+        )
+    }
+
     /** Today's reads, by book then chapter (iOS `getChapterReadingLogs(on:)`). */
     fun observeLogsOn(day: LocalDate, zone: ZoneId): Flow<List<ChapterLogEntity>> =
         db.chapterLogDao().observeActive().map { logs ->
