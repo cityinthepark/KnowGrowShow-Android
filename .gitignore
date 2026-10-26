@@ -17,5 +17,6 @@ gen/
 out/
 release/
 google-services.json
+keystore.properties
 *.keystore
 !debug.keystore

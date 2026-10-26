@@ -28,4 +28,4 @@ Do not share one video file across platforms unless it is brand-only (no UI chro
 
 ## Phase 1 preview
 
-Google Sign-In → Realm models → Firestore push/pull → AES-GCM per `CRYPTO_SYNC_CONTRACT.md` in iOS repo.
+Room data layer + AES-GCM + Firestore mapping are in (see [DATA_LAYER.md](DATA_LAYER.md)). Next: sync engine, note key session, Firebase Auth.
