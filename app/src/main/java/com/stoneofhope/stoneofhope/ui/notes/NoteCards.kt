@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.model.NoteType
+import com.stoneofhope.stoneofhope.data.notes.MarkedVerse
 import com.stoneofhope.stoneofhope.data.notes.NoteBadges
 import com.stoneofhope.stoneofhope.data.notes.ResolvedVerse
 import com.stoneofhope.stoneofhope.ui.theme.AppColors
@@ -60,22 +61,23 @@ private fun CardSurface(modifier: Modifier = Modifier, content: @Composable () -
     Surface(shape = CardShape, color = c.surface0, border = BorderStroke(1.dp, c.neutral20), modifier = modifier.fillMaxWidth(), content = content)
 }
 
-/** One verse with its number as a superscript (design §2: 10 / Bold, `scriptureInk` 70%). */
-fun numberedVerse(number: Int, text: String, numberColor: Color): AnnotatedString = buildAnnotatedString {
+/** One verse with its number as a superscript (design §2: 10 / Bold, `scriptureInk` 70%) and its marks. */
+fun numberedVerse(number: Int, verse: MarkedVerse, numberColor: Color): AnnotatedString = buildAnnotatedString {
     withStyle(SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Bold, color = numberColor, baselineShift = BaselineShift.Superscript, fontFamily = FontFamily.Default)) {
         append("$number")
     }
-    append("\u2009" + text.trim())
+    append("\u2009")
+    appendMarked(verse.trimmed())
 }
 
 /** A verse range as one paragraph, numbered when there is more than one verse (design L2). */
-fun numberedVerses(verses: List<Pair<Int, String>>, numberColor: Color, combined: String): AnnotatedString {
-    val shown = verses.filter { it.second.isNotBlank() }
-    if (shown.size <= 1) return AnnotatedString(combined.trim())
+fun numberedVerses(verse: ResolvedVerse, numberColor: Color): AnnotatedString {
+    val shown = verse.verses.filter { it.second.isNotBlank() }
+    if (shown.size <= 1) return verse.combined.trimmed().annotated()
     return buildAnnotatedString {
         shown.forEachIndexed { i, (n, text) ->
             if (i > 0) append(" ")
-            append(numberedVerse(n, text, numberColor))
+            append(numberedVerse(n, verse.verse(n, text), numberColor))
         }
     }
 }
@@ -132,8 +134,8 @@ fun NoteListCard(
             }
             if (verseExpanded) {
                 Surface(shape = RoundedCornerShape(14.dp), color = c.noteTypeBibleVerse.copy(alpha = 0.08f), modifier = Modifier.padding(top = 8.dp, end = 10.dp).fillMaxWidth()) {
-                    val text = verse?.let { numberedVerses(it.verses, c.scriptureInk.copy(alpha = 0.7f), it.combinedContent) }
-                    Text(
+                    val text = verse?.let { numberedVerses(it, c.scriptureInk.copy(alpha = 0.7f)) }
+                    MarkedText(
                         text ?: AnnotatedString(stringResource(R.string.verse_unavailable)),
                         style = textStyle(15, 1.6f, serif = true),
                         color = if (text != null && text.isNotBlank()) c.neutral100 else c.neutral90,
@@ -220,7 +222,12 @@ fun VerseAnchorCard(card: NoteCardUi, sectionDay: LocalDate?, onOpen: () -> Unit
             Column(Modifier.fillMaxWidth().background(scriptureFill(c)).padding(horizontal = 16.dp, vertical = 12.dp)) {
                 ScriptureHeader(card.verseRef.orEmpty(), card.badge.sermonMark, cardTime(note.createdAt, sectionDay), note)
                 if (card.showsBody) {
-                    Text(card.displayContent, style = textStyle(16, 1.6f, serif = true), color = c.neutral100, modifier = Modifier.padding(top = 6.dp))
+                    MarkedText(
+                        MarkedVerse(card.displayContent, card.bodyMarks).annotated(),
+                        style = textStyle(16, 1.6f, serif = true),
+                        color = c.neutral100,
+                        modifier = Modifier.padding(top = 6.dp).testTag("anchorVerse"),
+                    )
                 }
             }
             HorizontalDivider(color = c.noteTypeBibleVerse.copy(alpha = 0.12f))
@@ -248,7 +255,7 @@ fun ReflectionGroupCard(group: NoteRowUi.VerseGroup, sectionDay: LocalDate?, onO
                 Modifier.fillMaxWidth().clickable { onOpen(group.notes.first().id) }.background(scriptureFill(c)).padding(horizontal = 16.dp, vertical = 12.dp),
             ) {
                 ScriptureHeader(group.header.verseRef.orEmpty(), sermonMark = false, time = null, note = null)
-                group.verseText?.let { Text(it, style = textStyle(16, 1.6f, serif = true), color = c.neutral100, modifier = Modifier.padding(top = 6.dp)) }
+                group.verse?.let { MarkedText(it.annotated(), style = textStyle(16, 1.6f, serif = true), color = c.neutral100, modifier = Modifier.padding(top = 6.dp)) }
             }
             HorizontalDivider(color = c.noteTypeBibleVerse.copy(alpha = 0.12f))
             group.notes.forEachIndexed { i, note ->

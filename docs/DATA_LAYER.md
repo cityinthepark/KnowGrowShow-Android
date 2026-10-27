@@ -78,6 +78,7 @@ peer-gated pulls) against real Room and an in-memory Firestore.
 | Note-body reference detection | ASCII `:` / `-` only | also full-width `：` `－` | IOS_ISSUES F1 |
 | `vN` shortcut past the chapter end | reference dropped, `vN` text lost | body kept as typed | IOS_ISSUES F2 |
 | Edit note text | re-runs the old detector; "John 3:16 …" turns the note into a verse anchor | text only | IOS_ISSUES G1 |
+| Edit comment text to blank | saved | ignored | IOS_ISSUES G10 |
 
 Anything else that differs is a bug: the encoder tests list the exact iOS field set per collection.
 

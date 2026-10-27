@@ -153,6 +153,16 @@ interface IndexedTextDao {
     )
     fun observeMarksForVerse(userVerseId: String): Flow<List<IndexedTextEntity>>
 
+    /** Every active verse mark (read-only overlays on verse text, like iOS). */
+    @Query("SELECT * FROM indexedTexts WHERE sourceType = 'verse' AND deletedAt IS NULL AND isDeleted = 0")
+    fun observeActiveVerseMarks(): Flow<List<IndexedTextEntity>>
+
+    @Query(
+        "SELECT * FROM indexedTexts WHERE sourceType = 'verse' AND sourceId IN (:userVerseIds) " +
+            "AND deletedAt IS NULL AND isDeleted = 0"
+    )
+    suspend fun activeForVerses(userVerseIds: List<String>): List<IndexedTextEntity>
+
     @Query("SELECT * FROM indexedTexts WHERE needsSync = 1")
     suspend fun dirty(): List<IndexedTextEntity>
 

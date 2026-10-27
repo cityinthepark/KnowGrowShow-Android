@@ -5,6 +5,15 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -72,7 +81,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.model.NoteType
 import com.stoneofhope.stoneofhope.data.notes.NoteBadges
+import com.stoneofhope.stoneofhope.data.notes.PinSegment
 import com.stoneofhope.stoneofhope.data.notes.ResolvedVerse
+import com.stoneofhope.stoneofhope.data.notes.ThreadDay
+import com.stoneofhope.stoneofhope.data.notes.ThreadItem
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 import java.time.YearMonth
 
@@ -85,37 +97,47 @@ import java.time.YearMonth
 fun NoteDetailsScreen(onBack: () -> Unit, viewModel: NoteDetailsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val actions = rememberNoteActionsState()
+    val commentActions = rememberCommentActionsState()
     val composerFocus = remember { FocusRequester() }
     var starDialog by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(state.gone) { if (state.gone) onBack() }
     val c = AppTheme.colors
     val card = state.card
 
-    Column(Modifier.fillMaxSize().background(c.pageBackground).statusBarsPadding()) {
-        TopBar(card, onBack, onMenu = { card?.let { actions.open(it.note.id) } })
-        if (card == null) return@Column
-        val note = card.note
-        LazyColumn(
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(26.dp),
-            modifier = Modifier.weight(1f).testTag("noteDetails"),
-        ) {
-            item(key = "card") {
-                MainCard(
-                    card = card,
-                    verse = state.verse,
-                    onStar = { viewModel.onAction(note, NoteAction.Star(if (note.starLevel > 0) 0 else 1)) },
-                    onStarLevels = { starDialog = true },
-                    onMenu = { actions.open(note.id) },
-                )
+    Box(Modifier.fillMaxSize().background(c.pageBackground)) {
+        // Android 12+ blurs the page behind a lifted comment (design C4); older versions only dim it.
+        Column(Modifier.fillMaxSize().statusBarsPadding().then(if (commentActions.isLifted) Modifier.blur(3.dp) else Modifier)) {
+            TopBar(card, onBack, onMenu = { card?.let { actions.open(it.note.id) } })
+            if (card == null) return@Column
+            val note = card.note
+            LazyColumn(
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(26.dp),
+                modifier = Modifier.weight(1f).testTag("noteDetails"),
+            ) {
+                item(key = "card") {
+                    MainCard(
+                        card = card,
+                        verse = state.verse,
+                        onStar = { viewModel.onAction(note, NoteAction.Star(if (note.starLevel > 0) 0 else 1)) },
+                        onStarLevels = { starDialog = true },
+                        onMenu = { actions.open(note.id) },
+                    )
+                }
+                item(key = "thread") { Thread(card.isAnchor, state.thread, state.threadCount, onItemActions = commentActions::open) }
             }
-            item(key = "thread") { Thread(card.isAnchor, state.thread, state.threadCount) }
+            Composer(
+                isAnchor = card.isAnchor,
+                canMarkAnswered = note.noteType == NoteType.Prayer && note.isAnswered != true,
+                focusRequester = composerFocus,
+                onSend = { text, answered -> viewModel.onAction(note, NoteAction.Comment(text, answered)) },
+            )
         }
-        Composer(
-            isAnchor = card.isAnchor,
-            canMarkAnswered = note.noteType == NoteType.Prayer && note.isAnswered != true,
-            focusRequester = composerFocus,
-            onSend = { text, answered -> viewModel.onAction(note, NoteAction.Comment(text, answered)) },
+        CommentActionsHost(
+            state = commentActions,
+            item = commentActions.itemId?.let(state::threadItem),
+            allTags = state.allTags,
+            onAction = viewModel::onThreadAction,
         )
     }
 
@@ -262,10 +284,10 @@ private fun VerseParagraphs(verse: ResolvedVerse) {
     val style = textStyle(17, 1.6f, serif = true)
     val shown = verse.verses.filter { it.second.isNotBlank() }
     if (shown.size <= 1) {
-        Text(verse.combinedContent.trim(), style = style, color = c.neutral100, modifier = Modifier.testTag("verseText"))
+        MarkedText(verse.combined.trimmed().annotated(), style = style, color = c.neutral100, modifier = Modifier.testTag("verseText"))
     } else {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.testTag("verseText")) {
-            shown.forEach { (n, text) -> Text(numberedVerse(n, text, c.scriptureInk.copy(alpha = 0.7f)), style = style, color = c.neutral100) }
+            shown.forEach { (n, text) -> MarkedText(numberedVerse(n, verse.verse(n, text), c.scriptureInk.copy(alpha = 0.7f)), style = style, color = c.neutral100) }
         }
     }
 }
@@ -287,7 +309,7 @@ private fun FoldBox(collapsed: Boolean, maxHeight: Dp, onOverflow: (Boolean) -> 
 
 /** "Comments" / "Reflections" with count and month, then day groups with a date column (§3.3). */
 @Composable
-private fun Thread(isAnchor: Boolean, days: List<ThreadDay>, count: Int) {
+private fun Thread(isAnchor: Boolean, days: List<ThreadDay>, count: Int, onItemActions: (id: String, cardBounds: Rect) -> Unit) {
     val c = AppTheme.colors
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(Modifier.padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -312,29 +334,77 @@ private fun Thread(isAnchor: Boolean, days: List<ThreadDay>, count: Int) {
                     Text(weekdayShort(day.day), style = textStyle(11), color = c.neutral90, modifier = Modifier.padding(top = 3.dp))
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    day.items.forEach { CommentCard(it) }
+                    day.pinned?.let { PinnedLine(it) }
+                    if (day.answered) AnsweredLine()
+                    day.items.forEach { item -> CommentCard(item, onActions = { onItemActions(item.id, it) }) }
                 }
             }
         }
     }
 }
 
-/** A comment (or reflection) card; an "Answered" marker reads as a green label (§3.3). */
+/**
+ * A pinned run as one gray line on its last day (§3.3; `PinLog` keeps days, not times):
+ * "📌 Pinned" or "📌 Pinned · Oct 20 – 26".
+ */
+@Composable
+private fun PinnedLine(run: PinSegment) {
+    val label = if (run.start == run.end) stringResource(R.string.thread_pinned)
+    else stringResource(R.string.thread_pinned_range, dayRange(run.start, run.end))
+    Text("📌 $label", style = textStyle(13, weight = FontWeight.Medium), color = AppTheme.colors.neutral90, modifier = Modifier.padding(start = 4.dp, top = 12.dp).testTag("pinnedLine"))
+}
+
+/** iOS `showsAnsweredBadge`: the day a prayer was marked answered without an "Answered" comment. */
+@Composable
+private fun AnsweredLine() {
+    Text(
+        "🙌 " + stringResource(R.string.answered),
+        style = textStyle(13, weight = FontWeight.SemiBold),
+        color = AppTheme.colors.answeredInk,
+        modifier = Modifier.padding(start = 4.dp, top = 12.dp).testTag("answeredLine"),
+    )
+}
+
+/**
+ * A comment (or reflection) card; an "Answered" marker reads as a green label (§3.3). Long press or
+ * its "⋯" opens the actions (C4) with the card's place on screen.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun CommentCard(item: ThreadItem) {
+private fun CommentCard(item: ThreadItem, onActions: (cardBounds: Rect) -> Unit) {
     val c = AppTheme.colors
-    Surface(shape = RoundedCornerShape(16.dp), color = c.surface0, border = BorderStroke(1.dp, c.neutral20), modifier = Modifier.fillMaxWidth().testTag("comment")) {
-        Column(Modifier.padding(start = 14.dp, top = 12.dp, bottom = 12.dp, end = 14.dp)) {
-            if (item.isAnsweredMarker) {
-                Text("🙌 " + stringResource(R.string.answered), style = textStyle(15, 1.6f, FontWeight.SemiBold), color = c.answeredInk)
-            } else {
-                Text(item.text, style = textStyle(15, 1.6f), color = c.neutral100)
+    val haptics = LocalHapticFeedback.current
+    var bounds by remember { mutableStateOf(Rect.Zero) }
+    val open by rememberUpdatedState { onActions(bounds) }
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = c.surface0,
+        border = BorderStroke(1.dp, c.neutral20),
+        modifier = Modifier.fillMaxWidth()
+            .onGloballyPositioned { bounds = it.boundsInRoot() }
+            .pointerInput(Unit) {
+                detectTapGestures(onLongPress = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    open()
+                })
             }
-            FlowRow(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(clockTime(item.createdAt), style = textStyle(12), color = c.neutral90, modifier = Modifier.align(Alignment.CenterVertically))
-                if (item.starLevel > 0) StarIcons(item.starLevel, Modifier.align(Alignment.CenterVertically), size = 12.dp)
-                item.tagNames.forEach { TagPill(it, compact = true) }
+            .testTag("comment"),
+    ) {
+        Row {
+            Column(Modifier.weight(1f).padding(start = 14.dp, top = 12.dp, bottom = 12.dp)) {
+                if (item.isAnsweredMarker) {
+                    Text("🙌 " + stringResource(R.string.answered), style = textStyle(15, 1.6f, FontWeight.SemiBold), color = c.answeredInk)
+                } else {
+                    Text(item.text, style = textStyle(15, 1.6f), color = c.neutral100)
+                }
+                FlowRow(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(clockTime(item.createdAt), style = textStyle(12), color = c.neutral90, modifier = Modifier.align(Alignment.CenterVertically))
+                    if (item.starLevel > 0) StarIcons(item.starLevel, Modifier.align(Alignment.CenterVertically), size = 12.dp)
+                    item.tagNames.forEach { TagPill(it, compact = true) }
+                }
+            }
+            IconButton(onClick = { open() }, modifier = Modifier.padding(top = 4.dp, end = 4.dp).size(36.dp).testTag("commentMenu")) {
+                Icon(Icons.Filled.MoreHoriz, stringResource(R.string.action_more), tint = c.neutral90, modifier = Modifier.size(18.dp))
             }
         }
     }

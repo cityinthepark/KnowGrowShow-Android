@@ -187,6 +187,56 @@ class NoteActionRepository @Inject constructor(
         }
     }
 
+    // Comment actions (iOS `TimelineCommentLine`). iOS marks the comment `needsSync` and bumps its
+    // note's `needsSync` / `updatedAt`; a comment has no `updatedAt` of its own.
+
+    private suspend fun updateComment(commentId: String, block: suspend (NoteCommentEntity) -> NoteCommentEntity?) {
+        val now = clock.instant()
+        db.withTransaction {
+            val comment = commentDao.getById(commentId)?.takeIf { it.deletedAt == null && !it.isDeleted } ?: return@withTransaction
+            val changed = block(comment) ?: return@withTransaction
+            commentDao.upsert(changed.copy(needsSync = true))
+            comment.noteId?.let { noteDao.getById(it) }?.let { noteDao.upsert(it.copy(needsSync = true, updatedAt = now)) }
+        }
+    }
+
+    /** iOS `updateNoteCommentContentByID`. Blank text is ignored; an "Answered" marker has no text to edit. */
+    suspend fun updateCommentContent(commentId: String, newContent: String) {
+        if (SwiftText.trim(newContent).isEmpty()) return
+        updateComment(commentId) { if (it.isAnsweredMarker) null else it.copy(content = newContent) }
+    }
+
+    /** iOS `setStarLevelForComment` (0 clears). */
+    suspend fun setCommentStarLevel(commentId: String, level: Int) {
+        updateComment(commentId) { it.copy(starLevel = level) }
+    }
+
+    /** iOS `addTags(toNoteID:commentID:…)`: same tag lookup as [addTag]. */
+    suspend fun addCommentTag(commentId: String, tagName: String) {
+        val name = SwiftText.trim(tagName)
+        if (name.isEmpty()) return
+        val now = clock.instant()
+        updateComment(commentId) { comment ->
+            val tag = db.tagDao().findActiveByName(name)
+                ?: TagEntity(id = ObjectIds.newId(), name = name, createdAt = now, needsSync = true).also { db.tagDao().upsert(it) }
+            comment.copy(tagIds = if (tag.id in comment.tagIds) comment.tagIds else comment.tagIds + tag.id)
+        }
+    }
+
+    /** iOS `removeTag(fromComment:tagName:)`. */
+    suspend fun removeCommentTag(commentId: String, tagId: String) {
+        updateComment(commentId) { it.copy(tagIds = it.tagIds - tagId) }
+    }
+
+    /**
+     * iOS `deleteNoteComment`: soft-deletes this comment only. Like iOS, deleting an "Answered" marker
+     * leaves the prayer answered, and deleting its paired comment leaves the marker (IOS_ISSUES G9).
+     */
+    suspend fun deleteComment(commentId: String) {
+        val now = clock.instant()
+        updateComment(commentId) { it.softDeleted(now) }
+    }
+
     /** iOS `refreshTodayPinLogIfNeeded` (Note Details on appear). */
     suspend fun refreshTodayPinLog(zone: ZoneId = ZoneId.systemDefault()) {
         db.withTransaction { ops.refreshTodayLedgerForPinnedNotes(clock.instant(), zone) }

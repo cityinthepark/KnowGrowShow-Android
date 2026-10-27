@@ -4,6 +4,7 @@ import com.stoneofhope.stoneofhope.data.bible.BibleAnchor
 import com.stoneofhope.stoneofhope.data.bible.BibleAnchorKey
 import com.stoneofhope.stoneofhope.data.bible.BibleFormatter
 import com.stoneofhope.stoneofhope.data.bible.SwiftText
+import com.stoneofhope.stoneofhope.data.local.entity.IndexedTextEntity
 import com.stoneofhope.stoneofhope.data.local.entity.NoteCommentEntity
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.UserVerseEntity
@@ -185,7 +186,24 @@ data class ResolvedVerse(
     val combinedContent: String,
     val versionAbbr: String = "",
     val verses: List<Pair<Int, String>> = emptyList(),
-)
+    /** Web highlights / underlines per verse number (offsets into that verse's text). */
+    val marks: Map<Int, List<VerseMark>> = emptyMap(),
+) {
+    /** One verse with its marks. */
+    fun verse(number: Int, text: String) = MarkedVerse(text, marks[number].orEmpty())
+
+    /** [combinedContent] with every verse's marks moved to where that verse starts (iOS `combinedHighlightedText`). */
+    val combined: MarkedVerse
+        get() {
+            var offset = 0
+            val all = verses.flatMap { (n, text) ->
+                val shifted = marks[n].orEmpty().map { it.copy(start = it.start + offset, end = it.end + offset) }
+                offset += text.length + 1
+                shifted
+            }
+            return MarkedVerse(combinedContent, all)
+        }
+}
 
 object VerseDisplay {
 
@@ -195,14 +213,22 @@ object VerseDisplay {
         return anchor.verseOrds.map { UserVerseEntity.makeId(anchor.versionAbbr, anchor.bookOrd, anchor.chapterOrd, it) }
     }
 
-    /** iOS `resolveUserVerses(for:)`: verses joined with one space; a missing verse is "". */
-    fun resolve(note: NoteEntity, versesById: Map<String, UserVerseEntity>): ResolvedVerse? {
+    /**
+     * iOS `resolveUserVerses(for:)`: verses joined with one space; a missing verse is "". [marksByVerseId]
+     * (from [VerseMarks.byVerseId]) adds the Web's highlights and underlines.
+     */
+    fun resolve(
+        note: NoteEntity,
+        versesById: Map<String, UserVerseEntity>,
+        marksByVerseId: Map<String, List<IndexedTextEntity>> = emptyMap(),
+    ): ResolvedVerse? {
         val anchor = BibleAnchor.from(note) ?: return null
         if (anchor.isChapterLevel) return null
-        val verses = anchor.verseOrds.map { v ->
-            v to versesById[UserVerseEntity.makeId(anchor.versionAbbr, anchor.bookOrd, anchor.chapterOrd, v)]?.content.orEmpty()
-        }
-        return ResolvedVerse(anchor.refLabel(showVersion = false).orEmpty(), verses.joinToString(" ") { it.second }, anchor.versionAbbr, verses)
+        val ids = anchor.verseOrds.associateWith { UserVerseEntity.makeId(anchor.versionAbbr, anchor.bookOrd, anchor.chapterOrd, it) }
+        val verses = anchor.verseOrds.map { v -> v to versesById[ids.getValue(v)]?.content.orEmpty() }
+        val marks = verses.associate { (v, text) -> v to VerseMarks.onText(text, marksByVerseId[ids.getValue(v)].orEmpty()) }
+            .filterValues { it.isNotEmpty() }
+        return ResolvedVerse(anchor.refLabel(showVersion = false).orEmpty(), verses.joinToString(" ") { it.second }, anchor.versionAbbr, verses, marks)
     }
 
     /**

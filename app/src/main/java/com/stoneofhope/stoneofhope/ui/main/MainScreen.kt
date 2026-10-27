@@ -47,6 +47,7 @@ fun MainScreen(
     onOpenPlaceholder: (title: String) -> Unit,
     onOpenReadingLog: (bookOrd: Int) -> Unit,
     onOpenNotes: (NoteFilter, LocalDate) -> Unit,
+    onOpenReview: (LocalDate) -> Unit,
 ) {
     var selected by rememberSaveable { mutableStateOf(MainTab.Today) }
 
@@ -72,7 +73,12 @@ fun MainScreen(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (selected) {
-                MainTab.Today -> TodayScreen(onOpen = onOpenPlaceholder, onOpenReadingLog = onOpenReadingLog, onOpenNotes = onOpenNotes)
+                MainTab.Today -> TodayScreen(
+                    onOpen = onOpenPlaceholder,
+                    onOpenReadingLog = onOpenReadingLog,
+                    onOpenNotes = onOpenNotes,
+                    onOpenReview = onOpenReview,
+                )
                 MainTab.Series -> PlaceholderTab(MainTab.Series)
                 MainTab.Moments -> PlaceholderTab(MainTab.Moments)
                 MainTab.Calendar -> PlaceholderTab(MainTab.Calendar)

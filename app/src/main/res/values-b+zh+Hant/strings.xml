@@ -44,6 +44,7 @@
     <string name="flashcard">記憶卡片</string>
     <string name="today_activity">今日動態</string>
     <string name="today_review">回顧</string>
+    <string name="review_empty">還沒有筆記</string>
     <string name="tile_pinned">置頂</string>
     <string name="tile_starred">加星標</string>
     <string name="tile_study_note">學習筆記</string>
@@ -134,6 +135,9 @@
     <string name="comment_to">新增註釋至：</string>
     <string name="answered_today">今天已應允</string>
     <string name="answered">已應允</string>
+    <!-- Details thread: a pinned run (PinLog), "📌 Pinned · Oct 20 – 26" -->
+    <string name="thread_pinned">已置頂</string>
+    <string name="thread_pinned_range">已置頂 · %1$s</string>
     <string name="no_comments">暫無評論。</string>
     <string name="verse_unavailable">暫時無法取得經文內容</string>
     <string name="tags_title">選擇標籤</string>
@@ -182,6 +186,12 @@
     <string name="collapse">收起</string>
     <string name="comments_title">評論</string>
     <string name="reflections_title">感想</string>
+    <!-- Comment / reflection actions (design C4) -->
+    <string name="edit_comment_title">編輯評論</string>
+    <string name="edit_reflection_title">編輯感想</string>
+    <string name="comment_delete_title">刪除評論？</string>
+    <string name="reflection_delete_title">刪除感想？</string>
+    <string name="action_tags_count">標籤 · %1$d</string>
     <string name="add_comment_hint">寫評論…</string>
     <string name="add_reflection_hint">寫感想…</string>
     <string name="send">傳送</string>

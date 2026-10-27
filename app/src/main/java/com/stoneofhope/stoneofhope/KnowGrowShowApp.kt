@@ -22,6 +22,8 @@ import com.stoneofhope.stoneofhope.ui.notes.NoteDetailsScreen
 import com.stoneofhope.stoneofhope.ui.notes.NoteDetailsViewModel
 import com.stoneofhope.stoneofhope.ui.notes.NoteListScreen
 import com.stoneofhope.stoneofhope.ui.notes.NoteListViewModel
+import com.stoneofhope.stoneofhope.ui.notes.NotesReviewScreen
+import com.stoneofhope.stoneofhope.ui.notes.NotesReviewViewModel
 import com.stoneofhope.stoneofhope.ui.reading.ReadingLogScreen
 import com.stoneofhope.stoneofhope.ui.reading.ReadingLogViewModel
 import com.stoneofhope.stoneofhope.ui.theme.KnowGrowShowThemeSurface
@@ -35,10 +37,13 @@ private object Routes {
     const val ReadingLog = "readingLog/{${ReadingLogViewModel.ARG_BOOK_ORD}}"
     const val NoteList = "notes/{${NoteListViewModel.ARG_FILTER}}/{${NoteListViewModel.ARG_DAY}}"
     const val NoteDetails = "note/{${NoteDetailsViewModel.ARG_NOTE_ID}}"
+    const val NotesReview = "review/{${NotesReviewViewModel.ARG_DAY}}"
 
     fun noteList(filter: NoteFilter, day: LocalDate?) = "notes/${filter.ordinal}/${day?.toEpochDay() ?: NoteListViewModel.NO_DAY}"
 
     fun noteDetails(noteId: String) = "note/$noteId"
+
+    fun notesReview(day: LocalDate) = "review/${day.toEpochDay()}"
 
     fun readingLog(bookOrd: Int) = "readingLog/$bookOrd"
 
@@ -78,6 +83,7 @@ fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     onOpenPlaceholder = { title -> navController.navigate(Routes.comingSoon(title)) },
                     onOpenReadingLog = { bookOrd -> navController.navigate(Routes.readingLog(bookOrd)) },
                     onOpenNotes = { filter, day -> navController.navigate(Routes.noteList(filter, day)) },
+                    onOpenReview = { day -> navController.navigate(Routes.notesReview(day)) },
                 )
             }
             composable(
@@ -97,6 +103,12 @@ fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel()) {
                 arguments = listOf(navArgument(NoteDetailsViewModel.ARG_NOTE_ID) { type = NavType.StringType }),
             ) {
                 NoteDetailsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(
+                Routes.NotesReview,
+                arguments = listOf(navArgument(NotesReviewViewModel.ARG_DAY) { type = NavType.LongType }),
+            ) {
+                NotesReviewScreen(onClose = { navController.popBackStack() })
             }
             composable(Routes.Account) {
                 AccountScreen(onBack = { navController.popBackStack() })

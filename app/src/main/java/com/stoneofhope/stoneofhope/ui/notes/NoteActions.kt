@@ -286,7 +286,7 @@ private fun ListRow(icon: ImageVector, label: String, trailing: String?, modifie
     }
 }
 
-private fun copyToClipboard(context: Context, text: String) {
+internal fun copyToClipboard(context: Context, text: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText("note", text))
 }
@@ -347,14 +347,14 @@ fun CommentSheet(preview: String, canMarkAnswered: Boolean, onDismiss: () -> Uni
     }
 }
 
-/** iOS `EditNoteSheet`. */
+/** iOS `EditNoteSheet` (and `EditCommentSheet` with [title]). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EditNoteSheet(initial: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+internal fun EditNoteSheet(initial: String, onDismiss: () -> Unit, title: String = stringResource(R.string.edit_note_title), onSave: (String) -> Unit) {
     var text by rememberSaveable { mutableStateOf(initial) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 16.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.edit_note_title), style = MaterialTheme.typography.titleMedium)
+            Text(title, style = MaterialTheme.typography.titleMedium)
             OutlinedTextField(value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth().heightIn(min = 160.dp).testTag("editText"))
             Button(onClick = { onSave(text) }, enabled = text.isNotBlank(), modifier = Modifier.fillMaxWidth().testTag("editSave")) {
                 Text(stringResource(R.string.action_save))
@@ -369,7 +369,7 @@ private fun EditNoteSheet(initial: String, onDismiss: () -> Unit, onSave: (Strin
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun TagPickerSheet(
+internal fun TagPickerSheet(
     allTags: List<TagEntity>,
     selectedIds: Set<String>,
     onAdd: (String) -> Unit,

@@ -1,6 +1,6 @@
 # 笔记列表与笔记详情 — 安卓方案
 
-**已确认（2026-10-26）**：按本方案先做 N1。**N1 状态：已完成**（未提交），验证见 §6。
+**已确认（2026-10-26）**：按本方案先做 N1。**N1 状态：已完成**，连同界面重做提交于 `4f6c3bd`，验证见 §6–§7。**N2 已确认并完成（未提交），方案见 §8，验证见 §9。**
 
 依据（iOS 代码为准）：`NoteCreationView`（Today 方块进入的列表）、`NoteListViewModel`、`NoteCellView`
 （`NoteHeaderBadgeView`、`NoteActionButtonsRow`、`NoteStatusIndicatorsView`、`VerseNoteGroupCell`、`PrayerVerseRevealButton`）、
@@ -95,3 +95,76 @@ Firebase 本地模拟器，确认 `notes` / `noteComments` / `tags` / `PinLog` �
 
 模拟器上对照 L1/L2、C1–C3 逐项看过（含深色模式）；修了两个只在真机交互里出现的问题：菜单里的切换按钮要读最新的笔记状态
 （第二次点「Pin」才不会又变回去），切换筛选或标签后列表回到顶部（否则置顶区被滚到上面看不见）。
+
+## 8. N2 方案（2026-10-26 确认）
+
+依据：`NotePinLogBuilder`、`NoteDetailsView`（`TimelineCommentLine`）、`NotesManager`（`noteTimelineRows`、`setStarLevelForComment`、
+`updateNoteCommentContentByID`、`deleteNoteComment`、`addTags(toNoteID:commentID:)`、`removeTag(fromComment:)`、`notesForDailyReview`）、
+`NotesReviewView`、`UserVerse.highlightedAttributedString`、`IndexedTextColorHelper`；设计稿 `NOTE_DETAILS_DESIGN.md` §3.3、§5（C4）。
+
+### 8.1 评论区补两种行（设计稿 §3.3）
+新设计里已经没有 iOS 那条圆点加连线的时间轴，评论按天分组、左边日期列、跨月加月份标题，这些在 N1 重做时都做完了。
+还差设计稿 §3.3 自己标了「N2」的置顶记录，以及 iOS 有、现在安卓漏掉的已应允行：
+- **置顶记录**：设计稿写「📌 Pinned · 9:02 AM」，但 `PinLog` 只存日期（`yyyy-MM-dd`），**没有时刻**，做不到。
+  **已定**：连续置顶的日子合成一行灰色小字，放在这段的最后一天：「📌 Pinned · Oct 20 – 26」；只有一天就写「📌 Pinned」。
+  （iOS 是每天一行，置顶一个月就有 30 行空日子。）只有置顶、没有评论的日子也会出现（iOS `buildRows`）。
+- **已应允**：用「⋯」菜单标成已应允的祷告没有「Answered」标记评论，现在那天什么都不显示；补一行绿色「🙌 Answered」
+  （iOS `showsAnsweredBadge`；`answeredAt` 为空时用 `updatedAt`）。
+- 经文锚点：感想照现在按天列，再加上锚点自己的置顶记录。
+
+### 8.2 评论和感想的操作（设计稿 §5，C4）
+N1 重做时只做了 C1–C3，评论卡片上现在还没有「⋯」，长按也没反应（评论的编辑、删除、星级、标签当时还没有数据层）。这次照 C4 做：
+- 长按评论卡片，或点卡片右上角的「⋯」：背景加遮罩（安卓 12 以上加模糊），卡片浮起并显示完整日期，
+  下面是一排 **Edit · Copy · Star · Tags · Delete**（放不下就放在卡片上方）。
+- 评论：编辑文字、复制、星级（1–3 级 / 取消）、标签（选已有 / 新建 / 去掉）、删除（确认）。
+  写法照 iOS：评论 `needsSync`，所属笔记 `needsSync` 并更新 `updatedAt`；删除写 `deletedAt` + `isDeleted`。
+- 「Answered」标记评论：只有 Star · Tags · Delete（和 iOS 一样，没有编辑和复制）。
+- 感想（锚点下的笔记）：同样 5 个操作，走现有的笔记操作（iOS 详情里的感想没有任何操作，安卓按设计稿补上）。
+- 编辑后为空时不保存（同 G4）。
+
+### 8.3 回顾页（Today 的「▶ Review」）
+- 全屏、左右翻页：背景用 iOS 同一张绿叶图（`GreenLeavesBackground`，转成 WebP）加深绿遮罩；
+  左上角关闭，右上角「1 / N」，底部圆点。
+- 每页：类型标签和状态（📌、星、🙌、标签）、白色大字正文（经文锚点为经文）、祷告的经文卡片（深色）、时间；
+  有评论或感想时，下面露出一截，向上滑动看「N 条评论」卡片（已应允标记显示绿色「🙌 Answered Today」）。
+- 当天的笔记（iOS `notesForDailyReview`）：笔记、学习笔记、经文、图片、祷告，当天创建或当天有评论；
+  看的是今天时再加上所有置顶笔记；去掉挂在锚点下的感想；**最早的在前**。
+- 这一页只读，不放操作（和 iOS 一样）。
+
+### 8.4 经文划线（IndexedText）
+- 只读显示，和 iOS 一样（划线只能在网页端做）：`highlight` 是 35% 透明度的底色，`underline` 是同色下划线；
+  颜色 yellow / green / blue / pink / orange，未知颜色当作 yellow；偏移量越界的划线跳过。
+- 显示位置：列表的经文锚点卡片、祷告展开的经文、详情的经文区、回顾页。
+- Compose 的下划线不能单独设颜色，所以下划线按文字位置自己画。
+
+### 8.5 准备记入 IOS_ISSUES
+- G8：回顾页「N comments」把「Answered」标记也算成一条评论。安卓不算。
+- G9（产品决定，照 iOS）：删掉「Answered」标记评论后，祷告仍是「已应允」；删掉配对的那条评论，标记还在。
+- G10：iOS 编辑评论可以存成空白。安卓不保存空白。
+
+### 8.6 验收
+- 单元测试：时间线（置顶分段、只有置顶的日子、已应允行与标记去重、跨月）、评论操作的写入字段、回顾页的笔记选择和排序、划线区间
+  （越界、重叠、emoji 的 UTF-16 偏移）。
+- 模拟器：从详情页操作评论 / 感想并同步到 Firebase 本地模拟器核对字段；在本地模拟器写入网页端格式的 `indexedTexts`，
+  看各处划线；从 Today 进入回顾页翻页、上滑看评论。
+
+## 9. N2 验证结果（2026-10-26）
+
+- 单元测试共 238 个全部通过（新增 18：时间线 6、评论操作 3、回顾页选笔记 4、划线 5）。对「已应允行与标记去重」「标记评论不能编辑」做了变异测试，测试都能抓到。
+- 安卓模拟器 + Firebase 本地模拟器：
+  - 时间线：在本地模拟器写入一段多天的 `PinLog`（10/20–22、10/24–26），同步后创世记 1:3 详情里出现「📌 Pinned · Oct 24 – 26」和只有置顶的「22 周四 · 📌 Pinned · Oct 20 – 22」；
+    用「⋯」把祷告标成已应允后，当天出现绿色「🙌 Answered」行。
+  - 评论操作（C4）：长按和「⋯」都能打开；背景模糊加遮罩，卡片浮起显示完整日期；评论的编辑、星级、新建标签、删除（确认）；
+    「Answered」标记只有 Star · Tags · Delete；卡片靠近底部时操作栏放在上方；感想的编辑、星级、标签走笔记操作。
+    推送后核对：评论的 `starLevel`、`tagIds`、加密正文（CryptoKit 解密为编辑后的文字）、删除为 `{isDeleted, updatedAt}`；
+    所属笔记的 `contentUpdatedAt` 更新；感想笔记的 `starLevel`、`tagIds` 正确。
+  - 回顾页：从 Today「▶ Review」进入，13 页左右翻、「i / N」和圆点；经文锚点显示经文正文和「1 reflection」；
+    祷告显示深色经文卡片，上滑看到「1 comment」（不含标记）和绿色「🙌 Answered Today」。
+  - 划线：在本地模拟器写入 5 条网页端格式的 `indexedTexts`（黄/绿/粉底色，蓝/橙下划线，含跨节偏移），
+    列表的锚点卡片、详情的分节经文、回顾页的祷告经文卡片都按位置显示。
+  - 简体中文界面：「已置顶 · 10月24日至26日」「编辑 / 复制 / 加星标 / 标签 · 1 / 删除」。
+
+**和设计稿 / iOS 的差异**
+- 置顶记录没有时刻（`PinLog` 只存日期），连续的日子合成一行（用户决定）。
+- 回顾页底部的圆点会压在露出的评论标题上，和 iOS 一样（iOS 也是叠在上面）。
+- 感想在详情里可以操作（设计稿 C4）；iOS 详情里的感想没有操作。

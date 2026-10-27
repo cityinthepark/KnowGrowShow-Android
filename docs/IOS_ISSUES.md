@@ -70,7 +70,7 @@
 | F5 🟡 | `ResolvedBibleRef.displayText`（引用框下方的规范写法提示） | 调用 `BibleFormatter` 时不传译本，书名固定用**英文** | 中文界面输入"约 3:16"，下方提示却是"John 3:16" | 用主译本的书名语言（与书卷选择列表一致，和合本为繁体） | 不用 |
 | F6 🟡 | `Utils/DataFiles/KJV.json` → `DownloadedVerse.verseContent` | JSON 里 1,302 节正文带首尾空格（1,280 节结尾、22 节开头），原样导入，再原样冻结进 `userVerses.content` | 显示时多一个空格，影响很小 | **照存**（两端同一节内容逐字节一致，已用脚本对比全部 62,202 节）；仅记录 | 若 iOS 改成导入时去空格，安卓同步改生成脚本并升级 `BibleTextDatabase.VERSION`（已冻结的 `userVerses` 不受影响） |
 
-## G. 笔记列表与详情（N1）
+## G. 笔记列表、详情与回顾（N1、N2）
 
 | # | iOS 位置 | 问题 | 影响 | 安卓做法 | iOS 修后安卓要改吗 |
 | --- | --- | --- | --- | --- | --- |
@@ -81,6 +81,9 @@
 | G5 🟡 | `addVerseReflection`（在经文锚点详情里"加评论"） | 走 `saveVerseReference`，按"今天"去重：给**以前某天**的锚点加感想，会在今天新建一个锚点，感想挂在今天的锚点下 | 在旧锚点详情里加的感想不出现在这个详情页（产品语义问题） | **照 iOS**（契约规定锚点按天） | 若 iOS 改为挂在原锚点下，安卓跟着改 |
 | G6 🟡 | `TagPickerPopup.commit` | 在"添加新标签"里输入一个已选中的标签名，会把它**取消**（走的是切换） | 少见的误操作 | "添加"只添加不取消 | 不用 |
 | G7 🟡 | 各语言 `Localizable.strings` | 这些页面缺键，界面直接显示英文键名："Chapter"、"Delete Note?"、"Answered Today"、"Copy"、"Star"、"Remove Star"、"Sort By"、"Just now"、"%d minutes ago"、"%d hours ago" 等；繁体里还有简体字：祷告（Prayers）、属灵成长、新增注释至、快速笔记、加星标、已應允祷告、图片 | 中文用户看到英文或简体字 | 安卓补齐三种语言并改为繁体字 | 不用 |
+| G8 🟡 | `NotesReviewView.commentsSection`（Today 的"回顾"） | 「%d comments」用 `comments.count`，把「Answered」标记评论（正文是配对评论的 id）也算成一条 | 只写了一条评论并标记已应允时显示「2 comments」 | 不算标记，和列表、详情的评论数一致 | 不用 |
+| G9 🟡 | `NotesManager.deleteNoteComment` | 只软删这一条：删掉「Answered」标记后祷告仍是「已应允」；删掉配对的那条评论后，标记还留在时间线上 | 删除后状态和时间线对不上（产品决定） | **照 iOS** | 若 iOS 改为联动（删标记即取消已应允，或一起删掉配对评论），安卓跟着改 |
+| G10 🟡 | `EditCommentSheet`（评论"编辑"） | 「Save」没有空内容检查，可以把评论改成空白 | 时间线上出现空的评论卡片 | 空白内容不保存（与编辑笔记相同） | 不用 |
 
 ---
 

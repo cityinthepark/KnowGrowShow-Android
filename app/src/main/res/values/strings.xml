@@ -47,6 +47,7 @@
     <string name="flashcard">Flashcard</string>
     <string name="today_activity">Today\'s activity</string>
     <string name="today_review">Review</string>
+    <string name="review_empty">No notes yet</string>
     <string name="tile_pinned">Pinned</string>
     <string name="tile_starred">Starred</string>
     <string name="tile_study_note">Study Note</string>
@@ -142,6 +143,9 @@
     <string name="comment_to">Add a Comment to:</string>
     <string name="answered_today">Answered Today</string>
     <string name="answered">Answered</string>
+    <!-- Details thread: a pinned run (PinLog), "📌 Pinned · Oct 20 – 26" -->
+    <string name="thread_pinned">Pinned</string>
+    <string name="thread_pinned_range">Pinned · %1$s</string>
     <string name="no_comments">No comments yet.</string>
     <string name="verse_unavailable">Verse text unavailable</string>
     <string name="tags_title">Choose Tags</string>
@@ -195,6 +199,12 @@
     <string name="collapse">Collapse</string>
     <string name="comments_title">Comments</string>
     <string name="reflections_title">Reflections</string>
+    <!-- Comment / reflection actions (design C4) -->
+    <string name="edit_comment_title">Edit Comment</string>
+    <string name="edit_reflection_title">Edit Reflection</string>
+    <string name="comment_delete_title">Delete Comment?</string>
+    <string name="reflection_delete_title">Delete Reflection?</string>
+    <string name="action_tags_count">Tags · %1$d</string>
     <string name="add_comment_hint">Add a comment…</string>
     <string name="add_reflection_hint">Add a reflection…</string>
     <string name="send">Send</string>

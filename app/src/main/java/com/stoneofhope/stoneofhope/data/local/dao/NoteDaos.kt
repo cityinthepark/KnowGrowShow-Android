@@ -174,6 +174,9 @@ interface PinLogDao {
     @Query("SELECT * FROM PinLog WHERE noteId = :noteId")
     suspend fun getByNoteId(noteId: String): PinLogEntity?
 
+    @Query("SELECT * FROM PinLog WHERE noteId = :noteId")
+    fun observeByNoteId(noteId: String): Flow<PinLogEntity?>
+
     @Query("SELECT * FROM PinLog WHERE needsSync = 1")
     suspend fun dirty(): List<PinLogEntity>
 

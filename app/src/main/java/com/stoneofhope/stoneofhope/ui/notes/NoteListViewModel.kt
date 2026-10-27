@@ -5,12 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stoneofhope.stoneofhope.data.bible.BibleVersions
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
+import com.stoneofhope.stoneofhope.data.local.entity.IndexedTextEntity
 import com.stoneofhope.stoneofhope.data.local.entity.NoteCommentEntity
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
 import com.stoneofhope.stoneofhope.data.local.entity.UserVerseEntity
 import com.stoneofhope.stoneofhope.data.model.NoteType
 import com.stoneofhope.stoneofhope.data.notes.CompactSummary
+import com.stoneofhope.stoneofhope.data.notes.MarkedVerse
 import com.stoneofhope.stoneofhope.data.notes.NoteBadge
 import com.stoneofhope.stoneofhope.data.notes.NoteBadges
 import com.stoneofhope.stoneofhope.data.notes.NoteFilter
@@ -19,6 +21,8 @@ import com.stoneofhope.stoneofhope.data.notes.NoteListData
 import com.stoneofhope.stoneofhope.data.notes.NoteRelations
 import com.stoneofhope.stoneofhope.data.notes.ResolvedVerse
 import com.stoneofhope.stoneofhope.data.notes.VerseDisplay
+import com.stoneofhope.stoneofhope.data.notes.VerseMark
+import com.stoneofhope.stoneofhope.data.notes.VerseMarks
 import com.stoneofhope.stoneofhope.data.notes.anchoredVerseRef
 import com.stoneofhope.stoneofhope.data.notes.bibleVerseRef
 import com.stoneofhope.stoneofhope.data.notes.chapterRef
@@ -54,6 +58,8 @@ data class NoteCardUi(
     val prayerRef: String?,
     /** The reference shown at the top of the "⋯" sheet. */
     val verseRef: String?,
+    /** Highlights / underlines over [displayContent] when it is an anchor's verse text. */
+    val bodyMarks: List<VerseMark> = emptyList(),
 ) {
     val isAnchor: Boolean get() = note.noteType == NoteType.BibleVerse
     val threadCount: Int get() = when (val t = thread) { is CompactSummary.Notes -> t.count; is CompactSummary.Comments -> t.count }
@@ -69,7 +75,7 @@ sealed interface NoteRowUi {
     }
 
     /** iOS `VerseNoteGroupCell`: loose notes on one verse, verse text once. */
-    data class VerseGroup(val header: NoteCardUi, val verseText: String?, val notes: List<NoteEntity>) : NoteRowUi {
+    data class VerseGroup(val header: NoteCardUi, val verse: MarkedVerse?, val notes: List<NoteEntity>) : NoteRowUi {
         override val key get() = "group_" + notes.first().id
     }
 }
@@ -105,8 +111,13 @@ internal object NoteCards {
         activeSermonIds: Set<String>,
         verses: Map<String, UserVerseEntity>,
         zone: ZoneId,
+        marksByVerseId: Map<String, List<IndexedTextEntity>> = emptyMap(),
     ): NoteCardUi {
         val content = VerseDisplay.displayContent(note, verses)
+        // An anchor's body is its verse text: carry the Web's marks along with it.
+        val bodyMarks = if (note.noteType == NoteType.BibleVerse && content != note.content) {
+            VerseDisplay.resolve(note, verses, marksByVerseId)?.combined?.marks.orEmpty()
+        } else emptyList()
         val prayerRef = if (note.noteType == NoteType.Prayer && !note.showsBibleRefInHeaderBadge) {
             (note.bibleVerseRef ?: note.chapterRef)?.takeIf { it.isNotEmpty() }
         } else null
@@ -119,6 +130,7 @@ internal object NoteCards {
             tagNames = note.tagIds.mapNotNull(tagNamesById::get),
             prayerRef = prayerRef,
             verseRef = (note.bibleVerseRef ?: note.anchoredVerseRef)?.takeIf { it.isNotEmpty() },
+            bodyMarks = bodyMarks,
         )
     }
 }
@@ -169,15 +181,18 @@ class NoteListViewModel @Inject constructor(
         db.youTubeVideoDao().observeActiveIds(),
     ) { n, c, t, s, v -> Source(NoteListData(n, c, t.associate { it.id to it.name }, s.toSet(), v.toSet()), t) }
 
-    val state: StateFlow<NoteListState> = combine(source, db.userVerseDao().observeAll(), filter, tag) { src, verses, f, tg ->
+    val state: StateFlow<NoteListState> = combine(
+        source, db.userVerseDao().observeAll(), db.indexedTextDao().observeActiveVerseMarks(), filter, tag,
+    ) { src, verses, markRows, f, tg ->
         val versesById = verses.associateBy { it.id }
+        val marks = VerseMarks.byVerseId(markRows)
         val d = src.data
-        fun card(n: NoteEntity) = NoteCards.card(n, d.notes, d.comments, d.tagNamesById, d.activeSermonIds, versesById, zone)
+        fun card(n: NoteEntity) = NoteCards.card(n, d.notes, d.comments, d.tagNamesById, d.activeSermonIds, versesById, zone, marks)
         var sections = NoteListBuilder.build(d, f, tg, day, today, zone).map { section ->
             NoteSectionUi(section.day, section.rows.map { row ->
                 if (row.isVerseGroup) {
                     val first = row.notes.first()
-                    val verse = VerseDisplay.resolve(first, versesById)?.combinedContent?.trim()?.ifEmpty { null }
+                    val verse = VerseDisplay.resolve(first, versesById, marks)?.combined?.trimmed()?.takeIf { it.text.isNotEmpty() }
                     NoteRowUi.VerseGroup(card(first), verse, row.notes)
                 } else {
                     NoteRowUi.Single(card(row.note))
@@ -239,8 +254,9 @@ class NoteListViewModel @Inject constructor(
         if (note.id !in _prayerVerses.value) {
             viewModelScope.launch {
                 notes.ensureUserVerses(note.id)
-                val verses = VerseDisplay.userVerseIds(note).mapNotNull { db.userVerseDao().getById(it) }.associateBy { it.id }
-                val resolved = VerseDisplay.resolve(note, verses)
+                val ids = VerseDisplay.userVerseIds(note)
+                val verses = ids.mapNotNull { db.userVerseDao().getById(it) }.associateBy { it.id }
+                val resolved = VerseDisplay.resolve(note, verses, VerseMarks.byVerseId(db.indexedTextDao().activeForVerses(ids)))
                 _prayerVerses.update { it + (note.id to resolved) }
             }
         }

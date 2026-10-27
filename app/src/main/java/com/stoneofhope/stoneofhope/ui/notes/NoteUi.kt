@@ -1,5 +1,7 @@
 package com.stoneofhope.stoneofhope.ui.notes
 
+import android.icu.text.DateIntervalFormat
+import android.icu.util.DateInterval
 import android.text.format.DateFormat
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -221,6 +223,13 @@ fun monthDay(day: LocalDate): String = pattern("MMMd").format(day)
 
 /** "Mon" (the comments date column). */
 fun weekdayShort(day: LocalDate): String = pattern("EEE").format(day)
+
+/** "Oct 20 – 26", "Sep 28 – Oct 3"; with years when the run is not all in this year. */
+fun dayRange(start: LocalDate, end: LocalDate, today: LocalDate = LocalDate.now(), zone: ZoneId = ZoneId.systemDefault()): String {
+    val skeleton = if (start.year == today.year && end.year == today.year) "MMMd" else "yMMMd"
+    val millis = { d: LocalDate -> d.atTime(12, 0).atZone(zone).toInstant().toEpochMilli() }
+    return DateIntervalFormat.getInstance(skeleton, Locale.getDefault()).format(DateInterval(millis(start), millis(end)))
+}
 
 /** "OCT 2026". */
 fun monthYearCaps(month: YearMonth): String = pattern("MMMy").format(month.atDay(1)).uppercase()

@@ -213,4 +213,86 @@ class NoteActionRepositoryTest {
         assertNull(db.pinLogDao().getByNoteId(note.id))
         assertFalse(db.noteDao().observeActive().first().any { it.id == note.id })
     }
+
+    // Comment actions (iOS `TimelineCommentLine`).
+
+    private suspend fun clean(noteId: String) {
+        db.noteDao().upsert(get(noteId).copy(needsSync = false))
+        comments(noteId).forEach { db.noteCommentDao().upsert(it.copy(needsSync = false)) }
+    }
+
+    @Test fun commentEditStarAndTagsMarkTheCommentAndBumpTheNote() = runTest {
+        val note = insert(NoteType.Note)
+        actions.addComment(note.id, "first", zone)
+        val c = comments(note.id).single()
+        clean(note.id)
+        clock.now = clock.now.plusSeconds(30)
+
+        actions.updateCommentContent(c.id, "edited\nline two")
+        with(db.noteCommentDao().getById(c.id)!!) {
+            assertEquals("edited\nline two", content)
+            assertTrue(needsSync)
+            assertEquals(c.createdAt, createdAt)
+        }
+        with(get(note.id)) {
+            assertTrue(needsSync)
+            assertEquals(clock.now, updatedAt)
+        }
+
+        actions.updateCommentContent(c.id, " \n ")
+        assertEquals("edited\nline two", db.noteCommentDao().getById(c.id)!!.content)
+
+        actions.setCommentStarLevel(c.id, 2)
+        assertEquals(2, db.noteCommentDao().getById(c.id)!!.starLevel)
+
+        db.tagDao().upsert(TagEntity(id = "t1", name = "Hope", createdAt = clock.now))
+        actions.addCommentTag(c.id, "hope")
+        actions.addCommentTag(c.id, "HOPE")
+        actions.addCommentTag(c.id, " Joy ")
+        val joy = db.tagDao().findActiveByName("Joy")!!
+        assertEquals(listOf("t1", joy.id), db.noteCommentDao().getById(c.id)!!.tagIds)
+        assertTrue(joy.needsSync)
+        actions.removeCommentTag(c.id, "t1")
+        assertEquals(listOf(joy.id), db.noteCommentDao().getById(c.id)!!.tagIds)
+        assertTrue(get(note.id).tagIds.isEmpty())
+    }
+
+    @Test fun deleteCommentSoftDeletesOnlyThatComment() = runTest {
+        val note = insert(NoteType.Note)
+        actions.addComment(note.id, "keep", zone)
+        clock.now = clock.now.plusSeconds(1)
+        actions.addComment(note.id, "drop", zone)
+        val drop = comments(note.id).single { it.content == "drop" }
+        clean(note.id)
+        clock.now = clock.now.plusSeconds(60)
+        actions.deleteComment(drop.id)
+        with(db.noteCommentDao().getById(drop.id)!!) {
+            assertEquals(clock.now, deletedAt)
+            assertTrue(isDeleted)
+            assertTrue(needsSync)
+        }
+        assertEquals(listOf("keep"), comments(note.id).map { it.content })
+        with(get(note.id)) {
+            assertTrue(needsSync)
+            assertEquals(clock.now, updatedAt)
+            assertNull(deletedAt)
+        }
+        // A deleted comment takes no further edits.
+        actions.updateCommentContent(drop.id, "back")
+        assertEquals("drop", db.noteCommentDao().getById(drop.id)!!.content)
+    }
+
+    /** iOS: the marker has no Edit; deleting it leaves the prayer answered (IOS_ISSUES G9). */
+    @Test fun answeredMarkerCanBeStarredAndDeletedButNotEdited() = runTest {
+        val prayer = insert(NoteType.Prayer)
+        actions.addAnsweredComment(prayer.id, "He provided")
+        val marker = comments(prayer.id).single { it.isAnsweredMarker }
+        actions.updateCommentContent(marker.id, "text")
+        assertTrue(db.noteCommentDao().getById(marker.id)!!.isAnsweredMarker)
+        actions.setCommentStarLevel(marker.id, 1)
+        assertEquals(1, db.noteCommentDao().getById(marker.id)!!.starLevel)
+        actions.deleteComment(marker.id)
+        assertEquals(listOf("He provided"), comments(prayer.id).map { it.content })
+        assertEquals(true, get(prayer.id).isAnswered)
+    }
 }

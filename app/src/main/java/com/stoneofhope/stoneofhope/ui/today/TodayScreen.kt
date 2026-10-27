@@ -60,13 +60,15 @@ private enum class TodaySheet { Prayer, Note }
 /**
  * iOS `TodayView`: greeting, reading carousel, quick add, today's activity.
  * [onOpen] receives the title of a screen that isn't ported yet (shown as "coming soon");
- * [onOpenNotes] is a tile's note list (iOS `NoteCreationView(date, type)`).
+ * [onOpenNotes] is a tile's note list (iOS `NoteCreationView(date, type)`); [onOpenReview] the day's
+ * "Review" (iOS `NotesReviewView`).
  */
 @Composable
 fun TodayScreen(
     onOpen: (title: String) -> Unit,
     onOpenReadingLog: (bookOrd: Int) -> Unit,
     onOpenNotes: (NoteFilter, LocalDate) -> Unit,
+    onOpenReview: (LocalDate) -> Unit,
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
     val day by viewModel.day.collectAsStateWithLifecycle()
@@ -119,6 +121,7 @@ fun TodayScreen(
                 activity = activity,
                 onOpen = onOpen,
                 onOpenTile = { kind -> onOpenNotes(kind.noteFilter, day) },
+                onReview = { onOpenReview(day) },
                 onUnread = viewModel::toggleChapterRead,
             )
         }

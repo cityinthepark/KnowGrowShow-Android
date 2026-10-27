@@ -52,6 +52,7 @@ fun TodayActivitySection(
     activity: TodayActivity,
     onOpen: (title: String) -> Unit,
     onOpenTile: (TileKind) -> Unit,
+    onReview: () -> Unit,
     onUnread: (bookOrd: Int, chapter: Int) -> Unit,
 ) {
     if (activity.isEmpty) return
@@ -59,8 +60,7 @@ fun TodayActivitySection(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.today_activity), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             if (activity.showReview) {
-                val review = stringResource(R.string.today_review)
-                AssistChip(onClick = { onOpen(review) }, label = { Text("▶ $review") })
+                AssistChip(onClick = onReview, label = { Text("▶ " + stringResource(R.string.today_review)) }, modifier = Modifier.testTag("todayReview"))
             }
         }
         Tiles(activity.tiles, onOpenTile)
