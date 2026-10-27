@@ -105,4 +105,95 @@
     <string name="bible_ref_help_chapter_only">只写到章（如 约 3）不会保存为经文引用，请写到节。</string>
     <string name="bible_ref_help_note_shortcut">笔记也可以直接以经文开头，如“约 3:16 感谢主”。引用框只写到章（如 约 3）时，笔记开头写“v16”即第 16 节。</string>
     <string name="bible_ref_done">完成</string>
+    <!-- Note list and details (iOS NoteCreationView / NoteCellView / NoteDetailsView). -->
+    <string name="filter_all">全部</string>
+    <string name="filter_youtube_video">YouTube 视频</string>
+    <string name="label_quick_note">快速笔记</string>
+    <string name="label_prayers">祷告</string>
+    <string name="label_sermon_note">讲道笔记</string>
+    <string name="label_flash_card">记忆卡片</string>
+    <string name="label_personal_growth">属灵成长</string>
+    <string name="label_chapter">章</string>
+    <string name="time_just_now">刚刚</string>
+    <string name="note_delete_title">删除笔记？</string>
+    <string name="action_delete">删除</string>
+    <string name="action_copy">复制</string>
+    <string name="action_copied">已复制</string>
+    <string name="action_pin">置顶</string>
+    <string name="action_unpin">取消置顶</string>
+    <string name="action_mark_answered">标记为已应允</string>
+    <string name="action_mark_unanswered">取消已应允</string>
+    <string name="action_add_comment">添加评论</string>
+    <string name="action_star">星级</string>
+    <string name="action_remove_star">取消星级</string>
+    <string name="action_tags">标签</string>
+    <string name="action_edit">编辑</string>
+    <string name="action_more">更多操作</string>
+    <string name="action_save">保存</string>
+    <string name="edit_note_title">编辑笔记</string>
+    <string name="comment_to">添加注释至：</string>
+    <string name="answered_today">今天已应允</string>
+    <string name="answered">已应允</string>
+    <string name="no_comments">暂无评论。</string>
+    <string name="verse_unavailable">暂时无法获取经文内容</string>
+    <string name="tags_title">选择标签</string>
+    <string name="tag_new_placeholder">添加新标签…</string>
+    <string name="tag_add_button">添加</string>
+    <string name="sort_by_name">按名称</string>
+    <string name="sort_by_created">按创建日期</string>
+    <string name="image_placeholder">图片（安卓暂不显示）</string>
+    <string name="notes_empty">没有笔记</string>
+    <string name="note_not_found">笔记未找到。</string>
+    <string name="back">返回</string>
+    <plurals name="notes_count">
+        <item quantity="other">%d 条笔记</item>
+    </plurals>
+    <plurals name="comments_count">
+        <item quantity="other">%d 条评论</item>
+    </plurals>
+    <plurals name="minutes_ago">
+        <item quantity="other">%d 分钟前</item>
+    </plurals>
+    <plurals name="hours_ago">
+        <item quantity="other">%d 小时前</item>
+    </plurals>
+    <plurals name="stars_n">
+        <item quantity="other">%d 星</item>
+    </plurals>
+    <!-- Note list / details redesign (docs/design). -->
+    <string name="notes_title_today">今天</string>
+    <string name="chip_notes">笔记</string>
+    <string name="chip_study">学习</string>
+    <string name="chip_prayer">祷告</string>
+    <string name="chip_answered">已应允</string>
+    <string name="chip_pinned">置顶</string>
+    <string name="chip_image">图片</string>
+    <string name="chip_bible">圣经</string>
+    <string name="chip_sermon">讲道</string>
+    <string name="chip_video">视频</string>
+    <string name="chip_starred">加星</string>
+    <string name="pinned_section">置顶</string>
+    <string name="new_note">新建笔记</string>
+    <string name="new_prayer">新建祷告</string>
+    <string name="empty_notes_today">今天还没有笔记</string>
+    <string name="empty_prayers_today">今天还没有祷告</string>
+    <string name="no_comments_short">暂无评论</string>
+    <string name="no_reflections_short">暂无感想</string>
+    <string name="collapse">收起</string>
+    <string name="comments_title">评论</string>
+    <string name="reflections_title">感想</string>
+    <string name="add_comment_hint">写评论…</string>
+    <string name="add_reflection_hint">写感想…</string>
+    <string name="send">发送</string>
+    <string name="delete_note">删除笔记</string>
+    <string name="tag_filter">按标签筛选</string>
+    <plurals name="prayers_count">
+        <item quantity="other">%d 条祷告</item>
+    </plurals>
+    <plurals name="reflections_count">
+        <item quantity="other">%d 条感想</item>
+    </plurals>
+    <plurals name="show_all_verses">
+        <item quantity="other">显示全部 %d 节</item>
+    </plurals>
 </resources>

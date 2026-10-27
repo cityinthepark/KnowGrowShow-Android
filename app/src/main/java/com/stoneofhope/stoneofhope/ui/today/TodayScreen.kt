@@ -45,6 +45,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stoneofhope.stoneofhope.R
+import com.stoneofhope.stoneofhope.data.notes.NoteFilter
+import com.stoneofhope.stoneofhope.data.today.TodayActivity.TileKind
 import com.stoneofhope.stoneofhope.ui.theme.AppColors
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 import java.time.LocalDate
@@ -57,12 +59,14 @@ private enum class TodaySheet { Prayer, Note }
 
 /**
  * iOS `TodayView`: greeting, reading carousel, quick add, today's activity.
- * [onOpen] receives the title of a screen that isn't ported yet (shown as "coming soon").
+ * [onOpen] receives the title of a screen that isn't ported yet (shown as "coming soon");
+ * [onOpenNotes] is a tile's note list (iOS `NoteCreationView(date, type)`).
  */
 @Composable
 fun TodayScreen(
     onOpen: (title: String) -> Unit,
     onOpenReadingLog: (bookOrd: Int) -> Unit,
+    onOpenNotes: (NoteFilter, LocalDate) -> Unit,
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
     val day by viewModel.day.collectAsStateWithLifecycle()
@@ -114,6 +118,7 @@ fun TodayScreen(
             TodayActivitySection(
                 activity = activity,
                 onOpen = onOpen,
+                onOpenTile = { kind -> onOpenNotes(kind.noteFilter, day) },
                 onUnread = viewModel::toggleChapterRead,
             )
         }
@@ -236,3 +241,16 @@ private fun androidx.compose.foundation.layout.RowScope.QuickAddButton(
         Box(contentAlignment = Alignment.Center) { Text(emoji, fontSize = 20.sp) }
     }
 }
+
+/** Today tile → its note list filter (iOS `TodayActivityView` tile actions). */
+private val TileKind.noteFilter: NoteFilter
+    get() = when (this) {
+        TileKind.Pinned -> NoteFilter.Pinned
+        TileKind.Starred -> NoteFilter.Starred
+        TileKind.QuickNote -> NoteFilter.QuickNote
+        TileKind.StudyNote -> NoteFilter.StudyNote
+        TileKind.Bible -> NoteFilter.Bible
+        TileKind.Prayer -> NoteFilter.Prayer
+        TileKind.AnsweredPrayer -> NoteFilter.AnsweredPrayer
+        TileKind.Image -> NoteFilter.Image
+    }

@@ -374,12 +374,6 @@ class NoteRepository @Inject constructor(
 
     // MARK: - Misc
 
-    /** Soft delete; the tombstone syncs, then the row is purged locally. */
-    suspend fun delete(note: NoteEntity) {
-        val now = clock.instant()
-        noteDao.upsert(note.copy(deletedAt = now, isDeleted = true, updatedAt = now, needsSync = true))
-    }
-
     /** iOS `attachTags`: an active tag matched case-insensitively, else a new one. Call inside a transaction. */
     private suspend fun withTag(note: NoteEntity, tagName: String?): NoteEntity {
         if (tagName.isNullOrEmpty()) return note

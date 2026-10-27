@@ -113,4 +113,103 @@
     <string name="bible_ref_help_chapter_only">A chapter alone (John 3) is not saved as a reference — add a verse.</string>
     <string name="bible_ref_help_note_shortcut">In a note you can also start the text with the reference, e.g. “John 3:16 Thank you, Lord”. With only a chapter in the field (John 3), start the note with “v16” for verse 16.</string>
     <string name="bible_ref_done">Done</string>
+    <!-- Note list and details (iOS NoteCreationView / NoteCellView / NoteDetailsView). -->
+    <string name="filter_all">All</string>
+    <string name="filter_youtube_video">YouTube Video</string>
+    <string name="label_quick_note">Quick Note</string>
+    <string name="label_prayers">Prayer</string>
+    <string name="label_sermon_note">Sermon Note</string>
+    <string name="label_flash_card">Flashcard</string>
+    <string name="label_personal_growth">Personal Growth</string>
+    <string name="label_chapter">Chapter</string>
+    <string name="time_just_now">Just now</string>
+    <string name="note_delete_title">Delete Note?</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_copied">Copied</string>
+    <string name="action_pin">Pin</string>
+    <string name="action_unpin">Unpin</string>
+    <string name="action_mark_answered">Mark as Answered</string>
+    <string name="action_mark_unanswered">Mark as Not Answered</string>
+    <string name="action_add_comment">Add Comment</string>
+    <string name="action_star">Star</string>
+    <string name="action_remove_star">Remove Star</string>
+    <string name="action_tags">Tags</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_more">More actions</string>
+    <string name="action_save">Save</string>
+    <string name="edit_note_title">Edit Note</string>
+    <string name="comment_to">Add a Comment to:</string>
+    <string name="answered_today">Answered Today</string>
+    <string name="answered">Answered</string>
+    <string name="no_comments">No comments yet.</string>
+    <string name="verse_unavailable">Verse text unavailable</string>
+    <string name="tags_title">Choose Tags</string>
+    <string name="tag_new_placeholder">Add new tag…</string>
+    <string name="tag_add_button">Add</string>
+    <string name="sort_by_name">By Name</string>
+    <string name="sort_by_created">By Create Date</string>
+    <string name="image_placeholder">Image (not shown on Android yet)</string>
+    <string name="notes_empty">No notes</string>
+    <string name="note_not_found">Note not found.</string>
+    <string name="back">Back</string>
+    <plurals name="notes_count">
+        <item quantity="one">%d note</item>
+        <item quantity="other">%d notes</item>
+    </plurals>
+    <plurals name="comments_count">
+        <item quantity="one">%d comment</item>
+        <item quantity="other">%d comments</item>
+    </plurals>
+    <plurals name="minutes_ago">
+        <item quantity="one">%d minute ago</item>
+        <item quantity="other">%d minutes ago</item>
+    </plurals>
+    <plurals name="hours_ago">
+        <item quantity="one">%d hour ago</item>
+        <item quantity="other">%d hours ago</item>
+    </plurals>
+    <plurals name="stars_n">
+        <item quantity="one">%d star</item>
+        <item quantity="other">%d stars</item>
+    </plurals>
+    <!-- Note list / details redesign (docs/design). -->
+    <string name="notes_title_today">Today</string>
+    <string name="chip_notes">Notes</string>
+    <string name="chip_study">Study</string>
+    <string name="chip_prayer">Prayer</string>
+    <string name="chip_answered">Answered</string>
+    <string name="chip_pinned">Pinned</string>
+    <string name="chip_image">Image</string>
+    <string name="chip_bible">Bible</string>
+    <string name="chip_sermon">Sermon</string>
+    <string name="chip_video">Video</string>
+    <string name="chip_starred">Starred</string>
+    <string name="pinned_section">PINNED</string>
+    <string name="new_note">New note</string>
+    <string name="new_prayer">New prayer</string>
+    <string name="empty_notes_today">No notes today</string>
+    <string name="empty_prayers_today">No prayers today</string>
+    <string name="no_comments_short">No comments</string>
+    <string name="no_reflections_short">No reflections</string>
+    <string name="collapse">Collapse</string>
+    <string name="comments_title">Comments</string>
+    <string name="reflections_title">Reflections</string>
+    <string name="add_comment_hint">Add a comment…</string>
+    <string name="add_reflection_hint">Add a reflection…</string>
+    <string name="send">Send</string>
+    <string name="delete_note">Delete note</string>
+    <string name="tag_filter">Filter by tag</string>
+    <plurals name="prayers_count">
+        <item quantity="one">%d prayer</item>
+        <item quantity="other">%d prayers</item>
+    </plurals>
+    <plurals name="reflections_count">
+        <item quantity="one">%d reflection</item>
+        <item quantity="other">%d reflections</item>
+    </plurals>
+    <plurals name="show_all_verses">
+        <item quantity="one">Show all %d verse</item>
+        <item quantity="other">Show all %d verses</item>
+    </plurals>
 </resources>

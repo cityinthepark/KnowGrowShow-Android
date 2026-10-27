@@ -39,6 +39,10 @@ data class AppColors(
     val noteTypeQuickNote: Color,
     val noteTypeSermon: Color,
     val noteTypeDefault: Color,
+    /** Verse references, verse numbers and "Show all" in scripture areas (note redesign §1). */
+    val scriptureInk: Color,
+    /** "🙌 Answered" text; system green is too light for small text (note redesign §1.1). */
+    val answeredInk: Color,
 ) {
     /** iOS `AppColor.ChipPair` (icon handled by the caller). */
     @Immutable
@@ -78,6 +82,7 @@ data class AppColors(
             readingChipMutedFill = Color(0xFFFFFFFF), avatarBackground = Color(0xFFD9F2F7), avatarIcon = Color(0xFF128BA6),
             noteTypeBibleVerse = Color(0xFFA259FF), noteTypePrayer = Color(0xFF10B981), noteTypeQuickNote = Color(0xFF007AFF),
             noteTypeSermon = Color(0xFFFF9500), noteTypeDefault = Color(0xFF8E8E93),
+            scriptureInk = Color(0xFF4F3F96), answeredInk = Color(0xFF1E6B33),
         )
 
         val Dark = AppColors(
@@ -91,6 +96,7 @@ data class AppColors(
             readingChipMutedFill = Color(0xFF3A3F3E), avatarBackground = Color(0xFF1E3338), avatarIcon = Color(0xFF8AD4E8),
             noteTypeBibleVerse = Color(0xFFD6B2FF), noteTypePrayer = Color(0xFF34D399), noteTypeQuickNote = Color(0xFF60A5FA),
             noteTypeSermon = Color(0xFFFDBA74), noteTypeDefault = Color(0xFFC7C7CC),
+            scriptureInk = Color(0xFFCDBFFF), answeredInk = Color(0xFF7BD88F),
         )
     }
 }

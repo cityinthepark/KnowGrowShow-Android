@@ -178,7 +178,7 @@ class VerseReferenceSaveTest {
     @Test fun softDeletedAnchorIsRestoredAsTodays() = runTest {
         val r = repo()
         val old = r.saveGenesis11().anchor
-        r.delete(old)
+        db.noteDao().upsert(old.copy(deletedAt = clock.now, isDeleted = true, needsSync = true))
         clock.now = clock.now.plus(Duration.ofDays(3))
         val again = r.saveGenesis11()
         assertFalse(again.didCreateAnchor)

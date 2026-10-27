@@ -116,6 +116,13 @@ interface UserVerseDao {
     )
     fun observeChapter(versionAbbr: String, bookOrd: Int, chapterOrd: Int): Flow<List<UserVerseEntity>>
 
+    /** Like iOS `realm.object(forPrimaryKey:)`, display reads rows whatever their deletion state. */
+    @Query("SELECT * FROM userVerses WHERE id IN (:ids)")
+    fun observeByIds(ids: List<String>): Flow<List<UserVerseEntity>>
+
+    @Query("SELECT * FROM userVerses")
+    fun observeAll(): Flow<List<UserVerseEntity>>
+
     @Query("SELECT * FROM userVerses WHERE needsSync = 1")
     suspend fun dirty(): List<UserVerseEntity>
 

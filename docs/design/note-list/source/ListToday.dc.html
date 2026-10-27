@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Note list, today</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#128BA6}a:hover{color:#0E6F85}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; box-sizing: border-box; display: flex; flex-direction: column; background: #F1F3F1; font-family: -apple-system, 'SF Pro Text', 'PingFang SC', system-ui, sans-serif; color: #242F2F; overflow: hidden">
+
+  <header style="padding: 54px 16px 8px; display: flex; align-items: center; gap: 12px">
+    <button aria-label="Back" style="width: 44px; height: 44px; flex: none; border-radius: 22px; border: 1px solid #DBE2E1; background: #FFFFFF; display: flex; align-items: center; justify-content: center; padding: 0; color: #242F2F">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+    </button>
+    <div style="flex: 1; min-width: 0">
+      <h1 style="margin: 0; font-size: 22px; line-height: 1.2; font-weight: 700">Today</h1>
+      <div style="font-size: 12px; color: #4A5958; margin-top: 2px">Mon, Oct 26 · 6 notes</div>
+    </div>
+    <button aria-label="Filter by tag" style="width: 44px; height: 44px; flex: none; border-radius: 22px; border: 1px solid #DBE2E1; background: #FFFFFF; display: flex; align-items: center; justify-content: center; padding: 0; color: #242F2F">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8z"></path><circle cx="7.5" cy="8.5" r="1.3"></circle></svg>
+    </button>
+  </header>
+
+  <nav aria-label="Note type" style="display: flex; gap: 8px; padding: 4px 16px 10px; overflow: hidden; white-space: nowrap">
+    <button aria-pressed="true" style="flex: none; height: 36px; padding: 0 14px; border-radius: 18px; border: 0; background: #242F2F; color: #FFFFFF; font-size: 14px; font-weight: 600">All</button>
+    <button style="flex: none; height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #DBE2E1; background: #FFFFFF; color: #242F2F; font-size: 14px">📝 Notes</button>
+    <button style="flex: none; height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #DBE2E1; background: #FFFFFF; color: #242F2F; font-size: 14px">🌿 Prayer</button>
+    <button style="flex: none; height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #DBE2E1; background: #FFFFFF; color: #242F2F; font-size: 14px">✝️ Bible</button>
+    <button style="flex: none; height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #DBE2E1; background: #FFFFFF; color: #242F2F; font-size: 14px">🙌 Answered</button>
+    <button style="flex: none; height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #DBE2E1; background: #FFFFFF; color: #242F2F; font-size: 14px">📌 Pinned</button>
+  </nav>
+
+  <main style="flex: 1; min-height: 0; overflow: hidden; padding: 6px 16px 0; display: flex; flex-direction: column; gap: 10px">
+
+    <div style="display: flex; align-items: center; padding: 0 4px">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #A4580E">📌 PINNED</span>
+    </div>
+    <article style="background: #FFFFFF; border: 1px solid #DBE2E1; border-radius: 20px; padding: 12px 6px 6px 16px">
+      <div style="display: flex; align-items: center; gap: 6px; padding-right: 10px">
+        <span style="padding: 3px 9px 3px 7px; border-radius: 999px; background: #D9F2F7; color: #2F5496; font-size: 12px; font-weight: 700">🌿 Prayer</span>
+        <span style="flex: 1"></span>
+        <span style="font-size: 12px; color: #4A5958">Oct 12</span>
+      </div>
+      <p style="margin: 8px 10px 0 0; font-size: 15px; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden">为弟弟找工作的事祷告：求主开路，让他在等待中不灰心，也学会信靠。</p>
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #4A5958; margin-top: 2px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
+        <span>4 comments</span>
+        <span style="flex: 1"></span>
+        <button aria-label="Note actions" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; display: flex; align-items: center; justify-content: center; color: #4A5958; padding: 0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="19" cy="12" r="1.7"></circle></svg>
+        </button>
+      </div>
+    </article>
+
+    <div style="display: flex; align-items: center; padding: 10px 4px 0">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #4A5958">TODAY · MON, OCT 26</span>
+      <span style="flex: 1"></span>
+      <span style="font-size: 12px; font-weight: 600; color: #4A5958">KJV</span>
+    </div>
+
+    <article style="background: #FFFFFF; border: 1px solid #DBE2E1; border-radius: 20px; padding: 12px 6px 6px 16px">
+      <div style="display: flex; align-items: center; gap: 6px; padding-right: 10px">
+        <span style="padding: 3px 9px 3px 7px; border-radius: 999px; background: #D9F2F7; color: #2F5496; font-size: 12px; font-weight: 700">🌿 Prayer</span>
+        <button style="height: 24px; padding: 0 8px; border-radius: 999px; border: 0; background: #F2EAFF; color: #4F3F96; font-size: 12px; font-weight: 600">✝️ Psalm 23:1–6</button>
+        <span style="flex: 1"></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#E09A2D" role="img" aria-label="Starred"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.5 19.6l1.2-6L3.2 9.4l6.1-.8z"></path></svg>
+        <span style="font-size: 12px; color: #4A5958">4:36 PM</span>
+      </div>
+      <p style="margin: 8px 10px 0 0; font-size: 15px; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden">今天读诗篇23篇，“他使我躺卧在青草地上”这一句停了很久。这几周工作节奏很快，常常一睁眼就开始想待办事项，很少真正停下来。主啊，求你教我在忙碌中也能安静。我承认自己常常靠自己的计划和能力，而不是先来到你面前。</p>
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #4A5958; margin-top: 2px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
+        <span>2 comments</span>
+        <span style="padding: 1px 7px; border-radius: 999px; background: #F1F3F1; color: #4A5958">#感恩</span>
+        <span style="flex: 1"></span>
+        <button aria-label="Note actions" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; display: flex; align-items: center; justify-content: center; color: #4A5958; padding: 0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="19" cy="12" r="1.7"></circle></svg>
+        </button>
+      </div>
+    </article>
+
+    <article style="background: #FFFFFF; border: 1px solid #DBE2E1; border-radius: 20px; overflow: hidden">
+      <div style="background: #F8F4FF; padding: 12px 16px 12px; border-bottom: 1px solid #EEE4FF">
+        <div style="display: flex; align-items: center; gap: 6px">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #4F3F96">✝️ JOHN 3:16</span>
+          <span style="flex: 1"></span>
+          <span style="font-size: 12px; color: #4A5958">2:10 PM</span>
+        </div>
+        <p style="margin: 6px 0 0; font-family: 'Noto Serif SC', 'Songti SC', Georgia, serif; font-size: 16px; line-height: 1.6; color: #2A2550">For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.</p>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #4A5958; padding: 0 6px 0 16px; height: 44px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
+        <span>3 reflections</span>
+        <span style="flex: 1"></span>
+        <button aria-label="Note actions" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; display: flex; align-items: center; justify-content: center; color: #4A5958; padding: 0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="19" cy="12" r="1.7"></circle></svg>
+        </button>
+      </div>
+    </article>
+
+    <article style="background: #FFFFFF; border: 1px solid #DBE2E1; border-radius: 20px; padding: 12px 6px 6px 16px">
+      <div style="display: flex; align-items: center; gap: 6px; padding-right: 10px">
+        <span style="padding: 3px 9px 3px 7px; border-radius: 999px; background: #D5EBDB; color: #004C45; font-size: 12px; font-weight: 700">📝 Quick note</span>
+        <span style="flex: 1"></span>
+        <span style="font-size: 12px; color: #4A5958">9:02 AM</span>
+      </div>
+      <p style="margin: 8px 10px 0 0; font-size: 15px; line-height: 1.55">周三小组：分享出埃及记第1章，准备三个讨论问题。</p>
+      <div style="height: 8px"></div>
+    </article>
+  </main>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 30px; display: flex; justify-content: center">
+    <button style="height: 52px; padding: 0 22px 0 18px; border-radius: 26px; border: 0; background: #128BA6; color: #FFFFFF; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 24px rgba(18, 139, 166, 0.30)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+      New note
+    </button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

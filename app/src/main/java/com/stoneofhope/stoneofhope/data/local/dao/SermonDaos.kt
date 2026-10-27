@@ -47,6 +47,10 @@ interface SermonDao {
     fun observeActive(): Flow<List<SermonEntity>>
 
     /** iOS `getSermons(on:)`: `preachedOn` day key (`yyyyMMdd`), church imports included. */
+    /** iOS `Note.hasLinkedSermon` resolves the FK against live sermons. */
+    @Query("SELECT id FROM sermons WHERE deletedAt IS NULL")
+    fun observeActiveIds(): Flow<List<String>>
+
     @Query("SELECT * FROM sermons WHERE preachedOn = :dayKey AND deletedAt IS NULL")
     fun observePreachedOn(dayKey: String): Flow<List<SermonEntity>>
 
@@ -93,6 +97,10 @@ interface YouTubeVideoDao {
             "AND createdAt >= :start AND createdAt < :end ORDER BY createdAt DESC"
     )
     fun observeCreatedBetween(start: Instant, end: Instant): Flow<List<YouTubeVideoEntity>>
+
+    /** iOS `Note.hasLinkedYouTubeVideo` resolves the id against live videos. */
+    @Query("SELECT youtubeID FROM youtubeVideos WHERE deletedAt IS NULL")
+    fun observeActiveIds(): Flow<List<String>>
 
     @Query("SELECT * FROM youtubeVideos WHERE needsSync = 1")
     suspend fun dirty(): List<YouTubeVideoEntity>

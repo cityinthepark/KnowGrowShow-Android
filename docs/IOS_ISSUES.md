@@ -70,6 +70,18 @@
 | F5 🟡 | `ResolvedBibleRef.displayText`（引用框下方的规范写法提示） | 调用 `BibleFormatter` 时不传译本，书名固定用**英文** | 中文界面输入"约 3:16"，下方提示却是"John 3:16" | 用主译本的书名语言（与书卷选择列表一致，和合本为繁体） | 不用 |
 | F6 🟡 | `Utils/DataFiles/KJV.json` → `DownloadedVerse.verseContent` | JSON 里 1,302 节正文带首尾空格（1,280 节结尾、22 节开头），原样导入，再原样冻结进 `userVerses.content` | 显示时多一个空格，影响很小 | **照存**（两端同一节内容逐字节一致，已用脚本对比全部 62,202 节）；仅记录 | 若 iOS 改成导入时去空格，安卓同步改生成脚本并升级 `BibleTextDatabase.VERSION`（已冻结的 `userVerses` 不受影响） |
 
+## G. 笔记列表与详情（N1）
+
+| # | iOS 位置 | 问题 | 影响 | 安卓做法 | iOS 修后安卓要改吗 |
+| --- | --- | --- | --- | --- | --- |
+| G1 🔴 | `NotesManager.updateNoteContent`（"⋯"→编辑） | 仍走已废弃的旧识别流程（`detectBibleVerseReference` / `parseFlexible`）：改后的文字若以"John 3:16 …"开头（或章级笔记写"v3 …"），整条笔记被改成 `.bibleVerse`、`content` 变成"·" | **用户写的文字丢失**；祷告也会被改成经文锚点；也不去重锚点、不建感想 | 编辑只改文字，不改类型和经文字段 | 不用 |
+| G2 🔴 | `linkedReflectionNotes` / `parentBibleVerseAnchor` | 与 F3 同：要求 `verseEnd` 完全相等 | `verseEnd` 为空的锚点（网页端/旧数据）的感想挂不上，在列表里单独出现、锚点下显示 0 条 | 空 `verseEnd` 视为等于 `verseStart` | 不用 |
+| G3 🟡 | `Note.displayBibleVerseRefPlain` | 只读 `refKey`；网页端只写 ords 不写 `refKey` 的经文锚点，标题显示为空 | 列表/详情的经文标签是空的 | 没有 `refKey` 时按 ords 生成"书卷 章:节" | 不用 |
+| G4 🟡 | `NoteCellView` 列表里的"加评论" | 不去首尾空白，空内容也会保存（详情页的加评论有检查） | 可能存出空评论 | 统一去空白、空内容不保存 | 不用 |
+| G5 🟡 | `addVerseReflection`（在经文锚点详情里"加评论"） | 走 `saveVerseReference`，按"今天"去重：给**以前某天**的锚点加感想，会在今天新建一个锚点，感想挂在今天的锚点下 | 在旧锚点详情里加的感想不出现在这个详情页（产品语义问题） | **照 iOS**（契约规定锚点按天） | 若 iOS 改为挂在原锚点下，安卓跟着改 |
+| G6 🟡 | `TagPickerPopup.commit` | 在"添加新标签"里输入一个已选中的标签名，会把它**取消**（走的是切换） | 少见的误操作 | "添加"只添加不取消 | 不用 |
+| G7 🟡 | 各语言 `Localizable.strings` | 这些页面缺键，界面直接显示英文键名："Chapter"、"Delete Note?"、"Answered Today"、"Copy"、"Star"、"Remove Star"、"Sort By"、"Just now"、"%d minutes ago"、"%d hours ago" 等；繁体里还有简体字：祷告（Prayers）、属灵成长、新增注释至、快速笔记、加星标、已應允祷告、图片 | 中文用户看到英文或简体字 | 安卓补齐三种语言并改为繁体字 | 不用 |
+
 ---
 
 ## 安卓有意不同、但不算 iOS bug 的地方

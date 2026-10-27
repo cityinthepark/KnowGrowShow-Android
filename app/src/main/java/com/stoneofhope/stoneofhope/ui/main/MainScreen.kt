@@ -27,6 +27,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.stoneofhope.stoneofhope.R
+import com.stoneofhope.stoneofhope.data.notes.NoteFilter
+import java.time.LocalDate
 import com.stoneofhope.stoneofhope.ui.today.TodayScreen
 
 /** The five tabs of iOS `MainTabView`, same order. Icons are the closest Material equivalents. */
@@ -44,6 +46,7 @@ fun MainScreen(
     onOpenAccount: () -> Unit,
     onOpenPlaceholder: (title: String) -> Unit,
     onOpenReadingLog: (bookOrd: Int) -> Unit,
+    onOpenNotes: (NoteFilter, LocalDate) -> Unit,
 ) {
     var selected by rememberSaveable { mutableStateOf(MainTab.Today) }
 
@@ -69,7 +72,7 @@ fun MainScreen(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (selected) {
-                MainTab.Today -> TodayScreen(onOpen = onOpenPlaceholder, onOpenReadingLog = onOpenReadingLog)
+                MainTab.Today -> TodayScreen(onOpen = onOpenPlaceholder, onOpenReadingLog = onOpenReadingLog, onOpenNotes = onOpenNotes)
                 MainTab.Series -> PlaceholderTab(MainTab.Series)
                 MainTab.Moments -> PlaceholderTab(MainTab.Moments)
                 MainTab.Calendar -> PlaceholderTab(MainTab.Calendar)

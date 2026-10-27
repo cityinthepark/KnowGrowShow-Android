@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Long note, actions sheet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0A7FC2}a:hover{color:#075E91}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; box-sizing: border-box; background: #F2F5F4; font-family: -apple-system, 'SF Pro Text', 'PingFang SC', system-ui, sans-serif; color: #17262A; overflow: hidden">
+
+  <div aria-hidden="true" style="padding: 54px 16px 0">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <div style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #E2E8E7; background: #FFFFFF"></div>
+      <div style="flex: 1">
+        <div><span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px 3px 8px; border-radius: 999px; background: #D9F2F7; color: #2F5496; font-size: 13px; font-weight: 700">🌿 Prayer</span></div>
+        <div style="font-size: 12px; color: #5C6C70">Mon, Oct 12, 2026 · 7:15 AM</div>
+      </div>
+    </div>
+    <div style="margin-top: 16px; background: #FFFFFF; border: 1px solid #E2E8E7; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; font-size: 18px; line-height: 1.7; font-weight: 500">
+      <p style="margin: 0">为家人祷告：求你保守爸妈的身体，特别是妈妈下周的检查，愿结果平安。也为弟弟找工作的事，求你开路，让他在等待中不灰心。</p>
+      <p style="margin: 0">为同事祷告：小组项目进入最后阶段，求你赐我们合一的心，彼此体谅，不互相指责。</p>
+      <p style="margin: 0">愿我这一周都记得：耶和华是我的牧者，我必不至缺乏。</p>
+    </div>
+  </div>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(12, 22, 26, 0.38)"></div>
+
+  <section role="dialog" aria-label="Note actions" style="position: absolute; left: 8px; right: 8px; bottom: 8px; background: #FFFFFF; border-radius: 32px; padding: 8px 8px 26px; display: flex; flex-direction: column; gap: 8px">
+    <div aria-hidden="true" style="width: 36px; height: 5px; border-radius: 3px; background: #D3DADB; margin: 2px auto 4px"></div>
+
+    <div style="padding: 4px 16px 6px; display: flex; flex-direction: column; gap: 2px">
+      <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #4F3F96"><span aria-hidden="true" style="letter-spacing: 0; margin-right: 4px">✝️</span>PSALM 23:1–6</div>
+      <div style="font-size: 14px; color: #3D4D51; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">今天读诗篇23篇，“他使我躺卧在青草地上”这一句停了很久…</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 0 8px">
+      <button style="height: 76px; border: 0; border-radius: 18px; background: #F2F5F4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #17262A; font-size: 12px; font-weight: 500">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg>
+        <span>Edit</span>
+      </button>
+      <button style="height: 76px; border: 0; border-radius: 18px; background: #F2F5F4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #17262A; font-size: 12px; font-weight: 500">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
+        <span>Copy</span>
+      </button>
+      <button style="height: 76px; border: 0; border-radius: 18px; background: #E3F1F8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #075E91; font-size: 12px; font-weight: 600">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5" fill="none"></path><path d="M8 3h8l-1 6 3 3v2H6v-2l3-3z"></path></svg>
+        <span>Pinned</span>
+      </button>
+      <button style="height: 76px; border: 0; border-radius: 18px; background: #FFF4E0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #9A5B00; font-size: 12px; font-weight: 600">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#E09A2D" stroke="#C47F12" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.2 6L12 16.8 6.5 19.6l1.2-6L3.2 9.4l6.1-.8z"></path></svg>
+        <span>Starred</span>
+      </button>
+    </div>
+
+    <div style="margin: 4px 8px 0; background: #F2F5F4; border-radius: 18px; overflow: hidden">
+      <button style="width: 100%; height: 52px; border: 0; background: transparent; display: flex; align-items: center; gap: 12px; padding: 0 16px; font-size: 16px; color: #17262A; text-align: left">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8z"></path><circle cx="7.5" cy="8.5" r="1.3"></circle></svg>
+        <span style="flex: 1">Tags</span>
+        <span style="font-size: 14px; color: #5C6C70">#感恩 #家人 +1</span>
+      </button>
+      <div aria-hidden="true" style="height: 1px; background: #E2E8E7; margin-left: 48px"></div>
+      <button style="width: 100%; height: 52px; border: 0; background: transparent; display: flex; align-items: center; gap: 12px; padding: 0 16px; font-size: 16px; color: #17262A; text-align: left">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 21V5"></path></svg>
+        <span style="flex: 1">Change verse</span>
+        <span style="font-size: 14px; color: #5C6C70">Psalm 23:1–6</span>
+      </button>
+    </div>
+
+    <div style="margin: 0 8px; background: #FDF0EF; border-radius: 18px">
+      <button style="width: 100%; height: 52px; border: 0; background: transparent; display: flex; align-items: center; gap: 12px; padding: 0 16px; font-size: 16px; font-weight: 500; color: #C2281F; text-align: left">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M6 7l1 13h10l1-13"></path></svg>
+        <span>Delete note</span>
+      </button>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

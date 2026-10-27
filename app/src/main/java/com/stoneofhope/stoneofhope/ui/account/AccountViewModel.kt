@@ -10,6 +10,7 @@ import com.stoneofhope.stoneofhope.data.account.AccountService
 import com.stoneofhope.stoneofhope.data.crypto.CryptoSession
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.remote.firestore.FirebaseBootstrap
+import com.stoneofhope.stoneofhope.data.repository.NoteActionRepository
 import com.stoneofhope.stoneofhope.data.repository.NoteRepository
 import com.stoneofhope.stoneofhope.data.settings.OnboardingPreferences
 import com.stoneofhope.stoneofhope.data.sync.CloudSync
@@ -29,6 +30,7 @@ class AccountViewModel @Inject constructor(
     private val cloudSync: CloudSync,
     private val identity: SyncIdentity,
     private val noteRepository: NoteRepository,
+    private val noteActions: NoteActionRepository,
     private val onboarding: OnboardingPreferences,
     session: CryptoSession,
 ) : ViewModel() {
@@ -80,7 +82,7 @@ class AccountViewModel @Inject constructor(
         if (text.isNotBlank()) noteRepository.saveNoteFromContent(text, bibleRefText = null)
     }
 
-    fun delete(note: NoteEntity) = launchReporting(null) { noteRepository.delete(note) }
+    fun delete(note: NoteEntity) = launchReporting(null) { noteActions.delete(note.id) }
 
     private fun launchReporting(success: String?, block: suspend () -> Unit) {
         viewModelScope.launch {

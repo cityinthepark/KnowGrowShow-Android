@@ -51,6 +51,7 @@ import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 fun TodayActivitySection(
     activity: TodayActivity,
     onOpen: (title: String) -> Unit,
+    onOpenTile: (TileKind) -> Unit,
     onUnread: (bookOrd: Int, chapter: Int) -> Unit,
 ) {
     if (activity.isEmpty) return
@@ -62,7 +63,7 @@ fun TodayActivitySection(
                 AssistChip(onClick = { onOpen(review) }, label = { Text("▶ $review") })
             }
         }
-        Tiles(activity.tiles, onOpen)
+        Tiles(activity.tiles, onOpenTile)
         if (activity.chaptersRead.isNotEmpty()) ChaptersCard(activity, onOpen, onUnread)
         if (activity.sermons.isNotEmpty()) SermonsCard(activity.sermons, onOpen)
         if (activity.videos.isNotEmpty()) VideosCard(activity.videos, onOpen)
@@ -71,7 +72,7 @@ fun TodayActivitySection(
 
 /** One tile takes the full row; two or more go two per row (iOS grid). */
 @Composable
-private fun Tiles(tiles: List<TodayActivity.Tile>, onOpen: (String) -> Unit) {
+private fun Tiles(tiles: List<TodayActivity.Tile>, onOpen: (TileKind) -> Unit) {
     if (tiles.isEmpty()) return
     FlowRow(
         maxItemsInEachRow = 2,
@@ -83,7 +84,7 @@ private fun Tiles(tiles: List<TodayActivity.Tile>, onOpen: (String) -> Unit) {
             val style = tileStyle(tile.kind)
             val title = stringResource(style.title)
             Surface(
-                onClick = { onOpen(title) },
+                onClick = { onOpen(tile.kind) },
                 shape = RoundedCornerShape(14.dp),
                 color = style.pair.background,
                 contentColor = style.pair.foreground,

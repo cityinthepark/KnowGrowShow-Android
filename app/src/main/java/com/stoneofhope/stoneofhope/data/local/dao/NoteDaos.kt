@@ -23,6 +23,9 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun getById(id: String): NoteEntity?
 
+    @Query("SELECT * FROM notes WHERE id = :id")
+    fun observeById(id: String): Flow<NoteEntity?>
+
     @Query("SELECT * FROM notes WHERE deletedAt IS NULL AND isDeleted = 0 ORDER BY createdAt DESC")
     fun observeActive(): Flow<List<NoteEntity>>
 
@@ -92,6 +95,16 @@ interface NoteCommentDao {
             "ORDER BY createdAt"
     )
     fun observeActiveForNote(noteId: String): Flow<List<NoteCommentEntity>>
+
+    @Query(
+        "SELECT * FROM noteComments WHERE noteId = :noteId AND deletedAt IS NULL AND isDeleted = 0 " +
+            "ORDER BY createdAt"
+    )
+    suspend fun activeForNote(noteId: String): List<NoteCommentEntity>
+
+    /** Every active comment (note lists match tags, stars and days through them). */
+    @Query("SELECT * FROM noteComments WHERE deletedAt IS NULL AND isDeleted = 0 ORDER BY createdAt")
+    fun observeActive(): Flow<List<NoteCommentEntity>>
 
     @Query(
         "SELECT * FROM noteComments WHERE deletedAt IS NULL AND isDeleted = 0 " +
