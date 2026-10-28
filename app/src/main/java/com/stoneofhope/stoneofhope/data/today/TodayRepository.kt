@@ -9,6 +9,7 @@ import com.stoneofhope.stoneofhope.data.local.entity.YouTubeVideoEntity
 import com.stoneofhope.stoneofhope.data.reading.ReadingModel
 import com.stoneofhope.stoneofhope.data.reading.ReadingRepository
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -83,6 +84,31 @@ class TodayRepository @Inject constructor(
                 videoNotes = m.videoNotes,
                 tags = m.tags,
             )
+        }
+    }
+
+    /** The Calendar tab's marks for [month] (iOS `CalendarSummaryView.loadData`), live. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun observeMonth(month: YearMonth, today: LocalDate, zone: ZoneId): Flow<Map<LocalDate, DayMarks>> {
+        val start = ReadingModel.startOfDay(month.atDay(1), zone)
+        val end = ReadingModel.startOfDay(month.plusMonths(1).atDay(1), zone)
+        val noteDao = db.noteDao()
+        val comments = db.noteCommentDao().observeCreatedBetween(start, end)
+        val commented = comments.flatMapLatest { list ->
+            val ids = list.mapNotNull { it.noteId }.distinct()
+            if (ids.isEmpty()) flowOf(emptyList()) else noteDao.observeByIds(ids)
+        }
+        val pinned = if (YearMonth.from(today) == month) noteDao.observePinned() else flowOf(emptyList())
+        val notes = combine(noteDao.observeCreatedBetween(start, end), comments, commented, pinned) { n, c, cn, p ->
+            NoteInputs(n, c, cn, p)
+        }
+        val sermons = db.sermonDao().observePreachedBetween(
+            month.atDay(1).format(DateTimeFormatter.BASIC_ISO_DATE),
+            month.plusMonths(1).atDay(1).format(DateTimeFormatter.BASIC_ISO_DATE),
+        )
+        val videos = db.youTubeVideoDao().observeCreatedBetween(start, end)
+        return combine(notes, sermons, videos) { n, s, v ->
+            CalendarMonthBuilder.build(month, today, zone, n.created, n.comments, n.commented, n.pinned, s, v)
         }
     }
 }

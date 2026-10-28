@@ -43,6 +43,7 @@ data class AppColors(
     val scriptureInk: Color,
     /** "🙌 Answered" text; system green is too light for small text (note redesign §1.1). */
     val answeredInk: Color,
+    val calendar: CalendarColors,
 ) {
     /** iOS `AppColor.ChipPair` (icon handled by the caller). */
     @Immutable
@@ -83,6 +84,7 @@ data class AppColors(
             noteTypeBibleVerse = Color(0xFFA259FF), noteTypePrayer = Color(0xFF10B981), noteTypeQuickNote = Color(0xFF007AFF),
             noteTypeSermon = Color(0xFFFF9500), noteTypeDefault = Color(0xFF8E8E93),
             scriptureInk = Color(0xFF4F3F96), answeredInk = Color(0xFF1E6B33),
+            calendar = CalendarColors.Light,
         )
 
         val Dark = AppColors(
@@ -97,6 +99,50 @@ data class AppColors(
             noteTypeBibleVerse = Color(0xFFD6B2FF), noteTypePrayer = Color(0xFF34D399), noteTypeQuickNote = Color(0xFF60A5FA),
             noteTypeSermon = Color(0xFFFDBA74), noteTypeDefault = Color(0xFFC7C7CC),
             scriptureInk = Color(0xFFCDBFFF), answeredInk = Color(0xFF7BD88F),
+            calendar = CalendarColors.Dark,
+        )
+    }
+}
+
+/** iOS `Color.colorCalendar*` (Utils/Extensions/Color.swift): the calendar's day bars and day styles. */
+@Immutable
+data class CalendarColors(
+    val quickNoteBar: Color,
+    val studyNoteBar: Color,
+    val starredBar: Color,
+    val prayerBar: Color,
+    val answeredBar: Color,
+    val pinnedBar: Color,
+    val imageBar: Color,
+    val bibleBar: Color,
+    val selectedDay: Color,
+    val todayRing: Color,
+    val todayRingFill: Color,
+    val todayButton: Color,
+    val todayButtonText: Color,
+    val gridBackground: Color,
+) {
+    companion object {
+        private val SkyBlueText = Color(0xFF3378A1)
+        private val SkyBlueLight = Color(0xFFDBF2FA)
+        private val NightMutedBlue = Color(0xFF7DADE0)
+        private val ButterBar = Color(0xFFEDD487)
+        private val PinkBar = Color(0xFFFCB5D4)
+
+        val Light = CalendarColors(
+            quickNoteBar = SkyBlueText.copy(alpha = 0.55f), studyNoteBar = Color(0xFFFF9500).copy(alpha = 0.65f),
+            starredBar = ButterBar, prayerBar = Color(0xFFF5EED8), answeredBar = Color(0xFF73C785),
+            pinnedBar = Color(0xFF5856D6).copy(alpha = 0.55f), imageBar = Color(0xFFDBE8FF), bibleBar = PinkBar,
+            selectedDay = SkyBlueText, todayRing = SkyBlueText.copy(alpha = 0.55f), todayRingFill = SkyBlueLight.copy(alpha = 0.35f),
+            todayButton = SkyBlueLight, todayButtonText = SkyBlueText, gridBackground = Color(0xFFF1F3F1),
+        )
+
+        val Dark = CalendarColors(
+            quickNoteBar = NightMutedBlue, studyNoteBar = Color(0xFFFF9F0A).copy(alpha = 0.55f),
+            starredBar = ButterBar, prayerBar = NightMutedBlue, answeredBar = Color(0xFF59A66B),
+            pinnedBar = Color(0xFF5E5CE6).copy(alpha = 0.72f), imageBar = Color(0xFF5C4A69), bibleBar = PinkBar,
+            selectedDay = NightMutedBlue, todayRing = NightMutedBlue, todayRingFill = Color(0xFF3B4A5C).copy(alpha = 0.35f),
+            todayButton = Color(0xFF3D3D42), todayButtonText = Color(0xFFF2F5F5), gridBackground = Color(0xFF2E2E33),
         )
     }
 }

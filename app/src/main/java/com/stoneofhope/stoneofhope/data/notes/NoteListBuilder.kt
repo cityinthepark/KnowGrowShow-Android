@@ -90,6 +90,35 @@ data class NoteListData(
     val activeVideoIds: Set<String>,
 )
 
+/**
+ * The type and tag menus' rules, shared by the note list and Moments. iOS runs Moments through
+ * `applyMomentsTypeFilter`, whose rules differ slightly (IOS_ISSUES I5); Android uses these for both.
+ */
+class NoteFilterRules(private val data: NoteListData) {
+    private val starredByComment = data.comments.filter { it.starLevel > 0 }.mapNotNull { it.noteId }.toSet()
+    private val commentTagNames = data.comments.groupBy { it.noteId }
+        .mapValues { (_, cs) -> cs.flatMap { c -> c.tagIds.mapNotNull(data.tagNamesById::get) }.toSet() }
+
+    fun typeMatches(n: NoteEntity, filter: NoteFilter): Boolean = when (filter) {
+        NoteFilter.All -> true
+        NoteFilter.Starred -> n.starLevel > 0 || n.id in starredByComment
+        NoteFilter.Sermon -> n.sermonId != null && n.sermonId in data.activeSermonIds
+        NoteFilter.YouTubeVideo -> (!n.youtubeID.isNullOrEmpty() && n.youtubeID in data.activeVideoIds) || n.noteType == NoteType.YouTubeVideo
+        NoteFilter.AnsweredPrayer -> n.isAnswered == true
+        NoteFilter.Pinned -> n.isPinned == true
+        NoteFilter.Prayer -> n.noteType == NoteType.Prayer
+        NoteFilter.QuickNote -> n.noteType == NoteType.Note && !n.isChapterNote && !n.isVerseAnchoredQuickNote
+        NoteFilter.StudyNote -> n.noteType == NoteType.StudyNote
+        // "Bible" folds in chapter-anchored quick notes too.
+        NoteFilter.Bible -> n.noteType == NoteType.BibleVerse || n.isChapterNote
+        NoteFilter.Image -> n.noteType == NoteType.Image
+    }
+
+    /** The note's own tags or any of its comments' tags. */
+    fun tagMatches(n: NoteEntity, tagName: String?): Boolean = tagName == null ||
+        n.tagIds.any { data.tagNamesById[it] == tagName } || tagName in commentTagNames[n.id].orEmpty()
+}
+
 /** Port of iOS `NoteCreationView.filterDisplayNotes` + `noteListDerived` + `NoteListViewModel.updateDisplayNotes`. */
 object NoteListBuilder {
 
@@ -105,30 +134,12 @@ object NoteListBuilder {
         val includesPinnedToday = filter == NoteFilter.All && day == today
 
         val topLevel = data.notes.filter { !NoteRelations.isHiddenFromTopLevel(it, data.notes, zone) }
-        val starredByComment = data.comments.filter { it.starLevel > 0 }.mapNotNull { it.noteId }.toSet()
         val commentedThatDay = day?.let { d ->
             data.comments.filter { it.createdAt.atZone(zone).toLocalDate() == d }.mapNotNull { it.noteId }.toSet()
         }
-        val commentTagNames = data.comments.groupBy { it.noteId }
-            .mapValues { (_, cs) -> cs.flatMap { c -> c.tagIds.mapNotNull(data.tagNamesById::get) }.toSet() }
-
-        fun typeMatches(n: NoteEntity): Boolean = when (filter) {
-            NoteFilter.All -> true
-            NoteFilter.Starred -> n.starLevel > 0 || n.id in starredByComment
-            NoteFilter.Sermon -> n.sermonId != null && n.sermonId in data.activeSermonIds
-            NoteFilter.YouTubeVideo -> (!n.youtubeID.isNullOrEmpty() && n.youtubeID in data.activeVideoIds) || n.noteType == NoteType.YouTubeVideo
-            NoteFilter.AnsweredPrayer -> n.isAnswered == true
-            NoteFilter.Pinned -> n.isPinned == true
-            NoteFilter.Prayer -> n.noteType == NoteType.Prayer
-            NoteFilter.QuickNote -> n.noteType == NoteType.Note && !n.isChapterNote && !n.isVerseAnchoredQuickNote
-            NoteFilter.StudyNote -> n.noteType == NoteType.StudyNote
-            // "Bible" folds in chapter-anchored quick notes too.
-            NoteFilter.Bible -> n.noteType == NoteType.BibleVerse || n.isChapterNote
-            NoteFilter.Image -> n.noteType == NoteType.Image
-        }
-
-        fun tagMatches(n: NoteEntity): Boolean = tagName == null ||
-            n.tagIds.any { data.tagNamesById[it] == tagName } || tagName in commentTagNames[n.id].orEmpty()
+        val rules = NoteFilterRules(data)
+        fun typeMatches(n: NoteEntity) = rules.typeMatches(n, filter)
+        fun tagMatches(n: NoteEntity) = rules.tagMatches(n, tagName)
 
         fun dayMatches(n: NoteEntity): Boolean {
             if (filter == NoteFilter.Pinned || filter == NoteFilter.AnsweredPrayer || day == null) return true

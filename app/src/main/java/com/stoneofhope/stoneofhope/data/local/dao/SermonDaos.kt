@@ -54,6 +54,10 @@ interface SermonDao {
     @Query("SELECT * FROM sermons WHERE preachedOn = :dayKey AND deletedAt IS NULL")
     fun observePreachedOn(dayKey: String): Flow<List<SermonEntity>>
 
+    /** Day keys in [startKey, endKeyExclusive) — `yyyyMMdd` sorts like the dates (iOS `CalendarDayKey.queryRange`). */
+    @Query("SELECT * FROM sermons WHERE preachedOn >= :startKey AND preachedOn < :endKeyExclusive AND deletedAt IS NULL")
+    fun observePreachedBetween(startKey: String, endKeyExclusive: String): Flow<List<SermonEntity>>
+
     /**
      * iOS `fetchSermonsByBibleChapter` also requires `ANY chapters == c`; `chapters` is a JSON column
      * here, so callers filter by chapter.

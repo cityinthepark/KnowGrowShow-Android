@@ -28,7 +28,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.notes.NoteFilter
+import com.stoneofhope.stoneofhope.ui.calendar.CalendarScreen
 import com.stoneofhope.stoneofhope.ui.chapter.ChapterTab
+import com.stoneofhope.stoneofhope.ui.moments.MomentsScreen
 import java.time.LocalDate
 import com.stoneofhope.stoneofhope.ui.today.TodayScreen
 
@@ -50,6 +52,7 @@ fun MainScreen(
     onOpenChapter: (bookOrd: Int, chapter: Int, tab: ChapterTab) -> Unit,
     onOpenNotes: (NoteFilter, LocalDate) -> Unit,
     onOpenReview: (LocalDate) -> Unit,
+    onOpenNote: (noteId: String) -> Unit,
 ) {
     var selected by rememberSaveable { mutableStateOf(MainTab.Today) }
 
@@ -83,8 +86,13 @@ fun MainScreen(
                     onOpenReview = onOpenReview,
                 )
                 MainTab.Series -> PlaceholderTab(MainTab.Series)
-                MainTab.Moments -> PlaceholderTab(MainTab.Moments)
-                MainTab.Calendar -> PlaceholderTab(MainTab.Calendar)
+                MainTab.Moments -> MomentsScreen(onOpenNote = onOpenNote)
+                MainTab.Calendar -> CalendarScreen(
+                    onOpen = onOpenPlaceholder,
+                    onOpenChapter = onOpenChapter,
+                    onOpenNotes = onOpenNotes,
+                    onOpenReview = onOpenReview,
+                )
                 MainTab.Settings -> SettingsTab(onOpenAccount)
             }
         }

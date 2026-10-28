@@ -230,4 +230,27 @@
     <string name="add_prayer_hint">寫禱告…</string>
     <string name="action_add_reflection">寫感想</string>
     <string name="reflection_to">寫感想：</string>
+    <!-- Moments and Calendar tabs (docs/MOMENTS_CALENDAR_PLAN.md) -->
+    <string name="moments_last_30_days">最近30天</string>
+    <string name="moments_last_7_days">最近7天</string>
+    <string name="moments_last_3_months">最近3個月</string>
+    <string name="moments_last_12_months">最近12個月</string>
+    <string name="moments_view_earlier">查看更早的記錄</string>
+    <string name="moments_empty">還沒有筆記。</string>
+    <string name="date_range_title">日期範圍</string>
+    <string name="date_range_custom">自訂區間</string>
+    <string name="date_range_done">完成</string>
+    <string name="calendar_summary_for">%1$s 摘要</string>
+    <string name="calendar_day_empty">這一天沒有記錄。</string>
+    <string name="calendar_previous_month">上個月</string>
+    <string name="calendar_next_month">下個月</string>
+    <plurals name="day_chapters_subtitle">
+        <item quantity="other">閱讀 %d 章</item>
+    </plurals>
+    <plurals name="day_sermons_subtitle">
+        <item quantity="other">%d 篇講道</item>
+    </plurals>
+    <plurals name="day_videos_subtitle">
+        <item quantity="other">%d 個影片</item>
+    </plurals>
 </resources>

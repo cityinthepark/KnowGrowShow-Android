@@ -47,7 +47,11 @@ import com.stoneofhope.stoneofhope.ui.chapter.ChapterTab
 import com.stoneofhope.stoneofhope.ui.theme.AppColors
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 
-/** iOS `TodayActivityView`: highlight tiles, then expandable Chapter / Sermon / Video cards. Hidden when empty. */
+/**
+ * iOS `TodayActivityView`: highlight tiles, then expandable Chapter / Sermon / Video cards. Hidden when empty.
+ * The Calendar tab draws its own header ([showsHeader] false); on a day other than today ([isToday] false)
+ * there is no "Unread" and the cards don't say "today" (iOS does: IOS_ISSUES I8).
+ */
 @Composable
 fun TodayActivitySection(
     activity: TodayActivity,
@@ -56,19 +60,23 @@ fun TodayActivitySection(
     onOpenTile: (TileKind) -> Unit,
     onReview: () -> Unit,
     onUnread: (bookOrd: Int, chapter: Int) -> Unit,
+    showsHeader: Boolean = true,
+    isToday: Boolean = true,
 ) {
     if (activity.isEmpty) return
     Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.today_activity), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            if (activity.showReview) {
-                AssistChip(onClick = onReview, label = { Text("▶ " + stringResource(R.string.today_review)) }, modifier = Modifier.testTag("todayReview"))
+        if (showsHeader) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.today_activity), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                if (activity.showReview) {
+                    AssistChip(onClick = onReview, label = { Text("▶ " + stringResource(R.string.today_review)) }, modifier = Modifier.testTag("todayReview"))
+                }
             }
         }
         Tiles(activity.tiles, onOpenTile)
-        if (activity.chaptersRead.isNotEmpty()) ChaptersCard(activity, onOpenChapter, onUnread)
-        if (activity.sermons.isNotEmpty()) SermonsCard(activity.sermons, onOpen)
-        if (activity.videos.isNotEmpty()) VideosCard(activity.videos, onOpen)
+        if (activity.chaptersRead.isNotEmpty()) ChaptersCard(activity, isToday, onOpenChapter, onUnread.takeIf { isToday })
+        if (activity.sermons.isNotEmpty()) SermonsCard(activity.sermons, isToday, onOpen)
+        if (activity.videos.isNotEmpty()) VideosCard(activity.videos, isToday, onOpen)
     }
 }
 
@@ -156,12 +164,12 @@ private fun ExpandableCard(
 }
 
 @Composable
-private fun ChaptersCard(activity: TodayActivity, onOpenChapter: (Int, Int, ChapterTab) -> Unit, onUnread: (Int, Int) -> Unit) {
+private fun ChaptersCard(activity: TodayActivity, isToday: Boolean, onOpenChapter: (Int, Int, ChapterTab) -> Unit, onUnread: ((Int, Int) -> Unit)?) {
     val logs = activity.chaptersRead
     ExpandableCard(
         id = "chaptersRead",
         title = stringResource(R.string.card_chapter_read),
-        subtitle = pluralStringResource(R.plurals.today_chapters_subtitle, logs.size, logs.size),
+        subtitle = pluralStringResource(if (isToday) R.plurals.today_chapters_subtitle else R.plurals.day_chapters_subtitle, logs.size, logs.size),
         count = logs.size,
         pair = AppTheme.colors.chapterReadTile,
         icon = Icons.AutoMirrored.Outlined.MenuBook,
@@ -170,7 +178,8 @@ private fun ChaptersCard(activity: TodayActivity, onOpenChapter: (Int, Int, Chap
             val name = chapterTitle(log.bookOrd, log.chapter)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                TextButton(onClick = { onUnread(log.bookOrd, log.chapter) }) { Text(stringResource(R.string.action_unread)) }
+                // iOS offers "Unread" on today's rows only.
+                if (onUnread != null) TextButton(onClick = { onUnread(log.bookOrd, log.chapter) }) { Text(stringResource(R.string.action_unread)) }
                 TextButton(onClick = { onOpenChapter(log.bookOrd, log.chapter, ChapterTab.Sermons) }) { Text(stringResource(R.string.card_sermons)) }
                 TextButton(onClick = { onOpenChapter(log.bookOrd, log.chapter, ChapterTab.Notes) }) { Text(stringResource(R.string.action_notes)) }
             }
@@ -179,11 +188,11 @@ private fun ChaptersCard(activity: TodayActivity, onOpenChapter: (Int, Int, Chap
 }
 
 @Composable
-private fun SermonsCard(rows: List<TodayActivity.SermonRow>, onOpen: (String) -> Unit) {
+private fun SermonsCard(rows: List<TodayActivity.SermonRow>, isToday: Boolean, onOpen: (String) -> Unit) {
     ExpandableCard(
         id = "sermons",
         title = stringResource(R.string.card_sermons),
-        subtitle = pluralStringResource(R.plurals.today_sermons_subtitle, rows.size, rows.size),
+        subtitle = pluralStringResource(if (isToday) R.plurals.today_sermons_subtitle else R.plurals.day_sermons_subtitle, rows.size, rows.size),
         count = rows.size,
         pair = AppTheme.colors.sermonChip,
         icon = Icons.AutoMirrored.Outlined.MenuBook,
@@ -198,7 +207,7 @@ private fun SermonsCard(rows: List<TodayActivity.SermonRow>, onOpen: (String) ->
 
 /** One video: a plain card that opens it. Several: an expandable list (iOS). */
 @Composable
-private fun VideosCard(rows: List<TodayActivity.VideoRow>, onOpen: (String) -> Unit) {
+private fun VideosCard(rows: List<TodayActivity.VideoRow>, isToday: Boolean, onOpen: (String) -> Unit) {
     val colors = AppTheme.colors
     if (rows.size == 1) {
         val row = rows.single()
@@ -221,7 +230,7 @@ private fun VideosCard(rows: List<TodayActivity.VideoRow>, onOpen: (String) -> U
     ExpandableCard(
         id = "videos",
         title = stringResource(R.string.card_videos),
-        subtitle = pluralStringResource(R.plurals.today_videos_subtitle, rows.size, rows.size),
+        subtitle = pluralStringResource(if (isToday) R.plurals.today_videos_subtitle else R.plurals.day_videos_subtitle, rows.size, rows.size),
         count = rows.size,
         pair = colors.videoChip,
         icon = Icons.Outlined.PlayCircle,

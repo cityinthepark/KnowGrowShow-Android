@@ -101,6 +101,23 @@
 | H8 🟡 | `ChapterNoteDetailsView`、锚点的 `NoteDetailActionsMenuButton`、各语言 `Localizable.strings` | 经文锚点下面的内容叫"评论"："Comments (N)"、"No comments or prayers yet."、分段"Comment / Prayer"、"⋯"里的"Add Comment"；zh-Hans 的"Delete Comment?"译成"删除注释？"，zh-Hant 写成"刪除注释？"（混了简体字） | 用词与笔记详情不一致 | 锚点下一律叫"感想"：标题、空状态、分段、"⋯"里的"写感想"（笔记列表和详情的"⋯"也一起改了） | 不用 |
 | H9 🟡 | `SermonRow` | 没有简介时也显示展开箭头；"Listen / Watch / Read"没有翻译 | 小问题 | 有简介才显示箭头；三种语言都翻译。T3 之前"看 / 听 / 读"用系统打开链接 | T3 时再对一次 |
 
+## I. Moments 与 Calendar（M1）
+
+方案与验证见 [MOMENTS_CALENDAR_PLAN.md](MOMENTS_CALENDAR_PLAN.md)。这两个 tab 只读，以下都不影响写入格式。
+
+| # | iOS 位置 | 问题 | 影响 | 安卓做法 | iOS 修后安卓要改吗 |
+| --- | --- | --- | --- | --- | --- |
+| I1 🟡 | `CalendarSummaryView.loadData` | 彩条"笔记"把经文下面的感想（`.note` 带节号）也算进去，但下面的汇总（`TodayActivityBuilder`）不算 | 月历上有笔记彩条，点开那天却没有"笔记"方块 | 彩条直接用当天汇总的结果算，两者一定一致 | 不用 |
+| I2 🟡 | `CustomCalendarView` | 未来的日子只是变淡，仍能点选 | 选到未来日期，汇总是空的 | 未来的日子不能点 | 不用 |
+| I3 🟡 | `MomentsDateRangeSheet.presets` | "This Week"实际是最近 7 天，"This Year"实际是最近 365 天 | 名字与内容不符 | 范围不变，改名为"最近 7 天 / 最近 3 个月 / 最近 12 个月"（2026-10-27 决定） | 若 iOS 改成真正的本周 / 今年，安卓跟着改 |
+| I4 🟡 | `MomentsTabView`（"最近 30 天"）、`CalendarSummaryView` | 范围和"今天"在设置 / 出现时算好，跨过午夜不更新（同 D7） | 半夜开着 App，会少显示当天、月历停在昨天 | 跨日、回到前台时刷新；停在今天的月历跟着到新的一天 | 不用 |
+| I5 🟡 | `applyMomentsTypeFilter` 与 `NoteCreationView` 的筛选 | 两处规则略有不同：Moments 的"笔记"包含没有锚点的经文感想，"讲道 / 视频"不检查讲道或视频是否已删除 | 同一个筛选在两个页面结果不同 | 两处用同一套（`NoteFilterRules`，与笔记列表相同） | 不用 |
+| I6 🟡 | `MomentsTabView.recomputeRows` | 因为范围内有评论而被列出的旧笔记，按它的**创建日期**分组 | 例如 3 月写、10 月评论的笔记排在最后，日期标题在范围之外 | 放在范围内它最近一次评论的那一天（2026-10-27 决定），与 Today 笔记列表一致 | 若 iOS 也这样改，不用 |
+| I7 🟡 | `Views/TabViews/DaySummaryView.swift` | 整个文件没有被使用 | 无用代码 | 不移植 | 不用 |
+| I8 🟡 | `TodayActivityView` 用在 Calendar 时 | 卡片副标题固定写"今日"："今日阅读 3 章"、"今日 1 篇讲道"，在 10 月 18 日的汇总里也这么写 | 用词错误 | 不是今天时写"阅读 3 章"、"1 篇讲道"（"未读"按钮与 iOS 相同，只在今天出现） | 不用 |
+| I9 🟡 | 各语言 `Localizable.strings` | 缺"No notes yet."（Moments 空状态），中文界面显示英文 | 未翻译 | 三种语言都有 | 不用 |
+| I10 🟡 | `CalendarSummaryView.onAppear` | 每次出现都把月份重置为本月，但选中的日期不变 | 回到 Calendar 时月历和下面的汇总可能不是同一个月 | 月份和选中日期一起保留 | 不用 |
+
 ---
 
 ## 安卓有意不同、但不算 iOS bug 的地方

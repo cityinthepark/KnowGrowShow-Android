@@ -253,7 +253,7 @@ private fun androidx.compose.foundation.layout.RowScope.QuickAddButton(
 }
 
 /** Today tile → its note list filter (iOS `TodayActivityView` tile actions). */
-private val TileKind.noteFilter: NoteFilter
+internal val TileKind.noteFilter: NoteFilter
     get() = when (this) {
         TileKind.Pinned -> NoteFilter.Pinned
         TileKind.Starred -> NoteFilter.Starred

@@ -246,4 +246,30 @@
     <string name="add_prayer_hint">Add a prayer…</string>
     <string name="action_add_reflection">Add Reflection</string>
     <string name="reflection_to">Add a Reflection to:</string>
+    <!-- Moments and Calendar tabs (docs/MOMENTS_CALENDAR_PLAN.md) -->
+    <string name="moments_last_30_days">Recent 30 Days</string>
+    <string name="moments_last_7_days">Last 7 Days</string>
+    <string name="moments_last_3_months">Last 3 Months</string>
+    <string name="moments_last_12_months">Last 12 Months</string>
+    <string name="moments_view_earlier">View Earlier Notes</string>
+    <string name="moments_empty">No notes yet.</string>
+    <string name="date_range_title">Date Range</string>
+    <string name="date_range_custom">Custom Range</string>
+    <string name="date_range_done">Done</string>
+    <string name="calendar_summary_for">Summary for %1$s</string>
+    <string name="calendar_day_empty">Nothing on this day.</string>
+    <string name="calendar_previous_month">Previous month</string>
+    <string name="calendar_next_month">Next month</string>
+    <plurals name="day_chapters_subtitle">
+        <item quantity="one">%d chapter</item>
+        <item quantity="other">%d chapters</item>
+    </plurals>
+    <plurals name="day_sermons_subtitle">
+        <item quantity="one">%d sermon</item>
+        <item quantity="other">%d sermons</item>
+    </plurals>
+    <plurals name="day_videos_subtitle">
+        <item quantity="one">%d video</item>
+        <item quantity="other">%d videos</item>
+    </plurals>
 </resources>

@@ -98,6 +98,7 @@ fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     onOpenChapter = { bookOrd, chapter, tab -> navController.navigate(Routes.chapter(bookOrd, chapter, tab)) },
                     onOpenNotes = { filter, day -> navController.navigate(Routes.noteList(filter, day)) },
                     onOpenReview = { day -> navController.navigate(Routes.notesReview(day)) },
+                    onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
                 )
             }
             composable(
