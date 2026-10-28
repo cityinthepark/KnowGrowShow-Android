@@ -70,7 +70,7 @@ import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 @Composable
 fun ReadingLogScreen(
     onBack: () -> Unit,
-    onOpenChapter: (title: String) -> Unit,
+    onOpenChapter: (bookOrd: Int, chapter: Int) -> Unit,
     viewModel: ReadingLogViewModel = hiltViewModel(),
 ) {
     val books by viewModel.books.collectAsStateWithLifecycle()
@@ -108,7 +108,7 @@ fun ReadingLogScreen(
                     onToggleExpanded = { expanded = if (expanded == book.ord) null else book.ord },
                     onRestart = { viewModel.restart(book.ord) },
                     onToggleChapter = { chapter -> viewModel.toggleChapterRead(book.ord, chapter) },
-                    onOpenChapter = { chapter -> onOpenChapter("${book.fullName()} $chapter") },
+                    onOpenChapter = { chapter -> onOpenChapter(book.ord, chapter) },
                 )
             }
         }

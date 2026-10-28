@@ -20,6 +20,7 @@ import com.stoneofhope.stoneofhope.data.notes.NoteListBuilder
 import com.stoneofhope.stoneofhope.data.notes.NoteListData
 import com.stoneofhope.stoneofhope.data.notes.NoteRelations
 import com.stoneofhope.stoneofhope.data.notes.ResolvedVerse
+import com.stoneofhope.stoneofhope.data.notes.ThreadItem
 import com.stoneofhope.stoneofhope.data.notes.VerseDisplay
 import com.stoneofhope.stoneofhope.data.notes.VerseMark
 import com.stoneofhope.stoneofhope.data.notes.VerseMarks
@@ -283,6 +284,25 @@ internal object NoteActionDispatcher {
             is NoteAction.Comment ->
                 if (action.answered) actions.addAnsweredComment(note.id, action.text.ifEmpty { null })
                 else actions.addComment(note.id, action.text, zone)
+        }
+    }
+
+    /**
+     * A thread entry's actions (design C4). A reflection is a note, so it takes the note actions; a
+     * comment takes iOS `TimelineCommentLine`'s edit / star / tags / delete.
+     */
+    suspend fun dispatchThread(actions: NoteActionRepository, db: AppDatabase, item: ThreadItem, action: NoteAction, zone: ZoneId) {
+        if (item.isReflection) {
+            db.noteDao().getById(item.id)?.let { dispatch(actions, it, action, unmarkReferenceDay = null, zone = zone) }
+            return
+        }
+        when (action) {
+            is NoteAction.Edit -> actions.updateCommentContent(item.id, action.text)
+            is NoteAction.Star -> actions.setCommentStarLevel(item.id, action.level)
+            is NoteAction.AddTag -> actions.addCommentTag(item.id, action.name)
+            is NoteAction.RemoveTag -> actions.removeCommentTag(item.id, action.tagId)
+            NoteAction.Delete -> actions.deleteComment(item.id)
+            else -> Unit
         }
     }
 }

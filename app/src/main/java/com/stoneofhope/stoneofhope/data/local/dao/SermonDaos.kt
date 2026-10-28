@@ -46,13 +46,20 @@ interface SermonDao {
     @Query("SELECT * FROM sermons WHERE deletedAt IS NULL ORDER BY preachedOn DESC, createdAt DESC")
     fun observeActive(): Flow<List<SermonEntity>>
 
-    /** iOS `getSermons(on:)`: `preachedOn` day key (`yyyyMMdd`), church imports included. */
     /** iOS `Note.hasLinkedSermon` resolves the FK against live sermons. */
     @Query("SELECT id FROM sermons WHERE deletedAt IS NULL")
     fun observeActiveIds(): Flow<List<String>>
 
+    /** iOS `getSermons(on:)`: `preachedOn` day key (`yyyyMMdd`), church imports included. */
     @Query("SELECT * FROM sermons WHERE preachedOn = :dayKey AND deletedAt IS NULL")
     fun observePreachedOn(dayKey: String): Flow<List<SermonEntity>>
+
+    /**
+     * iOS `fetchSermonsByBibleChapter` also requires `ANY chapters == c`; `chapters` is a JSON column
+     * here, so callers filter by chapter.
+     */
+    @Query("SELECT * FROM sermons WHERE bookOrd = :bookOrd AND deletedAt IS NULL")
+    fun observeActiveForBook(bookOrd: Int): Flow<List<SermonEntity>>
 
     /**
      * Members of a series in the order pushed as `sermonSeries.sermonIds`.

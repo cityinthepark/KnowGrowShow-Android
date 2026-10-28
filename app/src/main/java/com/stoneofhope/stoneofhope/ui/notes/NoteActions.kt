@@ -146,7 +146,9 @@ fun NoteActionsHost(
         Sub.Star -> StarDialog(onDismiss = state::close) { state.close(); act(NoteAction.Star(it)) }
         Sub.Tags -> TagPickerSheet(allTags, note.tagIds.toSet(), onAdd = { act(NoteAction.AddTag(it)) }, onRemove = { act(NoteAction.RemoveTag(it)) }, onDismiss = state::close)
         Sub.Edit -> EditNoteSheet(note.content, onDismiss = state::close) { state.close(); act(NoteAction.Edit(it)) }
-        Sub.Comment -> CommentSheet(t.displayContent, canMarkAnswered = false, onDismiss = state::close) { text, answered ->
+        Sub.Comment -> CommentSheet(
+            t.displayContent, canMarkAnswered = false, onDismiss = state::close, isReflection = note.noteType == NoteType.BibleVerse,
+        ) { text, answered ->
             state.close(); act(NoteAction.Comment(text, answered))
         }
         Sub.Delete -> AlertDialog(
@@ -228,7 +230,9 @@ private fun ActionsSheet(t: NoteActionTarget, onDismiss: () -> Unit, onSub: (Sub
                     Column {
                         ListRow(Icons.Outlined.Sell, stringResource(R.string.action_tags), tagsSummary(t.tagNames), Modifier.testTag("sheetTags")) { onSub(Sub.Tags) }
                         HorizontalDivider(Modifier.padding(start = 56.dp), color = c.neutral20)
-                        ListRow(Icons.Outlined.ChatBubbleOutline, stringResource(R.string.action_add_comment), null, Modifier.testTag("sheetComment"), onClick = onAddComment)
+                        // Under a verse anchor this writes a reflection (and says so).
+                        val addLabel = if (note.noteType == NoteType.BibleVerse) R.string.action_add_reflection else R.string.action_add_comment
+                        ListRow(Icons.Outlined.ChatBubbleOutline, stringResource(addLabel), null, Modifier.testTag("sheetComment"), onClick = onAddComment)
                     }
                 }
                 Surface(onClick = { onSub(Sub.Delete) }, shape = RoundedCornerShape(18.dp), color = c.red20, modifier = Modifier.fillMaxWidth().testTag("noteDelete")) {
@@ -322,14 +326,20 @@ fun StarDialog(onDismiss: () -> Unit, onSelect: (Int) -> Unit) {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommentSheet(preview: String, canMarkAnswered: Boolean, onDismiss: () -> Unit, onSave: (text: String, answered: Boolean) -> Unit) {
+fun CommentSheet(
+    preview: String,
+    canMarkAnswered: Boolean,
+    onDismiss: () -> Unit,
+    isReflection: Boolean = false,
+    onSave: (text: String, answered: Boolean) -> Unit,
+) {
     var text by rememberSaveable { mutableStateOf("") }
     var answered by rememberSaveable { mutableStateOf(false) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 16.dp).imePadding(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.Top) {
                 Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.comment_to), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(if (isReflection) R.string.reflection_to else R.string.comment_to), style = MaterialTheme.typography.titleMedium)
                     Text(preview, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 if (canMarkAnswered) {

@@ -18,6 +18,7 @@ production. Known example: tombstones on the wire are `{isDeleted: true, updated
 | `data.remote.wire` | SDK-free Firestore mapping: `WireEncoder` (push), `WireDecoder` (pull), `NoteBodyCodec` |
 | `data.remote.firestore` | `FirestoreWireAdapter` — the only code that touches Firestore SDK types |
 | `data.bible` | Book table (generated from iOS), name matching, `BibleReferenceValidator` (field), `BibleReferenceParser` (note-body shortcut, `vN`), `BibleFormatter`, `BibleVersions`, `BibleAnchor` |
+| `data.chapter` | Chapter page: `ChapterNotesBuilder` (chapter notes and verse groups, iOS `ChapterNoteViewModel` / `ChapterNoteDetailsView`), `ChapterSermons` |
 | `data.bible.text` | `BibleTextDatabase` — read-only bundled KJV/CUV (Room `createFromAsset`), `BibleVerseReader` (iOS `BibleVerseRangeReader`), `OnDemandVerseSource` (NIV/NKJV; not implemented) |
 
 Room is the only store the UI reads. Firestore is a transport; local-only use never touches it.
@@ -79,6 +80,9 @@ peer-gated pulls) against real Room and an in-memory Firestore.
 | `vN` shortcut past the chapter end | reference dropped, `vN` text lost | body kept as typed | IOS_ISSUES F2 |
 | Edit note text | re-runs the old detector; "John 3:16 …" turns the note into a verse anchor | text only | IOS_ISSUES G1 |
 | Edit comment text to blank | saved | ignored | IOS_ISSUES G10 |
+| Chapter page verse details | one anchor of the verse (`.first`) | every anchor of the verse (all days, versions) | IOS_ISSUES H1 |
+| Chapter-page note whose field names another chapter | anchored to the page's chapter | anchored to the field's chapter | IOS_ISSUES H5 |
+| Reflection written on a chapter verse | only once an anchor exists; on that anchor's version | always; today's anchor in the primary version | IOS_ISSUES H1 |
 
 Anything else that differs is a bug: the encoder tests list the exact iOS field set per collection.
 

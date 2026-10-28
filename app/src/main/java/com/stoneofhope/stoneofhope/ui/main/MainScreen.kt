@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.notes.NoteFilter
+import com.stoneofhope.stoneofhope.ui.chapter.ChapterTab
 import java.time.LocalDate
 import com.stoneofhope.stoneofhope.ui.today.TodayScreen
 
@@ -46,6 +47,7 @@ fun MainScreen(
     onOpenAccount: () -> Unit,
     onOpenPlaceholder: (title: String) -> Unit,
     onOpenReadingLog: (bookOrd: Int) -> Unit,
+    onOpenChapter: (bookOrd: Int, chapter: Int, tab: ChapterTab) -> Unit,
     onOpenNotes: (NoteFilter, LocalDate) -> Unit,
     onOpenReview: (LocalDate) -> Unit,
 ) {
@@ -76,6 +78,7 @@ fun MainScreen(
                 MainTab.Today -> TodayScreen(
                     onOpen = onOpenPlaceholder,
                     onOpenReadingLog = onOpenReadingLog,
+                    onOpenChapter = onOpenChapter,
                     onOpenNotes = onOpenNotes,
                     onOpenReview = onOpenReview,
                 )

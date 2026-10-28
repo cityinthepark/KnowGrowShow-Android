@@ -109,25 +109,9 @@ class NoteDetailsViewModel @Inject constructor(
         viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, unmarkReferenceDay = null, zone = zone) }
     }
 
-    /**
-     * Comment actions (design C4). A reflection is a note, so it takes the note actions; a comment
-     * takes iOS `TimelineCommentLine`'s edit / star / tags / delete.
-     */
+    /** Comment / reflection actions (design C4). */
     fun onThreadAction(item: ThreadItem, action: NoteAction) {
-        viewModelScope.launch {
-            if (item.isReflection) {
-                db.noteDao().getById(item.id)?.let { NoteActionDispatcher.dispatch(actions, it, action, unmarkReferenceDay = null, zone = zone) }
-                return@launch
-            }
-            when (action) {
-                is NoteAction.Edit -> actions.updateCommentContent(item.id, action.text)
-                is NoteAction.Star -> actions.setCommentStarLevel(item.id, action.level)
-                is NoteAction.AddTag -> actions.addCommentTag(item.id, action.name)
-                is NoteAction.RemoveTag -> actions.removeCommentTag(item.id, action.tagId)
-                NoteAction.Delete -> actions.deleteComment(item.id)
-                else -> Unit
-            }
-        }
+        viewModelScope.launch { NoteActionDispatcher.dispatchThread(actions, db, item, action, zone) }
     }
 
     companion object {

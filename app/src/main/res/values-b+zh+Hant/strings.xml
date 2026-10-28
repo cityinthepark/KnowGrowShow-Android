@@ -207,4 +207,27 @@
     <plurals name="show_all_verses">
         <item quantity="other">顯示全部 %d 節</item>
     </plurals>
+    <!-- Chapter page (docs/CHAPTER_PLAN.md) -->
+    <string name="chapter_tab_sermons">章節講道</string>
+    <string name="chapter_tab_notes">章節筆記</string>
+    <string name="chapter_note_header">章節筆記</string>
+    <string name="chapter_no_sermons">這一章還沒有講道。</string>
+    <string name="chapter_no_notes">這一章還沒有筆記。</string>
+    <string name="chapter_no_notes_hint">點 ＋ 寫一則。以「v3」開頭，就記在第 3 節。</string>
+    <string name="chapter_add_note">新增章節筆記</string>
+    <string name="sermon_date_unknown">日期不詳</string>
+    <string name="sermon_listen">收聽</string>
+    <string name="sermon_watch">觀看</string>
+    <string name="sermon_read">閱讀</string>
+    <string name="sermon_media">收聽、觀看或閱讀</string>
+    <string name="sermon_show_intro">顯示簡介</string>
+    <string name="sermon_hide_intro">收起簡介</string>
+    <string name="link_open_failed">無法開啟這個連結。</string>
+    <string name="verse_page_empty">還沒有感想或禱告。</string>
+    <string name="no_reflections">還沒有感想。</string>
+    <string name="prayers_title">禱告</string>
+    <string name="mode_reflection">感想</string>
+    <string name="add_prayer_hint">寫禱告…</string>
+    <string name="action_add_reflection">寫感想</string>
+    <string name="reflection_to">寫感想：</string>
 </resources>

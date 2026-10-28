@@ -127,7 +127,7 @@ fun NoteDetailsScreen(onBack: () -> Unit, viewModel: NoteDetailsViewModel = hilt
                 item(key = "thread") { Thread(card.isAnchor, state.thread, state.threadCount, onItemActions = commentActions::open) }
             }
             Composer(
-                isAnchor = card.isAnchor,
+                hint = stringResource(if (card.isAnchor) R.string.add_reflection_hint else R.string.add_comment_hint),
                 canMarkAnswered = note.noteType == NoteType.Prayer && note.isAnswered != true,
                 focusRequester = composerFocus,
                 onSend = { text, answered -> viewModel.onAction(note, NoteAction.Comment(text, answered)) },
@@ -239,7 +239,7 @@ private val FoldedHeight = 136.dp
  * is its note, so it never folds.
  */
 @Composable
-private fun VerseArea(verse: ResolvedVerse, foldable: Boolean) {
+internal fun VerseArea(verse: ResolvedVerse, foldable: Boolean, divider: Boolean = true) {
     val c = AppTheme.colors
     val fill = c.noteTypeBibleVerse.copy(alpha = 0.06f)
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -275,7 +275,7 @@ private fun VerseArea(verse: ResolvedVerse, foldable: Boolean) {
             }
         }
     }
-    HorizontalDivider(color = c.noteTypeBibleVerse.copy(alpha = 0.12f))
+    if (divider) HorizontalDivider(color = c.noteTypeBibleVerse.copy(alpha = 0.12f))
 }
 
 @Composable
@@ -309,7 +309,7 @@ private fun FoldBox(collapsed: Boolean, maxHeight: Dp, onOverflow: (Boolean) -> 
 
 /** "Comments" / "Reflections" with count and month, then day groups with a date column (§3.3). */
 @Composable
-private fun Thread(isAnchor: Boolean, days: List<ThreadDay>, count: Int, onItemActions: (id: String, cardBounds: Rect) -> Unit) {
+internal fun Thread(isAnchor: Boolean, days: List<ThreadDay>, count: Int, onItemActions: (id: String, cardBounds: Rect) -> Unit) {
     val c = AppTheme.colors
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(Modifier.padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -321,7 +321,7 @@ private fun Thread(isAnchor: Boolean, days: List<ThreadDay>, count: Int, onItemA
             days.firstOrNull()?.let { Text(monthYearCaps(YearMonth.from(it.day)), style = capsStyle(0.06f).copy(fontWeight = FontWeight.SemiBold), color = c.neutral90) }
         }
         if (days.isEmpty()) {
-            Text(stringResource(R.string.no_comments), style = textStyle(14), color = c.neutral90, modifier = Modifier.padding(horizontal = 4.dp))
+            Text(stringResource(if (isAnchor) R.string.no_reflections else R.string.no_comments), style = textStyle(14), color = c.neutral90, modifier = Modifier.padding(horizontal = 4.dp))
         }
         days.forEachIndexed { i, day ->
             val month = YearMonth.from(day.day)
@@ -411,17 +411,25 @@ private fun CommentCard(item: ThreadItem, onActions: (cardBounds: Rect) -> Unit)
 }
 
 /**
- * The bottom composer (§3.4): a pill field ("Add a comment…" / "Add a reflection…") growing to 5 lines,
- * a round send button, and for unanswered prayers an "Answered today" toggle above it.
+ * The bottom composer (§3.4): a pill field ([hint]: "Add a comment…" / "Add a reflection…") growing to
+ * 5 lines, a round send button, and for unanswered prayers an "Answered today" toggle above it.
+ * [top] sits above the field (the chapter verse page's Reflection / Prayer switch).
  */
 @Composable
-private fun Composer(isAnchor: Boolean, canMarkAnswered: Boolean, focusRequester: FocusRequester, onSend: (String, Boolean) -> Unit) {
+internal fun Composer(
+    hint: String,
+    canMarkAnswered: Boolean,
+    focusRequester: FocusRequester,
+    onSend: (String, Boolean) -> Unit,
+    top: (@Composable () -> Unit)? = null,
+) {
     val c = AppTheme.colors
     var text by rememberSaveable { mutableStateOf("") }
     var answered by rememberSaveable { mutableStateOf(false) }
     val canSend = text.isNotBlank() || (canMarkAnswered && answered)
     Column(Modifier.fillMaxWidth().background(c.surface0).imePadding().navigationBarsPadding()) {
         HorizontalDivider(color = c.neutral20)
+        top?.invoke()
         if (canMarkAnswered) {
             Surface(
                 onClick = { answered = !answered },
@@ -450,7 +458,7 @@ private fun Composer(isAnchor: Boolean, canMarkAnswered: Boolean, focusRequester
                         contentAlignment = Alignment.CenterStart,
                     ) {
                         if (text.isEmpty()) {
-                            Text(stringResource(if (isAnchor) R.string.add_reflection_hint else R.string.add_comment_hint), style = textStyle(15, 1.4f), color = c.neutral90)
+                            Text(hint, style = textStyle(15, 1.4f), color = c.neutral90)
                         }
                         inner()
                     }

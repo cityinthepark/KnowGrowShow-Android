@@ -120,6 +120,10 @@ interface UserVerseDao {
     @Query("SELECT * FROM userVerses WHERE id IN (:ids)")
     fun observeByIds(ids: List<String>): Flow<List<UserVerseEntity>>
 
+    /** One chapter in every version, whatever the deletion state (display reads, like [observeByIds]). */
+    @Query("SELECT * FROM userVerses WHERE bookOrd = :bookOrd AND chapterOrd = :chapterOrd")
+    fun observeInChapter(bookOrd: Int, chapterOrd: Int): Flow<List<UserVerseEntity>>
+
     @Query("SELECT * FROM userVerses")
     fun observeAll(): Flow<List<UserVerseEntity>>
 

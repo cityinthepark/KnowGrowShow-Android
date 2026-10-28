@@ -223,4 +223,27 @@
         <item quantity="one">Show all %d verse</item>
         <item quantity="other">Show all %d verses</item>
     </plurals>
+    <!-- Chapter page (docs/CHAPTER_PLAN.md) -->
+    <string name="chapter_tab_sermons">Chapter Sermons</string>
+    <string name="chapter_tab_notes">Chapter Notes</string>
+    <string name="chapter_note_header">Chapter Note</string>
+    <string name="chapter_no_sermons">No sermons for this chapter yet.</string>
+    <string name="chapter_no_notes">No notes for this chapter yet.</string>
+    <string name="chapter_no_notes_hint">Tap + to write one. Start with “v3” to put it on verse 3.</string>
+    <string name="chapter_add_note">New chapter note</string>
+    <string name="sermon_date_unknown">Date unknown</string>
+    <string name="sermon_listen">Listen</string>
+    <string name="sermon_watch">Watch</string>
+    <string name="sermon_read">Read</string>
+    <string name="sermon_media">Listen, watch or read</string>
+    <string name="sermon_show_intro">Show intro</string>
+    <string name="sermon_hide_intro">Hide intro</string>
+    <string name="link_open_failed">Can’t open this link.</string>
+    <string name="verse_page_empty">No reflections or prayers yet.</string>
+    <string name="no_reflections">No reflections yet.</string>
+    <string name="prayers_title">Prayers</string>
+    <string name="mode_reflection">Reflection</string>
+    <string name="add_prayer_hint">Add a prayer…</string>
+    <string name="action_add_reflection">Add Reflection</string>
+    <string name="reflection_to">Add a Reflection to:</string>
 </resources>

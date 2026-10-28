@@ -115,16 +115,23 @@ fun PrayerSheet(
 }
 
 /**
- * iOS `NoteInputSheetView` (Today, `.flashCard` level): Bible reference, note text, Save. Save needs
- * either text or a verse-level reference (a verse with no comment is a valid note); a reference that
- * stops at a chapter is dropped on save. The body may itself start with "John 3:16 …".
+ * iOS `NoteInputSheetView`: Bible reference, note text, Save. Save needs either text or a verse-level
+ * reference (a verse with no comment is a valid note). On Today ([config] `.flashCard`) a reference
+ * that stops at a chapter is dropped on save; the chapter page passes `.chapterAnchored` and its own
+ * chapter as [initialReference] (iOS `defaultBookChapter`). The body may itself start with "John 3:16 …".
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NoteSheet(bibleRefLanguages: BibleRefLanguages, onDismiss: () -> Unit, onSave: (content: String, bibleRefText: String?) -> Unit) {
+fun NoteSheet(
+    bibleRefLanguages: BibleRefLanguages,
+    onDismiss: () -> Unit,
+    onSave: (content: String, bibleRefText: String?) -> Unit,
+    initialReference: String = "",
+    config: BibleRefConfig = BibleRefConfig.FlashCard,
+) {
     var text by rememberSaveable { mutableStateOf("") }
-    var reference by rememberSaveable { mutableStateOf("") }
-    var referenceIsValid by remember { mutableStateOf(false) }
+    var reference by rememberSaveable { mutableStateOf(initialReference) }
+    var referenceHasVerse by remember { mutableStateOf(false) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(
             Modifier.padding(horizontal = 20.dp).padding(bottom = 16.dp).imePadding(),
@@ -133,11 +140,11 @@ fun NoteSheet(bibleRefLanguages: BibleRefLanguages, onDismiss: () -> Unit, onSav
             BibleReferenceField(
                 value = reference,
                 onValueChange = { reference = it },
-                config = BibleRefConfig.FlashCard,
+                config = config,
                 languages = bibleRefLanguages,
                 help = BibleRefHelp.Note,
                 showAbbreviations = true,
-                onValidationChange = { referenceIsValid = it.isValid },
+                onValidationChange = { referenceHasVerse = it.resolved?.verseStart != null },
             )
             OutlinedTextField(
                 value = text,
@@ -147,7 +154,7 @@ fun NoteSheet(bibleRefLanguages: BibleRefLanguages, onDismiss: () -> Unit, onSav
             )
             SheetButtons(
                 saveLabel = stringResource(R.string.note_save),
-                saveEnabled = text.isNotBlank() || referenceIsValid,
+                saveEnabled = text.isNotBlank() || referenceHasVerse,
                 onCancel = onDismiss,
                 onSave = { onSave(text.trim(), reference.trim().ifEmpty { null }) },
                 saveTag = "noteSave",

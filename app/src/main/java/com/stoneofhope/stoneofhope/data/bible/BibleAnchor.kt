@@ -20,6 +20,9 @@ sealed interface BibleLinkBucket {
     }
 }
 
+/** iOS `BookChapter`: one chapter of one book (1-based ords). */
+data class BookChapter(val bookOrd: Int, val chapterOrd: Int)
+
 /** iOS `BibleAnchor`: ord-based identity of a verse reference in one version. */
 data class BibleAnchor(
     val bookOrd: Int,

@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.today.TodayActivity
 import com.stoneofhope.stoneofhope.data.today.TodayActivity.TileKind
+import com.stoneofhope.stoneofhope.ui.chapter.ChapterTab
 import com.stoneofhope.stoneofhope.ui.theme.AppColors
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 
@@ -51,6 +52,7 @@ import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 fun TodayActivitySection(
     activity: TodayActivity,
     onOpen: (title: String) -> Unit,
+    onOpenChapter: (bookOrd: Int, chapter: Int, tab: ChapterTab) -> Unit,
     onOpenTile: (TileKind) -> Unit,
     onReview: () -> Unit,
     onUnread: (bookOrd: Int, chapter: Int) -> Unit,
@@ -64,7 +66,7 @@ fun TodayActivitySection(
             }
         }
         Tiles(activity.tiles, onOpenTile)
-        if (activity.chaptersRead.isNotEmpty()) ChaptersCard(activity, onOpen, onUnread)
+        if (activity.chaptersRead.isNotEmpty()) ChaptersCard(activity, onOpenChapter, onUnread)
         if (activity.sermons.isNotEmpty()) SermonsCard(activity.sermons, onOpen)
         if (activity.videos.isNotEmpty()) VideosCard(activity.videos, onOpen)
     }
@@ -154,7 +156,7 @@ private fun ExpandableCard(
 }
 
 @Composable
-private fun ChaptersCard(activity: TodayActivity, onOpen: (String) -> Unit, onUnread: (Int, Int) -> Unit) {
+private fun ChaptersCard(activity: TodayActivity, onOpenChapter: (Int, Int, ChapterTab) -> Unit, onUnread: (Int, Int) -> Unit) {
     val logs = activity.chaptersRead
     ExpandableCard(
         id = "chaptersRead",
@@ -169,8 +171,8 @@ private fun ChaptersCard(activity: TodayActivity, onOpen: (String) -> Unit, onUn
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                 TextButton(onClick = { onUnread(log.bookOrd, log.chapter) }) { Text(stringResource(R.string.action_unread)) }
-                TextButton(onClick = { onOpen(name) }) { Text(stringResource(R.string.card_sermons)) }
-                TextButton(onClick = { onOpen(name) }) { Text(stringResource(R.string.action_notes)) }
+                TextButton(onClick = { onOpenChapter(log.bookOrd, log.chapter, ChapterTab.Sermons) }) { Text(stringResource(R.string.card_sermons)) }
+                TextButton(onClick = { onOpenChapter(log.bookOrd, log.chapter, ChapterTab.Notes) }) { Text(stringResource(R.string.action_notes)) }
             }
         }
     }

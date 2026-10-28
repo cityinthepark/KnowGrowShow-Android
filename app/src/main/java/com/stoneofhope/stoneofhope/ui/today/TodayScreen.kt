@@ -47,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.notes.NoteFilter
 import com.stoneofhope.stoneofhope.data.today.TodayActivity.TileKind
+import com.stoneofhope.stoneofhope.ui.chapter.ChapterTab
 import com.stoneofhope.stoneofhope.ui.reading.ReadingLogViewModel
 import com.stoneofhope.stoneofhope.ui.theme.AppColors
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
@@ -61,6 +62,7 @@ private enum class TodaySheet { Prayer, Note }
 /**
  * iOS `TodayView`: greeting, reading carousel, quick add, today's activity.
  * [onOpen] receives the title of a screen that isn't ported yet (shown as "coming soon");
+ * [onOpenChapter] opens a chapter page (iOS `ChapterDetailView`) on the given tab;
  * [onOpenNotes] is a tile's note list (iOS `NoteCreationView(date, type)`); [onOpenReview] the day's
  * "Review" (iOS `NotesReviewView`).
  */
@@ -68,6 +70,7 @@ private enum class TodaySheet { Prayer, Note }
 fun TodayScreen(
     onOpen: (title: String) -> Unit,
     onOpenReadingLog: (bookOrd: Int) -> Unit,
+    onOpenChapter: (bookOrd: Int, chapter: Int, tab: ChapterTab) -> Unit,
     onOpenNotes: (NoteFilter, LocalDate) -> Unit,
     onOpenReview: (LocalDate) -> Unit,
     viewModel: TodayViewModel = hiltViewModel(),
@@ -100,7 +103,8 @@ fun TodayScreen(
                 sort = sort,
                 onToggleSort = viewModel::toggleSort,
                 onToggleChapter = viewModel::toggleChapterRead,
-                onOpenChapter = { bookOrd, chapter -> onOpen(chapterTitle(bookOrd, chapter)) },
+                // iOS `BookCarouselView`: a long press opens the chapter on its sermons.
+                onOpenChapter = { bookOrd, chapter -> onOpenChapter(bookOrd, chapter, ChapterTab.Sermons) },
                 onOpenBook = onOpenReadingLog,
                 // iOS opens the Reading Log at Genesis.
                 onStartReading = { onOpenReadingLog(1) },
@@ -122,6 +126,7 @@ fun TodayScreen(
             TodayActivitySection(
                 activity = activity,
                 onOpen = onOpen,
+                onOpenChapter = onOpenChapter,
                 onOpenTile = { kind -> onOpenNotes(kind.noteFilter, day) },
                 onReview = { onOpenReview(day) },
                 onUnread = viewModel::toggleChapterRead,

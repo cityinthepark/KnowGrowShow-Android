@@ -16,7 +16,13 @@ import java.time.LocalDate
 import com.stoneofhope.stoneofhope.ui.ComingSoonScreen
 import com.stoneofhope.stoneofhope.ui.RootViewModel
 import com.stoneofhope.stoneofhope.ui.account.AccountScreen
+import com.stoneofhope.stoneofhope.data.chapter.ChapterVerse
 import com.stoneofhope.stoneofhope.data.notes.NoteFilter
+import com.stoneofhope.stoneofhope.ui.chapter.ChapterScreen
+import com.stoneofhope.stoneofhope.ui.chapter.ChapterTab
+import com.stoneofhope.stoneofhope.ui.chapter.ChapterVerseScreen
+import com.stoneofhope.stoneofhope.ui.chapter.ChapterVerseViewModel
+import com.stoneofhope.stoneofhope.ui.chapter.ChapterViewModel
 import com.stoneofhope.stoneofhope.ui.main.MainScreen
 import com.stoneofhope.stoneofhope.ui.notes.NoteDetailsScreen
 import com.stoneofhope.stoneofhope.ui.notes.NoteDetailsViewModel
@@ -38,6 +44,9 @@ private object Routes {
     const val NoteList = "notes/{${NoteListViewModel.ARG_FILTER}}/{${NoteListViewModel.ARG_DAY}}"
     const val NoteDetails = "note/{${NoteDetailsViewModel.ARG_NOTE_ID}}"
     const val NotesReview = "review/{${NotesReviewViewModel.ARG_DAY}}"
+    const val Chapter = "chapter/{${ChapterViewModel.ARG_BOOK_ORD}}/{${ChapterViewModel.ARG_CHAPTER_ORD}}/{${ChapterViewModel.ARG_TAB}}"
+    const val VersePage = "chapterVerse/{${ChapterViewModel.ARG_BOOK_ORD}}/{${ChapterViewModel.ARG_CHAPTER_ORD}}/" +
+        "{${ChapterVerseViewModel.ARG_VERSE_START}}/{${ChapterVerseViewModel.ARG_VERSE_END}}"
 
     fun noteList(filter: NoteFilter, day: LocalDate?) = "notes/${filter.ordinal}/${day?.toEpochDay() ?: NoteListViewModel.NO_DAY}"
 
@@ -46,6 +55,10 @@ private object Routes {
     fun notesReview(day: LocalDate) = "review/${day.toEpochDay()}"
 
     fun readingLog(bookOrd: Int) = "readingLog/$bookOrd"
+
+    fun chapter(bookOrd: Int, chapterOrd: Int, tab: ChapterTab) = "chapter/$bookOrd/$chapterOrd/${tab.ordinal}"
+
+    fun chapterVerse(v: ChapterVerse) = "chapterVerse/${v.bookOrd}/${v.chapterOrd}/${v.verseStart}/${v.verseEnd}"
 
     fun comingSoon(title: String) = "comingSoon/" + Uri.encode(title)
 }
@@ -82,6 +95,7 @@ fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     onOpenAccount = { navController.navigate(Routes.Account) },
                     onOpenPlaceholder = { title -> navController.navigate(Routes.comingSoon(title)) },
                     onOpenReadingLog = { bookOrd -> navController.navigate(Routes.readingLog(bookOrd)) },
+                    onOpenChapter = { bookOrd, chapter, tab -> navController.navigate(Routes.chapter(bookOrd, chapter, tab)) },
                     onOpenNotes = { filter, day -> navController.navigate(Routes.noteList(filter, day)) },
                     onOpenReview = { day -> navController.navigate(Routes.notesReview(day)) },
                 )
@@ -119,7 +133,35 @@ fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel()) {
             ) {
                 ReadingLogScreen(
                     onBack = { navController.popBackStack() },
-                    onOpenChapter = { title -> navController.navigate(Routes.comingSoon(title)) },
+                    onOpenChapter = { bookOrd, chapter -> navController.navigate(Routes.chapter(bookOrd, chapter, ChapterTab.Sermons)) },
+                )
+            }
+            composable(
+                Routes.Chapter,
+                arguments = listOf(
+                    navArgument(ChapterViewModel.ARG_BOOK_ORD) { type = NavType.IntType },
+                    navArgument(ChapterViewModel.ARG_CHAPTER_ORD) { type = NavType.IntType },
+                    navArgument(ChapterViewModel.ARG_TAB) { type = NavType.IntType },
+                ),
+            ) {
+                ChapterScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
+                    onOpenVerse = { verse -> navController.navigate(Routes.chapterVerse(verse)) },
+                )
+            }
+            composable(
+                Routes.VersePage,
+                arguments = listOf(
+                    navArgument(ChapterViewModel.ARG_BOOK_ORD) { type = NavType.IntType },
+                    navArgument(ChapterViewModel.ARG_CHAPTER_ORD) { type = NavType.IntType },
+                    navArgument(ChapterVerseViewModel.ARG_VERSE_START) { type = NavType.IntType },
+                    navArgument(ChapterVerseViewModel.ARG_VERSE_END) { type = NavType.IntType },
+                ),
+            ) {
+                ChapterVerseScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
                 )
             }
             composable(Routes.ComingSoon) { entry ->

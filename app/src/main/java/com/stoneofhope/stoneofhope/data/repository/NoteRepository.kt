@@ -11,6 +11,8 @@ import com.stoneofhope.stoneofhope.data.bible.BibleRefConfig
 import com.stoneofhope.stoneofhope.data.bible.BibleReferenceParser
 import com.stoneofhope.stoneofhope.data.bible.BibleReferenceValidator
 import com.stoneofhope.stoneofhope.data.bible.BibleVersions
+import com.stoneofhope.stoneofhope.data.bible.BookChapter
+import com.stoneofhope.stoneofhope.data.bible.ResolvedBibleRef
 import com.stoneofhope.stoneofhope.data.bible.SwiftText
 import com.stoneofhope.stoneofhope.data.bible.VerseShortcutDetector
 import com.stoneofhope.stoneofhope.data.bible.text.BibleVerseReader
@@ -69,18 +71,22 @@ class NoteRepository @Inject constructor(
     // MARK: - Note sheet (iOS saveNoteFromContent(_:bibleRefText:) → saveSeparatedNoteInput)
 
     /**
-     * Today / note sheet save, with no sermon, video or chapter context:
+     * Today / note sheet save, with no sermon or video context; [anchorChapter] is the chapter page's
+     * chapter (iOS `addNote(_:to:bibleRefText:separatedReference: true)`), null on Today:
      * 1. A "Book c:v[-v]" typed at the start of the body wins over the reference field: verse anchor
      *    plus the rest of the body as its own reflection note.
-     * 2. "vN" in the body, with the field naming only a chapter, becomes that chapter's verse N.
+     * 2. "vN" in the body becomes verse N of the chapter the field names (verse-less), or of
+     *    [anchorChapter] when the field is empty.
      * 3. A field that reaches verse level saves anchor + reflection; a chapter-only field is dropped.
-     * 4. Otherwise a plain note.
+     * 4. Otherwise a plain note — on a chapter page anchored to the field's chapter, else to
+     *    [anchorChapter] (iOS always uses [anchorChapter]: IOS_ISSUES H5).
      */
     suspend fun saveNoteFromContent(
         content: String,
         bibleRefText: String?,
         tagName: String? = null,
         noteType: NoteType? = null,
+        anchorChapter: BookChapter? = null,
         zone: ZoneId = ZoneId.systemDefault(),
     ): NoteInputSaveResult? {
         val v = versions()
@@ -96,10 +102,10 @@ class NoteRepository @Inject constructor(
         }
 
         val shortcut = VerseShortcutDetector.detect(trimmedContent)
-        val base = shortcut?.let { chapterBase(trimmedRef, v) }
+        val base = shortcut?.let { chapterBase(trimmedRef, v, anchorChapter) }
         if (shortcut != null && base != null) {
             val verses = if (shortcut.start == shortcut.end) "${shortcut.start}" else "${shortcut.start}-${shortcut.end}"
-            val ref = "${BibleBooks.name(base.first)} ${base.second}:$verses"
+            val ref = "${BibleBooks.name(base.bookOrd)} ${base.chapterOrd}:$verses"
             // iOS rewrites even when "v99" is past the chapter's end; the reference is then dropped
             // and "v99" is lost from the saved text. Android only rewrites a reference that will save.
             if (BibleReferenceValidator.validate(ref, BibleRefConfig.FlashCard, v.languages).resolved?.verseStart != null) {
@@ -116,13 +122,40 @@ class NoteRepository @Inject constructor(
         }
 
         if (trimmedContent.isEmpty()) return null
+        val chapter = anchorChapter?.let { fieldChapter(trimmedRef, v) ?: it }
         val now = clock.instant()
         return db.withTransaction {
-            NoteEntity(
+            var note = NoteEntity(
                 id = ObjectIds.newId(), noteType = noteType ?: NoteType.Note, content = trimmedContent,
                 createdAt = now, updatedAt = now, needsSync = true,
-            ).let { withTag(it, tagName) }.also { noteDao.upsert(it) }
+            )
+            if (chapter != null) {
+                // iOS: no verse resolved, so the note sits on the chapter (`getChapterNotes`), `refKey` = "CH:b:c".
+                note = withAnchorMetadata(
+                    note.copy(
+                        bookOrd = chapter.bookOrd, chapterOrd = chapter.chapterOrd,
+                        refKey = BibleAnchorKey.chapterKey(chapter.bookOrd, chapter.chapterOrd),
+                    ),
+                )
+            }
+            withTag(note, tagName).also { noteDao.upsert(it) }
         }.let(NoteInputSaveResult::Plain)
+    }
+
+    /**
+     * A reflection written on a chapter page's verse. iOS offers this only once the verse has an anchor
+     * and then hangs it on today's anchor in that anchor's version (`addVerseReflection`, G5); here it
+     * goes to today's anchor in the primary version, exactly like typing the verse on Today.
+     */
+    suspend fun saveVerseReflection(
+        bookOrd: Int, chapterOrd: Int, verseStart: Int, verseEnd: Int, text: String, zone: ZoneId = ZoneId.systemDefault(),
+    ): VerseReferenceSaveResult? {
+        val body = SwiftText.trim(text)
+        if (body.isEmpty()) return null
+        val v = versions()
+        val merged = mergedVerseContent(v.selected, bookOrd, chapterOrd, verseStart..verseEnd)
+        val contents = if (merged.isEmpty()) emptyMap() else resolvedUserVerseContents(v.selected, bookOrd, chapterOrd, verseStart, verseEnd)
+        return saveVerseReference(bookOrd, chapterOrd, verseStart, verseEnd, v.primary, contents, reflectionText = body, zone = zone)
     }
 
     private class VerseDetection(
@@ -155,11 +188,18 @@ class NoteRepository @Inject constructor(
         return VerseDetection(parsed.bookOrd, parsed.chapter, start, end, suffix.ifEmpty { null }, contents)
     }
 
-    /** iOS `chapterBase(forRefText:anchorChapter:)` with no reading-chapter context (Today). */
-    private fun chapterBase(ref: String, v: Versions): Pair<Int, Int>? {
+    /**
+     * iOS `chapterBase(forRefText:anchorChapter:)`: the field's chapter when it names one with no verse;
+     * [anchorChapter] when the field is empty.
+     */
+    private fun chapterBase(ref: String, v: Versions, anchorChapter: BookChapter?): BookChapter? =
+        if (ref.isEmpty()) anchorChapter else fieldChapter(ref, v)
+
+    /** The chapter a reference field names when it stops at chapter level. */
+    private fun fieldChapter(ref: String, v: Versions): BookChapter? {
         if (ref.isEmpty()) return null
         val resolved = BibleReferenceValidator.validate(ref, BibleRefConfig.ChapterAnchored, v.languages).resolved ?: return null
-        return if (resolved.verseStart == null) resolved.bookOrd to resolved.chapter else null
+        return if (resolved.verseStart == null) BookChapter(resolved.bookOrd, resolved.chapter) else null
     }
 
     /** iOS `saveBibleVerseFromSeparatedInput`: null (nothing written) unless the field reaches a verse. */
@@ -184,16 +224,27 @@ class NoteRepository @Inject constructor(
      * reaches verse level is stored as metadata on the prayer; anything less is silently dropped.
      */
     suspend fun savePrayerNote(content: String, tagName: String?, bibleRefText: String?): NoteEntity? {
+        val v = versions()
+        val ref = bibleRefText?.let(SwiftText::trim)?.takeIf { it.isNotEmpty() }
+            ?.let { BibleReferenceValidator.validate(it, BibleRefConfig.FlashCard, v.languages).resolved }
+        return savePrayer(content, tagName, ref, v)
+    }
+
+    /**
+     * A prayer written on a chapter page's verse. iOS formats the verse as text and parses it again
+     * (`savePrayerNote(_:bibleRefText:)`); the verse is known here, so it is stored directly.
+     */
+    suspend fun savePrayerOnVerses(content: String, bookOrd: Int, chapterOrd: Int, verseStart: Int, verseEnd: Int): NoteEntity? =
+        savePrayer(content, tagName = null, ResolvedBibleRef(bookOrd, chapterOrd, verseStart, verseEnd), versions())
+
+    private suspend fun savePrayer(content: String, tagName: String?, ref: ResolvedBibleRef?, v: Versions): NoteEntity? {
         val text = SwiftText.trim(content)
         if (text.isEmpty()) return null
-        val v = versions()
         val now = clock.instant()
         var note = NoteEntity(
             id = ObjectIds.newId(), noteType = NoteType.Prayer, content = text,
             createdAt = now, updatedAt = now, needsSync = true,
         )
-        val ref = bibleRefText?.let(SwiftText::trim)?.takeIf { it.isNotEmpty() }
-            ?.let { BibleReferenceValidator.validate(it, BibleRefConfig.FlashCard, v.languages).resolved }
         val start = ref?.verseStart
         if (ref != null && start != null) {
             note = note.copy(

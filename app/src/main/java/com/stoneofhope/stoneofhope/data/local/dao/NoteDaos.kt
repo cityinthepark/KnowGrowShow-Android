@@ -43,6 +43,13 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE isPinned = 1 AND deletedAt IS NULL AND isDeleted = 0")
     fun observePinned(): Flow<List<NoteEntity>>
 
+    /** Active notes anchored anywhere in one chapter (the chapter page), oldest first. */
+    @Query(
+        "SELECT * FROM notes WHERE bookOrd = :bookOrd AND chapterOrd = :chapterOrd " +
+            "AND deletedAt IS NULL AND isDeleted = 0 ORDER BY createdAt"
+    )
+    fun observeActiveInChapter(bookOrd: Int, chapterOrd: Int): Flow<List<NoteEntity>>
+
     @Query("SELECT * FROM notes WHERE deletedAt IS NULL AND isDeleted = 0 AND sermonId IN (:sermonIds)")
     fun observeForSermons(sermonIds: List<String>): Flow<List<NoteEntity>>
 
@@ -101,6 +108,12 @@ interface NoteCommentDao {
             "ORDER BY createdAt"
     )
     suspend fun activeForNote(noteId: String): List<NoteCommentEntity>
+
+    @Query(
+        "SELECT * FROM noteComments WHERE noteId IN (:noteIds) AND deletedAt IS NULL AND isDeleted = 0 " +
+            "ORDER BY createdAt"
+    )
+    fun observeActiveForNotes(noteIds: List<String>): Flow<List<NoteCommentEntity>>
 
     /** Every active comment (note lists match tags, stars and days through them). */
     @Query("SELECT * FROM noteComments WHERE deletedAt IS NULL AND isDeleted = 0 ORDER BY createdAt")
