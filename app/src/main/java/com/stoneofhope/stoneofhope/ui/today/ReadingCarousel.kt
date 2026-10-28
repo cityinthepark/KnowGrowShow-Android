@@ -18,16 +18,26 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,10 +70,29 @@ fun ReadingCarousel(
     onOpenChapter: (bookOrd: Int, chapter: Int) -> Unit,
     onOpenBook: (bookOrd: Int) -> Unit,
     onStartReading: () -> Unit,
+    onAddBook: () -> Unit,
 ) {
+    val rowState = rememberLazyListState()
+    // A lazy row stays on the card that was first; when another book moves to the front (a book just
+    // started from "+", a chapter marked, the sort switched), show the start of the row instead.
+    val firstBookId = books.firstOrNull()?.progress?.id
+    var shownFirstBookId by rememberSaveable { mutableStateOf(firstBookId) }
+    LaunchedEffect(firstBookId) {
+        if (firstBookId != null && firstBookId != shownFirstBookId) rowState.scrollToItem(0)
+        shownFirstBookId = firstBookId
+    }
     Column {
         Row(Modifier.padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.reading_by_books), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.reading_by_books), style = MaterialTheme.typography.titleMedium)
+            // Android addition (not on iOS): opens the book list to start another book.
+            IconButton(onClick = onAddBook, modifier = Modifier.testTag("readingAddBook")) {
+                Icon(
+                    Icons.Filled.Add,
+                    contentDescription = stringResource(R.string.reading_add_book),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+            Spacer(Modifier.weight(1f))
             if (books.isNotEmpty()) {
                 // Like iOS, the button names the order you would switch to.
                 TextButton(onClick = onToggleSort) {
@@ -79,6 +108,7 @@ fun ReadingCarousel(
             StartReadingCard(onStartReading)
         } else {
             LazyRow(
+                state = rowState,
                 contentPadding = PaddingValues(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.testTag("readingCarousel"),

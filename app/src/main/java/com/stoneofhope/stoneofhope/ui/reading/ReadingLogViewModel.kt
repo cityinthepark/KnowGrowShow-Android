@@ -28,8 +28,11 @@ class ReadingLogViewModel @Inject constructor(
     private val clock: Clock,
 ) : ViewModel() {
 
-    /** The book the screen opens on (expanded and scrolled to), from the navigation argument. */
-    val initialBookOrd: Int = savedState.get<Int>(ARG_BOOK_ORD)?.coerceIn(1, 66) ?: 1
+    /**
+     * The book the screen opens on (expanded and scrolled to), from the navigation argument; null for
+     * [NO_BOOK], which opens at the top with every book collapsed.
+     */
+    val initialBookOrd: Int? = savedState.get<Int>(ARG_BOOK_ORD)?.takeIf { it in 1..66 }
 
     private val zone: ZoneId get() = ZoneId.systemDefault()
     private val _day = MutableStateFlow(currentDay())
@@ -57,5 +60,8 @@ class ReadingLogViewModel @Inject constructor(
 
     companion object {
         const val ARG_BOOK_ORD = "bookOrd"
+
+        /** Opens the list to pick a book (Today's "+"), with nothing expanded. */
+        const val NO_BOOK = 0
     }
 }

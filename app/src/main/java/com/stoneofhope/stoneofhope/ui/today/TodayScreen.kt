@@ -47,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.notes.NoteFilter
 import com.stoneofhope.stoneofhope.data.today.TodayActivity.TileKind
+import com.stoneofhope.stoneofhope.ui.reading.ReadingLogViewModel
 import com.stoneofhope.stoneofhope.ui.theme.AppColors
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 import java.time.LocalDate
@@ -103,6 +104,7 @@ fun TodayScreen(
                 onOpenBook = onOpenReadingLog,
                 // iOS opens the Reading Log at Genesis.
                 onStartReading = { onOpenReadingLog(1) },
+                onAddBook = { onOpenReadingLog(ReadingLogViewModel.NO_BOOK) },
             )
         }
         item {

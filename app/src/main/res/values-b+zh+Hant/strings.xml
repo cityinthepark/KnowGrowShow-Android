@@ -36,6 +36,7 @@
     <string name="reading_by_book_order">依書卷順序</string>
     <string name="reading_start_prompt">你想今天開始一個讀經計劃嗎？或者只標記你讀過的一章。</string>
     <string name="reading_mark_progress">立即標記進度</string>
+    <string name="reading_add_book">開始讀新的書卷</string>
     <string name="quick_add">快速新增</string>
     <string name="note_type_prayer">禱告</string>
     <string name="note_type_note">筆記</string>

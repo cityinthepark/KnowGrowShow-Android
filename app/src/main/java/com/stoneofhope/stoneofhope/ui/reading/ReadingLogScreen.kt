@@ -76,7 +76,7 @@ fun ReadingLogScreen(
     val books by viewModel.books.collectAsStateWithLifecycle()
     var expanded by rememberSaveable { mutableStateOf<Int?>(viewModel.initialBookOrd) }
     // Opens with the starting book at the top, like iOS `scrollTo(initialBookOrd, anchor: .top)`.
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = viewModel.initialBookOrd - 1)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = (viewModel.initialBookOrd ?: 1) - 1)
 
     LifecycleResumeEffect(Unit) {
         viewModel.refreshDay()

@@ -39,6 +39,7 @@
     <string name="reading_by_book_order">By Book Order</string>
     <string name="reading_start_prompt">Do you want to start a reading plan today? Or just mark a chapter that you read.</string>
     <string name="reading_mark_progress">Mark your progress now!</string>
+    <string name="reading_add_book">Start a new book</string>
     <string name="quick_add">Quick add</string>
     <string name="note_type_prayer">Prayer</string>
     <string name="note_type_note">Note</string>
