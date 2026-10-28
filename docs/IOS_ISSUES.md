@@ -6,7 +6,7 @@
 
 状态：🔴 待修 · 🟡 待确认 / 产品决定 · ✅ 已处理
 
-最后更新：2026-10-27
+最后更新：2026-10-28
 
 ---
 
@@ -117,6 +117,15 @@
 | I8 🟡 | `TodayActivityView` 用在 Calendar 时 | 卡片副标题固定写"今日"："今日阅读 3 章"、"今日 1 篇讲道"，在 10 月 18 日的汇总里也这么写 | 用词错误 | 不是今天时写"阅读 3 章"、"1 篇讲道"（"未读"按钮与 iOS 相同，只在今天出现） | 不用 |
 | I9 🟡 | 各语言 `Localizable.strings` | 缺"No notes yet."（Moments 空状态），中文界面显示英文 | 未翻译 | 三种语言都有 | 不用 |
 | I10 🟡 | `CalendarSummaryView.onAppear` | 每次出现都把月份重置为本月，但选中的日期不变 | 回到 Calendar 时月历和下面的汇总可能不是同一个月 | 月份和选中日期一起保留 | 不用 |
+
+## J. 本机互通测试（2026-10-28）
+
+测试记录见 [INTEROP_TEST.md](INTEROP_TEST.md) §5。两条都不影响正式版的数据。
+
+| # | iOS 位置 | 问题 | 影响 | 安卓做法 | iOS 修后安卓要改吗 |
+| --- | --- | --- | --- | --- | --- |
+| J1 🔴 | `Services/FirebaseEmulatorBootstrap.swift`（全量模拟） | 只调用了 `Firestore.firestore().useEmulator`；Firebase 12.11 的 `useEmulator` 只改地址、不关 SSL，而本地模拟器只收明文连接 | iOS 连本地 Firestore 时 TLS 握手失败、一直"离线"，登录后显示"Could not load your encryption key"，无法做本机互通测试 | 安卓不涉及（安卓连本地模拟器正常） | 不用。已在 iOS 工作区加上三行：读出 `settings`、`isSSLEnabled = false`、写回（**未提交**，等你确认） |
+| J2 🟡 | Swift 包 `realm-core` 14.14.0 | 用 Xcode 27（iOS 27 SDK）从头编译失败：内带的 s2 几何库特化了 `std::is_pod`，还有 `std::less<void>` 的编译错误 | 现有的编译缓存还能增量编译；一旦 Clean Build Folder、换机器或换编译目录，iOS 就编不过 | 安卓不涉及 | 不用。建议升级 Realm |
 
 ---
 
