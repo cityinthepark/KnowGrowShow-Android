@@ -80,6 +80,11 @@ class NoteRepository @Inject constructor(
      * 3. A field that reaches verse level saves anchor + reflection; a chapter-only field is dropped.
      * 4. Otherwise a plain note — on a chapter page anchored to the field's chapter, else to
      *    [anchorChapter] (iOS always uses [anchorChapter]: IOS_ISSUES H5).
+     *
+     * On a sermon / video page every row written carries [sermonId] or [youtubeID] (iOS
+     * `saveSeparatedNoteInput(linkToSermon:linkToVideo:)`). With [anchorPlainNote] false the plain note
+     * stays off the chapter and [anchorChapter] only resolves "vN" (iOS `addNote(_:to:)` without the
+     * reference field, used for Script text).
      */
     suspend fun saveNoteFromContent(
         content: String,
@@ -88,6 +93,9 @@ class NoteRepository @Inject constructor(
         noteType: NoteType? = null,
         anchorChapter: BookChapter? = null,
         zone: ZoneId = ZoneId.systemDefault(),
+        sermonId: String? = null,
+        youtubeID: String? = null,
+        anchorPlainNote: Boolean = true,
     ): NoteInputSaveResult? {
         val v = versions()
         var trimmedContent = SwiftText.trim(content)
@@ -96,7 +104,7 @@ class NoteRepository @Inject constructor(
         detectExplicitVerseReference(trimmedContent, v)?.let { det ->
             val result = saveVerseReference(
                 det.bookOrd, det.chapter, det.start, det.end, v.primary, det.userVerseContents,
-                reflectionText = det.suffix, tagName = tagName, zone = zone,
+                reflectionText = det.suffix, tagName = tagName, sermonId = sermonId, youtubeID = youtubeID, zone = zone,
             )
             return result?.let(NoteInputSaveResult::Verse)
         }
@@ -115,20 +123,20 @@ class NoteRepository @Inject constructor(
         }
 
         if (trimmedRef.isNotEmpty()) {
-            saveVerseFromReferenceField(trimmedRef, trimmedContent.ifEmpty { null }, tagName, v, zone)?.let {
+            saveVerseFromReferenceField(trimmedRef, trimmedContent.ifEmpty { null }, tagName, v, zone, sermonId, youtubeID)?.let {
                 return NoteInputSaveResult.Verse(it)
             }
             // Not verse level: keep the note, drop the reference.
         }
 
         if (trimmedContent.isEmpty()) return null
-        val chapter = anchorChapter?.let { fieldChapter(trimmedRef, v) ?: it }
+        val chapter = anchorChapter?.takeIf { anchorPlainNote }?.let { fieldChapter(trimmedRef, v) ?: it }
         val now = clock.instant()
         return db.withTransaction {
             var note = NoteEntity(
                 id = ObjectIds.newId(), noteType = noteType ?: NoteType.Note, content = trimmedContent,
                 createdAt = now, updatedAt = now, needsSync = true,
-            )
+            ).withVerseLink(sermonId, youtubeID?.let(SwiftText::trim)?.ifEmpty { null })
             if (chapter != null) {
                 // iOS: no verse resolved, so the note sits on the chapter (`getChapterNotes`), `refKey` = "CH:b:c".
                 note = withAnchorMetadata(
@@ -205,6 +213,7 @@ class NoteRepository @Inject constructor(
     /** iOS `saveBibleVerseFromSeparatedInput`: null (nothing written) unless the field reaches a verse. */
     private suspend fun saveVerseFromReferenceField(
         refText: String, commentText: String?, tagName: String?, v: Versions, zone: ZoneId,
+        sermonId: String? = null, youtubeID: String? = null,
     ): VerseReferenceSaveResult? {
         val resolved = BibleReferenceValidator.validate(refText, BibleRefConfig.FlashCard, v.languages).resolved ?: return null
         val start = resolved.verseStart ?: return null
@@ -213,7 +222,7 @@ class NoteRepository @Inject constructor(
         val contents = if (merged.isEmpty()) emptyMap() else resolvedUserVerseContents(v.selected, resolved.bookOrd, resolved.chapter, start, end)
         return saveVerseReference(
             resolved.bookOrd, resolved.chapter, start, end, v.primary, contents,
-            reflectionText = commentText, tagName = tagName, zone = zone,
+            reflectionText = commentText, tagName = tagName, sermonId = sermonId, youtubeID = youtubeID, zone = zone,
         )
     }
 

@@ -19,6 +19,7 @@ production. Known example: tombstones on the wire are `{isDeleted: true, updated
 | `data.remote.firestore` | `FirestoreWireAdapter` — the only code that touches Firestore SDK types |
 | `data.bible` | Book table (generated from iOS), name matching, `BibleReferenceValidator` (field), `BibleReferenceParser` (note-body shortcut, `vN`), `BibleFormatter`, `BibleVersions`, `BibleAnchor` |
 | `data.chapter` | Chapter page: `ChapterNotesBuilder` (chapter notes and verse groups, iOS `ChapterNoteViewModel` / `ChapterNoteDetailsView`), `ChapterSermons` |
+| `data.sermon` | Sermons, videos, series: `SermonRepository`, `VideoRepository`, `SermonReferenceParser`, `YouTubeLinkParser`, YouTube title / transcript parsing, `YouTubeWeb` (oEmbed + captions), `SermonRules`, `SeriesList` |
 | `data.bible.text` | `BibleTextDatabase` — read-only bundled KJV/CUV (Room `createFromAsset`), `BibleVerseReader` (iOS `BibleVerseRangeReader`), `OnDemandVerseSource` (NIV/NKJV; not implemented) |
 
 Room is the only store the UI reads. Firestore is a transport; local-only use never touches it.
@@ -83,6 +84,15 @@ peer-gated pulls) against real Room and an in-memory Firestore.
 | Chapter page verse details | one anchor of the verse (`.first`) | every anchor of the verse (all days, versions) | IOS_ISSUES H1 |
 | Chapter-page note whose field names another chapter | anchored to the page's chapter | anchored to the field's chapter | IOS_ISSUES H5 |
 | Reflection written on a chapter verse | only once an anchor exists; on that anchor's version | always; today's anchor in the primary version | IOS_ISSUES H1 |
+| Empty optional field of a sermon / video / series on push | left out of the merge write (old remote value survives) | `FieldValue.delete()` | IOS_ISSUES K1 |
+| Sermon reference with a multi-word book ("1 John 3") | not parsed (first word only) | parsed; iOS-parseable input unchanged | IOS_ISSUES K21 |
+| Saving a sermon over a chapter read today | chapter toggled to unread | left read | IOS_ISSUES D1 |
+| Series auto-detection | same book within 6 months, else newest topical series | same book, 6 months, unfinished, user's own; else none | IOS_ISSUES K3 (user's decision) |
+| "Add as sermon" for a link saved as a video | video becomes the sermon's hidden index row | refused; the video opens | IOS_ISSUES K6 |
+| Delete / merge sermon | index row and notes' pin logs left behind | removed (merge: index row moves to the target) | IOS_ISSUES K7 |
+| Re-adding a deleted video | old row revived with its first `createdAt` | revived with `createdAt` = now | IOS_ISSUES K8 |
+| Merge target | gets only the notes | also the source's fields it lacks, tags combined | IOS_ISSUES K9 |
+| New video metadata | YouTube Data API (`channelId` set) | oEmbed (no `channelId`) | user's decision (plan §4 question 2) |
 
 Anything else that differs is a bug: the encoder tests list the exact iOS field set per collection.
 

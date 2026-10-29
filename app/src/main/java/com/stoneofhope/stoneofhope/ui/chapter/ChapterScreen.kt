@@ -1,6 +1,5 @@
 package com.stoneofhope.stoneofhope.ui.chapter
 
-import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -61,7 +60,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -72,6 +70,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.bible.BibleRefConfig
 import com.stoneofhope.stoneofhope.data.chapter.ChapterSermons
+import com.stoneofhope.stoneofhope.data.bible.BookChapter
+import com.stoneofhope.stoneofhope.data.sermon.SermonRules
+import com.stoneofhope.stoneofhope.ui.sermon.SermonActionsViewModel
+import com.stoneofhope.stoneofhope.ui.sermon.VideoEntry
+import com.stoneofhope.stoneofhope.ui.sermon.openUrl
 import com.stoneofhope.stoneofhope.data.chapter.ChapterVerse
 import com.stoneofhope.stoneofhope.data.local.entity.SermonEntity
 import com.stoneofhope.stoneofhope.data.model.NoteType
@@ -99,6 +102,7 @@ fun ChapterScreen(
     onBack: () -> Unit,
     onOpenNote: (noteId: String) -> Unit,
     onOpenVerse: (ChapterVerse) -> Unit,
+    onOpenSermon: (sermonId: String, chapter: BookChapter, entry: VideoEntry) -> Unit,
     viewModel: ChapterViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -132,7 +136,7 @@ fun ChapterScreen(
             }
             HorizontalPager(state = pager, modifier = Modifier.weight(1f).fillMaxWidth()) { page ->
                 when (ChapterTab.entries[page]) {
-                    ChapterTab.Sermons -> SermonsPage(state)
+                    ChapterTab.Sermons -> SermonsPage(state) { id, entry -> onOpenSermon(id, viewModel.chapter, entry) }
                     ChapterTab.Notes -> NotesPage(state, onOpenNote, onOpenVerse, onMenu = actions::open, onEnsureVerses = viewModel::ensureVerses)
                 }
             }
@@ -170,7 +174,7 @@ fun ChapterScreen(
 // MARK: - Chapter Sermons (iOS ChapterSermonView)
 
 @Composable
-private fun SermonsPage(state: ChapterState) {
+private fun SermonsPage(state: ChapterState, onOpenSermon: (String, VideoEntry) -> Unit) {
     if (!state.loaded) return
     if (state.sermons.isEmpty()) {
         EmptyState(stringResource(R.string.chapter_no_sermons), Modifier.testTag("chapterNoSermons"))
@@ -190,32 +194,36 @@ private fun SermonsPage(state: ChapterState) {
                     modifier = Modifier.padding(start = 4.dp, top = 6.dp),
                 )
             }
-            items(year.sermons, key = { it.id }) { SermonCard(it) }
+            items(year.sermons, key = { it.id }) { SermonCard(it, onOpenSermon) }
         }
     }
 }
 
-private data class SermonLink(@param:StringRes val label: Int, val icon: ImageVector, val url: String)
+private data class SermonLink(@param:StringRes val label: Int, val icon: ImageVector, val onClick: () -> Unit)
 
 /**
- * iOS `SermonRow`: chapter range, date and the intro toggle; the title (the sermon page is T3, so it
- * says "coming soon" for now); the preacher; "⋯" with Listen / Watch / Read, opened by the system
- * until the sermon page can play them.
+ * iOS `SermonRow`: chapter range, date and the intro toggle; the title opens the sermon page on this
+ * chapter; the preacher; "⋯" with Listen / Watch (both go to the sermon page and play there) and Read
+ * (the browser). A video link that isn't YouTube also opens in the browser.
  */
 @Composable
-private fun SermonCard(sermon: SermonEntity) {
+private fun SermonCard(sermon: SermonEntity, onOpenSermon: (String, VideoEntry) -> Unit, actions: SermonActionsViewModel = hiltViewModel()) {
     val c = AppTheme.colors
     val context = LocalContext.current
-    val uriHandler = LocalUriHandler.current
-    val comingSoon = stringResource(R.string.tab_placeholder)
-    val openFailed = stringResource(R.string.link_open_failed)
     var expanded by rememberSaveable(sermon.id) { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
     val intro = sermon.intro?.trim()?.takeIf { it.isNotEmpty() }
+    val youTube = SermonRules.youTubeID(sermon)
     val links = listOfNotNull(
-        ChapterSermons.audioUrl(sermon)?.let { SermonLink(R.string.sermon_listen, Icons.Outlined.Headphones, it) },
-        ChapterSermons.watchUrl(sermon)?.let { SermonLink(R.string.sermon_watch, Icons.Outlined.SmartDisplay, it) },
-        ChapterSermons.pdfUrl(sermon)?.let { SermonLink(R.string.sermon_read, Icons.Outlined.Description, it) },
+        ChapterSermons.audioUrl(sermon)?.let {
+            SermonLink(R.string.sermon_listen, Icons.Outlined.Headphones) { actions.listen(sermon); onOpenSermon(sermon.id, VideoEntry.Suppressed) }
+        },
+        ChapterSermons.watchUrl(sermon)?.let { url ->
+            SermonLink(R.string.sermon_watch, Icons.Outlined.SmartDisplay) {
+                if (youTube != null) onOpenSermon(sermon.id, VideoEntry.Autoplay) else openUrl(context, url)
+            }
+        },
+        ChapterSermons.pdfUrl(sermon)?.let { url -> SermonLink(R.string.sermon_read, Icons.Outlined.Description) { openUrl(context, url) } },
     )
 
     Surface(
@@ -253,7 +261,7 @@ private fun SermonCard(sermon: SermonEntity) {
                     sermon.title,
                     style = textStyle(17, 1.35f, FontWeight.SemiBold),
                     color = c.blue80,
-                    modifier = Modifier.padding(top = 4.dp).clickable { Toast.makeText(context, comingSoon, Toast.LENGTH_SHORT).show() },
+                    modifier = Modifier.padding(top = 4.dp).clickable { onOpenSermon(sermon.id, VideoEntry.Default) }.testTag("sermonTitle_${sermon.id}"),
                 )
                 sermon.preacher?.trim()?.takeIf { it.isNotEmpty() }?.let {
                     Text(it, style = textStyle(12), color = c.neutral90, modifier = Modifier.padding(top = 2.dp))
@@ -274,8 +282,7 @@ private fun SermonCard(sermon: SermonEntity) {
                                 leadingIcon = { Icon(link.icon, null) },
                                 onClick = {
                                     menuOpen = false
-                                    runCatching { uriHandler.openUri(link.url) }
-                                        .onFailure { Toast.makeText(context, openFailed, Toast.LENGTH_SHORT).show() }
+                                    link.onClick()
                                 },
                             )
                         }

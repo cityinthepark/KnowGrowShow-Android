@@ -13,6 +13,33 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import java.time.LocalDate
+import android.widget.Toast
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.stoneofhope.stoneofhope.data.bible.BookChapter
+import com.stoneofhope.stoneofhope.data.sermon.YouTubeLinkParser
+import com.stoneofhope.stoneofhope.ui.sermon.AudioBarViewModel
+import com.stoneofhope.stoneofhope.ui.sermon.CreateVideoSheet
+import com.stoneofhope.stoneofhope.ui.sermon.FloatingAudioBar
+import com.stoneofhope.stoneofhope.ui.sermon.IncomingShare
+import com.stoneofhope.stoneofhope.ui.sermon.SermonDestination
+import com.stoneofhope.stoneofhope.ui.sermon.SermonEditScreen
+import com.stoneofhope.stoneofhope.ui.sermon.SermonNavigation
+import com.stoneofhope.stoneofhope.ui.sermon.SermonNotice
+import com.stoneofhope.stoneofhope.ui.sermon.SermonReaderScreen
+import com.stoneofhope.stoneofhope.ui.sermon.SermonScreen
+import com.stoneofhope.stoneofhope.ui.sermon.SermonViewModel
+import com.stoneofhope.stoneofhope.ui.sermon.VideoEntry
+import com.stoneofhope.stoneofhope.ui.sermon.VideoScreen
+import com.stoneofhope.stoneofhope.ui.sermon.VideoViewModel
 import com.stoneofhope.stoneofhope.ui.ComingSoonScreen
 import com.stoneofhope.stoneofhope.ui.RootViewModel
 import com.stoneofhope.stoneofhope.ui.account.AccountScreen
@@ -47,6 +74,12 @@ private object Routes {
     const val Chapter = "chapter/{${ChapterViewModel.ARG_BOOK_ORD}}/{${ChapterViewModel.ARG_CHAPTER_ORD}}/{${ChapterViewModel.ARG_TAB}}"
     const val VersePage = "chapterVerse/{${ChapterViewModel.ARG_BOOK_ORD}}/{${ChapterViewModel.ARG_CHAPTER_ORD}}/" +
         "{${ChapterVerseViewModel.ARG_VERSE_START}}/{${ChapterVerseViewModel.ARG_VERSE_END}}"
+    const val Sermon = "sermon/{${SermonViewModel.ARG_ID}}?${SermonViewModel.ARG_BOOK}={${SermonViewModel.ARG_BOOK}}" +
+        "&${SermonViewModel.ARG_CHAPTER}={${SermonViewModel.ARG_CHAPTER}}&${SermonViewModel.ARG_ENTRY}={${SermonViewModel.ARG_ENTRY}}" +
+        "&${SermonViewModel.ARG_NOTICE}={${SermonViewModel.ARG_NOTICE}}"
+    const val SermonReader = "sermonReader/{${SermonViewModel.ARG_ID}}"
+    const val SermonEdit = "sermonEdit/{${SermonViewModel.ARG_ID}}"
+    const val Video = "video/{${VideoViewModel.ARG_ID}}?${SermonViewModel.ARG_NOTICE}={${SermonViewModel.ARG_NOTICE}}"
 
     fun noteList(filter: NoteFilter, day: LocalDate?) = "notes/${filter.ordinal}/${day?.toEpochDay() ?: NoteListViewModel.NO_DAY}"
 
@@ -61,113 +94,207 @@ private object Routes {
     fun chapterVerse(v: ChapterVerse) = "chapterVerse/${v.bookOrd}/${v.chapterOrd}/${v.verseStart}/${v.verseEnd}"
 
     fun comingSoon(title: String) = "comingSoon/" + Uri.encode(title)
+
+    fun sermon(id: String, chapter: BookChapter? = null, entry: VideoEntry = VideoEntry.Default, notice: SermonNotice = SermonNotice.None) =
+        "sermon/$id?book=${chapter?.bookOrd ?: -1}&chapter=${chapter?.chapterOrd ?: -1}&entry=${entry.ordinal}&notice=${notice.ordinal}"
+
+    fun sermonReader(id: String) = "sermonReader/$id"
+
+    fun sermonEdit(id: String) = "sermonEdit/$id"
+
+    fun video(youtubeID: String, notice: SermonNotice = SermonNotice.None) = "video/${Uri.encode(youtubeID)}?notice=${notice.ordinal}"
 }
 
 @Composable
-fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel()) {
+fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel(), audioBar: AudioBarViewModel = hiltViewModel()) {
     val navController = rememberNavController()
     // Decided once per launch: the welcome flow only until the user has made a choice.
     val startDestination = remember { if (rootViewModel.showWelcome) Routes.Welcome else Routes.Main }
+    val sermonNav = remember(navController) {
+        SermonNavigation(
+            openSermon = { id, entry -> navController.navigate(Routes.sermon(id, entry = entry)) },
+            openReader = { id -> navController.navigate(Routes.sermonReader(id)) },
+            openVideo = { id -> navController.navigate(Routes.video(id)) },
+        )
+    }
+    val openDestination: (SermonDestination) -> Unit = { dest ->
+        when (dest) {
+            is SermonDestination.Sermon -> navController.navigate(Routes.sermon(dest.id, notice = dest.notice))
+            is SermonDestination.Video -> navController.navigate(Routes.video(dest.youtubeID, dest.notice))
+        }
+    }
+    val backStack by navController.currentBackStackEntryAsState()
+    val audio by audioBar.state.collectAsStateWithLifecycle()
+    // On pushed pages the audio bar sits below the page (MainScreen puts it above the tab bar).
+    val barBelowPage = audio.visible && backStack?.destination?.route.let { it != null && it != Routes.Main && it != Routes.Welcome }
+    val share by IncomingShare.pending.collectAsStateWithLifecycle()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = KnowGrowShowThemeSurface
     ) {
-        NavHost(
-            navController = navController,
-            startDestination = startDestination
-        ) {
-            composable(Routes.Welcome) {
-                // Like iOS, both choices land on the tabs; cloud sign-in lives under Settings.
-                WelcomeScreen(
-                    onContinueLocal = {
-                        rootViewModel.chooseLocalOnly()
-                        navController.navigate(Routes.Main) { popUpTo(Routes.Welcome) { inclusive = true } }
-                    },
-                    onContinueRegister = {
-                        rootViewModel.chooseCloud()
-                        navController.navigate(Routes.Main) { popUpTo(Routes.Welcome) { inclusive = true } }
-                    }
-                )
-            }
-            composable(Routes.Main) {
-                MainScreen(
-                    onOpenAccount = { navController.navigate(Routes.Account) },
-                    onOpenPlaceholder = { title -> navController.navigate(Routes.comingSoon(title)) },
-                    onOpenReadingLog = { bookOrd -> navController.navigate(Routes.readingLog(bookOrd)) },
-                    onOpenChapter = { bookOrd, chapter, tab -> navController.navigate(Routes.chapter(bookOrd, chapter, tab)) },
-                    onOpenNotes = { filter, day -> navController.navigate(Routes.noteList(filter, day)) },
-                    onOpenReview = { day -> navController.navigate(Routes.notesReview(day)) },
-                    onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
-                )
-            }
-            composable(
-                Routes.NoteList,
-                arguments = listOf(
-                    navArgument(NoteListViewModel.ARG_FILTER) { type = NavType.IntType },
-                    navArgument(NoteListViewModel.ARG_DAY) { type = NavType.LongType },
-                ),
+        Column(Modifier.fillMaxSize()) {
+            NavHost(
+                navController = navController,
+                startDestination = startDestination,
+                modifier = Modifier.weight(1f).then(if (barBelowPage) Modifier.consumeWindowInsets(WindowInsets.navigationBars) else Modifier),
             ) {
-                NoteListScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
-                )
+                composable(Routes.Welcome) {
+                    // Like iOS, both choices land on the tabs; cloud sign-in lives under Settings.
+                    WelcomeScreen(
+                        onContinueLocal = {
+                            rootViewModel.chooseLocalOnly()
+                            navController.navigate(Routes.Main) { popUpTo(Routes.Welcome) { inclusive = true } }
+                        },
+                        onContinueRegister = {
+                            rootViewModel.chooseCloud()
+                            navController.navigate(Routes.Main) { popUpTo(Routes.Welcome) { inclusive = true } }
+                        }
+                    )
+                }
+                composable(Routes.Main) {
+                    MainScreen(
+                        onOpenAccount = { navController.navigate(Routes.Account) },
+                        onOpenPlaceholder = { title -> navController.navigate(Routes.comingSoon(title)) },
+                        onOpenReadingLog = { bookOrd -> navController.navigate(Routes.readingLog(bookOrd)) },
+                        onOpenChapter = { bookOrd, chapter, tab -> navController.navigate(Routes.chapter(bookOrd, chapter, tab)) },
+                        onOpenNotes = { filter, day -> navController.navigate(Routes.noteList(filter, day)) },
+                        onOpenReview = { day -> navController.navigate(Routes.notesReview(day)) },
+                        onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
+                        sermonNav = sermonNav,
+                        onOpenDestination = openDestination,
+                    )
+                }
+                composable(
+                    Routes.NoteList,
+                    arguments = listOf(
+                        navArgument(NoteListViewModel.ARG_FILTER) { type = NavType.IntType },
+                        navArgument(NoteListViewModel.ARG_DAY) { type = NavType.LongType },
+                    ),
+                ) {
+                    NoteListScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
+                    )
+                }
+                composable(
+                    Routes.NoteDetails,
+                    arguments = listOf(navArgument(NoteDetailsViewModel.ARG_NOTE_ID) { type = NavType.StringType }),
+                ) {
+                    NoteDetailsScreen(onBack = { navController.popBackStack() })
+                }
+                composable(
+                    Routes.NotesReview,
+                    arguments = listOf(navArgument(NotesReviewViewModel.ARG_DAY) { type = NavType.LongType }),
+                ) {
+                    NotesReviewScreen(onClose = { navController.popBackStack() })
+                }
+                composable(Routes.Account) {
+                    AccountScreen(onBack = { navController.popBackStack() })
+                }
+                composable(
+                    Routes.ReadingLog,
+                    arguments = listOf(navArgument(ReadingLogViewModel.ARG_BOOK_ORD) { type = NavType.IntType }),
+                ) {
+                    ReadingLogScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenChapter = { bookOrd, chapter -> navController.navigate(Routes.chapter(bookOrd, chapter, ChapterTab.Sermons)) },
+                    )
+                }
+                composable(
+                    Routes.Chapter,
+                    arguments = listOf(
+                        navArgument(ChapterViewModel.ARG_BOOK_ORD) { type = NavType.IntType },
+                        navArgument(ChapterViewModel.ARG_CHAPTER_ORD) { type = NavType.IntType },
+                        navArgument(ChapterViewModel.ARG_TAB) { type = NavType.IntType },
+                    ),
+                ) {
+                    ChapterScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
+                        onOpenVerse = { verse -> navController.navigate(Routes.chapterVerse(verse)) },
+                        onOpenSermon = { id, chapter, entry -> navController.navigate(Routes.sermon(id, chapter, entry)) },
+                    )
+                }
+                composable(
+                    Routes.VersePage,
+                    arguments = listOf(
+                        navArgument(ChapterViewModel.ARG_BOOK_ORD) { type = NavType.IntType },
+                        navArgument(ChapterViewModel.ARG_CHAPTER_ORD) { type = NavType.IntType },
+                        navArgument(ChapterVerseViewModel.ARG_VERSE_START) { type = NavType.IntType },
+                        navArgument(ChapterVerseViewModel.ARG_VERSE_END) { type = NavType.IntType },
+                    ),
+                ) {
+                    ChapterVerseScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
+                    )
+                }
+                composable(
+                    Routes.Sermon,
+                    arguments = listOf(
+                        navArgument(SermonViewModel.ARG_ID) { type = NavType.StringType },
+                        navArgument(SermonViewModel.ARG_BOOK) { type = NavType.IntType; defaultValue = -1 },
+                        navArgument(SermonViewModel.ARG_CHAPTER) { type = NavType.IntType; defaultValue = -1 },
+                        navArgument(SermonViewModel.ARG_ENTRY) { type = NavType.IntType; defaultValue = 0 },
+                        navArgument(SermonViewModel.ARG_NOTICE) { type = NavType.IntType; defaultValue = 0 },
+                    ),
+                ) {
+                    SermonScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
+                        onEdit = { id -> navController.navigate(Routes.sermonEdit(id)) },
+                    )
+                }
+                composable(Routes.SermonReader, arguments = listOf(navArgument(SermonViewModel.ARG_ID) { type = NavType.StringType })) {
+                    SermonReaderScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenSermon = { id, entry -> navController.navigate(Routes.sermon(id, entry = entry)) },
+                    )
+                }
+                composable(Routes.SermonEdit, arguments = listOf(navArgument(SermonViewModel.ARG_ID) { type = NavType.StringType })) {
+                    SermonEditScreen(
+                        onBack = { navController.popBackStack() },
+                        // The sermon page is gone too.
+                        onDeleted = { if (!navController.popBackStack(Routes.Sermon, inclusive = true)) navController.popBackStack() },
+                    )
+                }
+                composable(
+                    Routes.Video,
+                    arguments = listOf(
+                        navArgument(VideoViewModel.ARG_ID) { type = NavType.StringType },
+                        navArgument(SermonViewModel.ARG_NOTICE) { type = NavType.IntType; defaultValue = 0 },
+                    ),
+                ) {
+                    VideoScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
+                    )
+                }
+                composable(Routes.ComingSoon) { entry ->
+                    ComingSoonScreen(title = entry.arguments?.getString("title").orEmpty(), onBack = { navController.popBackStack() })
+                }
             }
-            composable(
-                Routes.NoteDetails,
-                arguments = listOf(navArgument(NoteDetailsViewModel.ARG_NOTE_ID) { type = NavType.StringType }),
-            ) {
-                NoteDetailsScreen(onBack = { navController.popBackStack() })
+            if (barBelowPage) FloatingAudioBar(Modifier.navigationBarsPadding())
+        }
+    }
+
+    // iOS: a link shared from the YouTube app opens the new-video sheet over whatever is on screen.
+    share?.let { shared ->
+        val url = YouTubeLinkParser.firstYouTubeURLString(shared.text)
+        if (url == null) {
+            val context = LocalContext.current
+            LaunchedEffect(shared) {
+                Toast.makeText(context, R.string.share_not_youtube, Toast.LENGTH_SHORT).show()
+                IncomingShare.consume()
             }
-            composable(
-                Routes.NotesReview,
-                arguments = listOf(navArgument(NotesReviewViewModel.ARG_DAY) { type = NavType.LongType }),
-            ) {
-                NotesReviewScreen(onClose = { navController.popBackStack() })
-            }
-            composable(Routes.Account) {
-                AccountScreen(onBack = { navController.popBackStack() })
-            }
-            composable(
-                Routes.ReadingLog,
-                arguments = listOf(navArgument(ReadingLogViewModel.ARG_BOOK_ORD) { type = NavType.IntType }),
-            ) {
-                ReadingLogScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenChapter = { bookOrd, chapter -> navController.navigate(Routes.chapter(bookOrd, chapter, ChapterTab.Sermons)) },
-                )
-            }
-            composable(
-                Routes.Chapter,
-                arguments = listOf(
-                    navArgument(ChapterViewModel.ARG_BOOK_ORD) { type = NavType.IntType },
-                    navArgument(ChapterViewModel.ARG_CHAPTER_ORD) { type = NavType.IntType },
-                    navArgument(ChapterViewModel.ARG_TAB) { type = NavType.IntType },
-                ),
-            ) {
-                ChapterScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
-                    onOpenVerse = { verse -> navController.navigate(Routes.chapterVerse(verse)) },
-                )
-            }
-            composable(
-                Routes.VersePage,
-                arguments = listOf(
-                    navArgument(ChapterViewModel.ARG_BOOK_ORD) { type = NavType.IntType },
-                    navArgument(ChapterViewModel.ARG_CHAPTER_ORD) { type = NavType.IntType },
-                    navArgument(ChapterVerseViewModel.ARG_VERSE_START) { type = NavType.IntType },
-                    navArgument(ChapterVerseViewModel.ARG_VERSE_END) { type = NavType.IntType },
-                ),
-            ) {
-                ChapterVerseScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
-                )
-            }
-            composable(Routes.ComingSoon) { entry ->
-                ComingSoonScreen(title = entry.arguments?.getString("title").orEmpty(), onBack = { navController.popBackStack() })
-            }
+        } else {
+            CreateVideoSheet(
+                onDismiss = IncomingShare::consume,
+                onCreated = { IncomingShare.consume(); openDestination(it) },
+                initialUrl = url,
+                sharedTitle = shared.title,
+            )
         }
     }
 }

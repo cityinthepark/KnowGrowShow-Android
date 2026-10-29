@@ -2,6 +2,7 @@ package com.stoneofhope.stoneofhope.ui.main
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -31,6 +32,9 @@ import com.stoneofhope.stoneofhope.data.notes.NoteFilter
 import com.stoneofhope.stoneofhope.ui.calendar.CalendarScreen
 import com.stoneofhope.stoneofhope.ui.chapter.ChapterTab
 import com.stoneofhope.stoneofhope.ui.moments.MomentsScreen
+import com.stoneofhope.stoneofhope.ui.sermon.FloatingAudioBar
+import com.stoneofhope.stoneofhope.ui.sermon.SermonDestination
+import com.stoneofhope.stoneofhope.ui.sermon.SermonNavigation
 import java.time.LocalDate
 import com.stoneofhope.stoneofhope.ui.today.TodayScreen
 
@@ -53,25 +57,31 @@ fun MainScreen(
     onOpenNotes: (NoteFilter, LocalDate) -> Unit,
     onOpenReview: (LocalDate) -> Unit,
     onOpenNote: (noteId: String) -> Unit,
+    sermonNav: SermonNavigation,
+    onOpenDestination: (SermonDestination) -> Unit,
 ) {
     var selected by rememberSaveable { mutableStateOf(MainTab.Today) }
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                MainTab.entries.forEach { tab ->
-                    NavigationBarItem(
-                        selected = tab == selected,
-                        onClick = { selected = tab },
-                        icon = { Icon(tab.icon, contentDescription = null) },
-                        label = { Text(stringResource(tab.title)) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                        ),
-                        modifier = Modifier.testTag("tab_${tab.name}"),
-                    )
+            // iOS: the floating audio player sits above the tab bar.
+            Column {
+                FloatingAudioBar()
+                NavigationBar {
+                    MainTab.entries.forEach { tab ->
+                        NavigationBarItem(
+                            selected = tab == selected,
+                            onClick = { selected = tab },
+                            icon = { Icon(tab.icon, contentDescription = null) },
+                            label = { Text(stringResource(tab.title)) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            ),
+                            modifier = Modifier.testTag("tab_${tab.name}"),
+                        )
+                    }
                 }
             }
         },
@@ -84,11 +94,13 @@ fun MainScreen(
                     onOpenChapter = onOpenChapter,
                     onOpenNotes = onOpenNotes,
                     onOpenReview = onOpenReview,
+                    nav = sermonNav,
+                    onOpenDestination = onOpenDestination,
                 )
                 MainTab.Series -> PlaceholderTab(MainTab.Series)
                 MainTab.Moments -> MomentsScreen(onOpenNote = onOpenNote)
                 MainTab.Calendar -> CalendarScreen(
-                    onOpen = onOpenPlaceholder,
+                    nav = sermonNav,
                     onOpenChapter = onOpenChapter,
                     onOpenNotes = onOpenNotes,
                     onOpenReview = onOpenReview,

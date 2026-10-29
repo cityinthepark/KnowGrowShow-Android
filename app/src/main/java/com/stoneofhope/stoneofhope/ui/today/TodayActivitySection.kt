@@ -28,6 +28,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,7 +44,12 @@ import androidx.compose.ui.unit.sp
 import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.today.TodayActivity
 import com.stoneofhope.stoneofhope.data.today.TodayActivity.TileKind
+import com.stoneofhope.stoneofhope.data.local.entity.SermonEntity
+import com.stoneofhope.stoneofhope.data.sermon.SermonRules
 import com.stoneofhope.stoneofhope.ui.chapter.ChapterTab
+import com.stoneofhope.stoneofhope.ui.sermon.MergeSermonHost
+import com.stoneofhope.stoneofhope.ui.sermon.SermonDayRow
+import com.stoneofhope.stoneofhope.ui.sermon.SermonNavigation
 import com.stoneofhope.stoneofhope.ui.theme.AppColors
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 
@@ -55,7 +61,7 @@ import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 @Composable
 fun TodayActivitySection(
     activity: TodayActivity,
-    onOpen: (title: String) -> Unit,
+    nav: SermonNavigation,
     onOpenChapter: (bookOrd: Int, chapter: Int, tab: ChapterTab) -> Unit,
     onOpenTile: (TileKind) -> Unit,
     onReview: () -> Unit,
@@ -75,8 +81,8 @@ fun TodayActivitySection(
         }
         Tiles(activity.tiles, onOpenTile)
         if (activity.chaptersRead.isNotEmpty()) ChaptersCard(activity, isToday, onOpenChapter, onUnread.takeIf { isToday })
-        if (activity.sermons.isNotEmpty()) SermonsCard(activity.sermons, isToday, onOpen)
-        if (activity.videos.isNotEmpty()) VideosCard(activity.videos, isToday, onOpen)
+        if (activity.sermons.isNotEmpty()) SermonsCard(activity.sermons, isToday, nav)
+        if (activity.videos.isNotEmpty()) VideosCard(activity.videos, isToday, nav)
     }
 }
 
@@ -188,7 +194,9 @@ private fun ChaptersCard(activity: TodayActivity, isToday: Boolean, onOpenChapte
 }
 
 @Composable
-private fun SermonsCard(rows: List<TodayActivity.SermonRow>, isToday: Boolean, onOpen: (String) -> Unit) {
+private fun SermonsCard(rows: List<TodayActivity.SermonRow>, isToday: Boolean, nav: SermonNavigation) {
+    var mergeSource by remember { mutableStateOf<SermonEntity?>(null) }
+    val noteCounts = rows.associate { it.sermon.id to it.noteCount }
     ExpandableCard(
         id = "sermons",
         title = stringResource(R.string.card_sermons),
@@ -198,20 +206,30 @@ private fun SermonsCard(rows: List<TodayActivity.SermonRow>, isToday: Boolean, o
         icon = Icons.AutoMirrored.Outlined.MenuBook,
     ) {
         rows.forEach { row ->
-            val ref = row.sermon.chapterRange?.trim().orEmpty()
-            val title = if (ref.isEmpty()) row.sermon.title else "$ref - ${row.sermon.title}"
-            ItemRow(title, row.noteCount, row.tagNames) { onOpen(row.sermon.title) }
+            SermonDayRow(
+                sermon = row.sermon,
+                noteCount = row.noteCount,
+                tagNames = row.tagNames,
+                isToday = isToday,
+                canMerge = SermonRules.canOfferMerge(row.noteCount, rows.size),
+                nav = nav,
+                onMerge = { mergeSource = row.sermon },
+            )
         }
     }
+    MergeSermonHost(mergeSource, rows.map { it.sermon }, noteCounts, onDismiss = { mergeSource = null })
 }
 
 /** One video: a plain card that opens it. Several: an expandable list (iOS). */
 @Composable
-private fun VideosCard(rows: List<TodayActivity.VideoRow>, isToday: Boolean, onOpen: (String) -> Unit) {
+private fun VideosCard(rows: List<TodayActivity.VideoRow>, isToday: Boolean, nav: SermonNavigation) {
     val colors = AppTheme.colors
     if (rows.size == 1) {
         val row = rows.single()
-        Surface(onClick = { onOpen(row.video.title) }, shape = RoundedCornerShape(16.dp), color = colors.surface0, modifier = Modifier.fillMaxWidth()) {
+        Surface(
+            onClick = { nav.openVideo(row.video.youtubeID) }, shape = RoundedCornerShape(16.dp), color = colors.surface0,
+            modifier = Modifier.fillMaxWidth().testTag("video_${row.video.youtubeID}"),
+        ) {
             Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Surface(shape = RoundedCornerShape(10.dp), color = colors.videoChip.background, contentColor = colors.videoChip.foreground) {
                     Icon(Icons.Outlined.PlayCircle, contentDescription = null, modifier = Modifier.padding(8.dp).size(18.dp))
@@ -235,7 +253,7 @@ private fun VideosCard(rows: List<TodayActivity.VideoRow>, isToday: Boolean, onO
         pair = colors.videoChip,
         icon = Icons.Outlined.PlayCircle,
     ) {
-        rows.forEach { row -> ItemRow(row.video.title, row.noteCount, row.tagNames) { onOpen(row.video.title) } }
+        rows.forEach { row -> ItemRow(row.video.title, row.noteCount, row.tagNames) { nav.openVideo(row.video.youtubeID) } }
     }
 }
 

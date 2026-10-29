@@ -1,7 +1,6 @@
 package com.stoneofhope.stoneofhope.ui.today
 
 import android.text.format.DateFormat
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -48,6 +46,10 @@ import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.notes.NoteFilter
 import com.stoneofhope.stoneofhope.data.today.TodayActivity.TileKind
 import com.stoneofhope.stoneofhope.ui.chapter.ChapterTab
+import com.stoneofhope.stoneofhope.ui.sermon.CreateSermonSheet
+import com.stoneofhope.stoneofhope.ui.sermon.CreateVideoSheet
+import com.stoneofhope.stoneofhope.ui.sermon.SermonDestination
+import com.stoneofhope.stoneofhope.ui.sermon.SermonNavigation
 import com.stoneofhope.stoneofhope.ui.reading.ReadingLogViewModel
 import com.stoneofhope.stoneofhope.ui.theme.AppColors
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
@@ -57,7 +59,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /** Which quick-add sheet is open. */
-private enum class TodaySheet { Prayer, Note }
+private enum class TodaySheet { Prayer, Note, Sermon, Video }
 
 /**
  * iOS `TodayView`: greeting, reading carousel, quick add, today's activity.
@@ -73,6 +75,8 @@ fun TodayScreen(
     onOpenChapter: (bookOrd: Int, chapter: Int, tab: ChapterTab) -> Unit,
     onOpenNotes: (NoteFilter, LocalDate) -> Unit,
     onOpenReview: (LocalDate) -> Unit,
+    nav: SermonNavigation,
+    onOpenDestination: (SermonDestination) -> Unit,
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
     val day by viewModel.day.collectAsStateWithLifecycle()
@@ -82,8 +86,6 @@ fun TodayScreen(
     val flashCount by viewModel.activeFlashCards.collectAsStateWithLifecycle()
     val tagNames by viewModel.tagNames.collectAsStateWithLifecycle()
     var sheet by rememberSaveable { mutableStateOf<TodaySheet?>(null) }
-    val context = LocalContext.current
-    val comingSoon = stringResource(R.string.tab_placeholder)
     val profileTitle = stringResource(R.string.today_profile)
     val flashcardTitle = stringResource(R.string.flashcard)
 
@@ -116,16 +118,15 @@ fun TodayScreen(
                 flashCount = flashCount,
                 onPrayer = { sheet = TodaySheet.Prayer },
                 onNote = { sheet = TodaySheet.Note },
-                // T3 of the Today plan.
-                onSermon = { Toast.makeText(context, comingSoon, Toast.LENGTH_SHORT).show() },
-                onVideo = { Toast.makeText(context, comingSoon, Toast.LENGTH_SHORT).show() },
+                onSermon = { sheet = TodaySheet.Sermon },
+                onVideo = { sheet = TodaySheet.Video },
                 onFlashCards = { onOpen(flashcardTitle) },
             )
         }
         item {
             TodayActivitySection(
                 activity = activity,
-                onOpen = onOpen,
+                nav = nav,
                 onOpenChapter = onOpenChapter,
                 onOpenTile = { kind -> onOpenNotes(kind.noteFilter, day) },
                 onReview = { onOpenReview(day) },
@@ -147,6 +148,8 @@ fun TodayScreen(
             onDismiss = { sheet = null },
             onSave = { content, ref -> viewModel.saveNote(content, ref); sheet = null },
         )
+        TodaySheet.Sermon -> CreateSermonSheet(onDismiss = { sheet = null }, onCreated = { sheet = null; onOpenDestination(it) })
+        TodaySheet.Video -> CreateVideoSheet(onDismiss = { sheet = null }, onCreated = { sheet = null; onOpenDestination(it) })
         null -> Unit
     }
 }

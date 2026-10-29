@@ -173,8 +173,10 @@ class WireEncoderTest {
         val sw = WireEncoder.sermonSeries(series, uid, sermonIds = listOf("64a0000000000000000000c2"))
         assertEquals(
             setOf("ownerUid", "title", "isFinished", "sermonIds", "schemaVersion", "updatedAt"),
-            sw.data.keys,
+            sw.data.valued(),
         )
+        // Empty optional fields are deleted remotely (IOS_ISSUES K1); iOS just leaves them out.
+        assertEquals(setOf("bookOrd", "startedOn"), sw.data.deleted())
         val sermon = SermonEntity(
             id = "64a0000000000000000000c2", title = "Grace", createdAt = t0, chapters = listOf(1, 2),
             preachedOn = "20260301", seriesId = series.id, bookOrd = 45,
@@ -185,7 +187,11 @@ class WireEncoderTest {
                 "ownerUid", "isUserData", "title", "chapters", "createdAt", "tagIds", "schemaVersion",
                 "updatedAt", "bookOrd", "preachedOn", "seriesId",
             ),
-            w.data.keys,
+            w.data.valued(),
+        )
+        assertEquals(
+            setOf("preacher", "youtubeID", "book", "chapterRange", "audioUrl", "videoUrl", "pdfUrl", "intro"),
+            w.data.deleted(),
         )
         assertEquals(true, w.data["isUserData"])
     }
@@ -203,7 +209,7 @@ class WireEncoderTest {
                     createdAt = t0, updatedAt = t0,
                 ),
                 uid,
-            ).data.keys,
+            ).data.valued(),
         )
         assertEquals(
             setOf(
@@ -275,4 +281,8 @@ class WireEncoderTest {
         assertEquals(WriteMode.Delete, d.mode)
         assertFalse(d.data.isNotEmpty())
     }
+
+    private fun WireData.valued() = filterValues { it != WireValue.DeleteField }.keys
+
+    private fun WireData.deleted() = filterValues { it == WireValue.DeleteField }.keys
 }

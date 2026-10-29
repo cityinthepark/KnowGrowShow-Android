@@ -79,7 +79,7 @@ data class BibleRefLanguages(
 )
 
 /** Which help text the info button shows. */
-enum class BibleRefHelp { Note, Prayer }
+enum class BibleRefHelp { Note, Prayer, Sermon, Chapter }
 
 private enum class DisplayState { Valid, Invalid, Quiet }
 
@@ -296,18 +296,32 @@ private fun BookPickerSheet(
  */
 @Composable
 private fun ReferenceHelpDialog(help: BibleRefHelp, onDismiss: () -> Unit) {
-    val examples = listOf(
-        "John 3:16" to R.string.bible_ref_help_example_verse,
-        "Jn 3:16-18" to R.string.bible_ref_help_example_range,
-        "约 3:16 · 約翰福音 3：16" to R.string.bible_ref_help_example_chinese,
-        "Jude 5" to R.string.bible_ref_help_example_one_chapter,
-    )
+    val examples = when (help) {
+        // iOS `Sermon Ref Example 1–4`, with a book name (Android's picker fills the book in the field).
+        BibleRefHelp.Sermon -> listOf(
+            "Romans 2:1-5" to R.string.bible_ref_help_sermon_verses,
+            "Romans 3, 5:1-3" to R.string.bible_ref_help_sermon_chapters,
+            "Romans 6" to R.string.bible_ref_help_sermon_chapter,
+            "罗 8 · 羅馬書 8" to R.string.bible_ref_help_example_chinese,
+        )
+        else -> listOf(
+            "John 3:16" to R.string.bible_ref_help_example_verse,
+            "Jn 3:16-18" to R.string.bible_ref_help_example_range,
+            "约 3:16 · 約翰福音 3：16" to R.string.bible_ref_help_example_chinese,
+            "Jude 5" to R.string.bible_ref_help_example_one_chapter,
+        )
+    }
+    val intro = when (help) {
+        BibleRefHelp.Sermon -> R.string.bible_ref_help_sermon_intro
+        BibleRefHelp.Chapter -> R.string.bible_ref_help_chapter_intro
+        else -> R.string.bible_ref_help_intro
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.bible_ref_help_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.bible_ref_help_intro))
+                Text(stringResource(intro))
                 examples.forEach { (input, desc) ->
                     val description = stringResource(desc)
                     Text(
@@ -317,7 +331,9 @@ private fun ReferenceHelpDialog(help: BibleRefHelp, onDismiss: () -> Unit) {
                         },
                     )
                 }
-                Text(stringResource(R.string.bible_ref_help_chapter_only), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (help == BibleRefHelp.Note || help == BibleRefHelp.Prayer) {
+                    Text(stringResource(R.string.bible_ref_help_chapter_only), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 if (help == BibleRefHelp.Note) {
                     Text(stringResource(R.string.bible_ref_help_note_shortcut), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

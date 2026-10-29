@@ -61,8 +61,8 @@ object WireEncoder {
             "sermonIds" to sermonIds,
             "schemaVersion" to SCHEMA_VERSION,
             "updatedAt" to WireValue.ServerTimestamp,
-            "bookOrd" to series.bookOrd,
-            "startedOn" to series.startedOn.ifEmpty { null },
+            "bookOrd" to series.bookOrd.orDelete(),
+            "startedOn" to series.startedOn.ifEmpty { null }.orDelete(),
         )
     }
 
@@ -78,17 +78,17 @@ object WireEncoder {
             "tagIds" to sermon.tagIds,
             "schemaVersion" to SCHEMA_VERSION,
             "updatedAt" to WireValue.ServerTimestamp,
-            "preacher" to sermon.preacher,
-            "youtubeID" to sermon.youtubeID,
-            "book" to sermon.book,
-            "bookOrd" to sermon.bookOrd,
-            "chapterRange" to sermon.chapterRange,
-            "audioUrl" to sermon.audioUrl,
-            "videoUrl" to sermon.videoUrl,
-            "pdfUrl" to sermon.pdfUrl,
-            "preachedOn" to sermon.preachedOn.ifEmpty { null },
-            "intro" to sermon.intro,
-            "seriesId" to sermon.seriesId,
+            "preacher" to sermon.preacher.orDelete(),
+            "youtubeID" to sermon.youtubeID.orDelete(),
+            "book" to sermon.book.orDelete(),
+            "bookOrd" to sermon.bookOrd.orDelete(),
+            "chapterRange" to sermon.chapterRange.orDelete(),
+            "audioUrl" to sermon.audioUrl.orDelete(),
+            "videoUrl" to sermon.videoUrl.orDelete(),
+            "pdfUrl" to sermon.pdfUrl.orDelete(),
+            "preachedOn" to sermon.preachedOn.ifEmpty { null }.orDelete(),
+            "intro" to sermon.intro.orDelete(),
+            "seriesId" to sermon.seriesId.orDelete(),
         )
     }
 
@@ -103,12 +103,12 @@ object WireEncoder {
             "tagIds" to video.tagIds,
             "schemaVersion" to SCHEMA_VERSION,
             "updatedAt" to WireValue.ServerTimestamp,
-            "channelName" to video.channelName,
-            "channelId" to video.channelId,
-            "thumbnailUrl" to video.thumbnailUrl,
-            "bookOrd" to video.bookOrd,
-            "chapterOrd" to video.chapterOrd,
-            "sermonId" to video.sermonId,
+            "channelName" to video.channelName.orDelete(),
+            "channelId" to video.channelId.orDelete(),
+            "thumbnailUrl" to video.thumbnailUrl.orDelete(),
+            "bookOrd" to video.bookOrd.orDelete(),
+            "chapterOrd" to video.chapterOrd.orDelete(),
+            "sermonId" to video.sermonId.orDelete(),
         )
     }
 
@@ -292,6 +292,13 @@ object WireEncoder {
         WireWrite(FirestoreSchema.PIN_LOG, documentId, emptyMap(), WriteMode.Delete)
 
     /** Merge write; `null` values are omitted, mirroring iOS `if let v = ... { d[key] = v }`. */
+    /**
+     * An optional field that is now empty is deleted remotely. iOS leaves it out of the merge write,
+     * so a value cleared on the device stays in Firestore and comes back on other devices
+     * (IOS_ISSUES K1). The document looks exactly like one iOS writes from scratch.
+     */
+    private fun Any?.orDelete(): Any = this ?: WireValue.DeleteField
+
     private fun merge(collection: String, documentId: String, vararg fields: Pair<String, Any?>) = WireWrite(
         collection = collection,
         documentId = documentId,

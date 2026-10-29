@@ -128,6 +128,17 @@ class ReadingRepository @Inject constructor(
         }
     }
 
+    /**
+     * Marks a chapter read today and leaves it alone when it already is. iOS
+     * `BibleReadingManager.markChapterRead` calls `toggleChapterRead`, so saving a sermon un-reads a
+     * chapter read earlier today (IOS_ISSUES D1).
+     */
+    suspend fun markChapterRead(bookOrd: Int, chapter: Int, zone: ZoneId = ZoneId.systemDefault()) {
+        val today = clock.instant().atZone(zone).toLocalDate()
+        val readToday = db.chapterLogDao().activeFor(bookOrd, chapter).any { ReadingModel.localDay(it.readOn, zone) == today }
+        if (!readToday) toggleChapterRead(bookOrd, chapter, zone)
+    }
+
     private fun newLog(bookOrd: Int, chapter: Int, readOn: Instant) =
         ChapterLogEntity(id = ObjectIds.newId(), bookOrd = bookOrd, chapter = chapter, readOn = readOn, needsSync = true)
 }

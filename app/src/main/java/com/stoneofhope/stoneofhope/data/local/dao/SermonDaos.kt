@@ -19,6 +19,12 @@ interface SermonSeriesDao {
     @Query("SELECT * FROM sermonSeries WHERE deletedAt IS NULL ORDER BY startedOn DESC")
     fun observeActive(): Flow<List<SermonSeriesEntity>>
 
+    @Query("SELECT * FROM sermonSeries WHERE deletedAt IS NULL ORDER BY startedOn DESC")
+    suspend fun active(): List<SermonSeriesEntity>
+
+    @Query("SELECT * FROM sermonSeries WHERE id = :id")
+    fun observeById(id: String): Flow<SermonSeriesEntity?>
+
     /** Church imports (`isUserData == 0`) never sync. */
     @Query("SELECT * FROM sermonSeries WHERE needsSync = 1 AND isUserData = 1")
     suspend fun dirty(): List<SermonSeriesEntity>
@@ -42,6 +48,21 @@ interface SermonDao {
 
     @Query("SELECT * FROM sermons WHERE id = :id")
     suspend fun getById(id: String): SermonEntity?
+
+    @Query("SELECT * FROM sermons WHERE id = :id")
+    fun observeById(id: String): Flow<SermonEntity?>
+
+    /** iOS `sermon(withYouTubeID:)`. */
+    @Query("SELECT * FROM sermons WHERE youtubeID = :youtubeID AND deletedAt IS NULL LIMIT 1")
+    suspend fun activeWithYouTubeID(youtubeID: String): SermonEntity?
+
+    /** iOS `createSermon(youtubeID:title:refText:preacher:)` second lookup. */
+    @Query("SELECT * FROM sermons WHERE title = :title AND chapterRange = :chapterRange AND deletedAt IS NULL LIMIT 1")
+    suspend fun activeWithTitleAndRange(title: String, chapterRange: String): SermonEntity?
+
+    /** Titles for iOS `uniqueSermonTitle(for:)`. */
+    @Query("SELECT title FROM sermons WHERE deletedAt IS NULL AND (title = :base OR title LIKE :base || ' - %')")
+    suspend fun activeTitlesLike(base: String): List<String>
 
     @Query("SELECT * FROM sermons WHERE deletedAt IS NULL ORDER BY preachedOn DESC, createdAt DESC")
     fun observeActive(): Flow<List<SermonEntity>>
@@ -97,6 +118,9 @@ interface YouTubeVideoDao {
 
     @Query("SELECT * FROM youtubeVideos WHERE youtubeID = :youtubeID")
     suspend fun getById(youtubeID: String): YouTubeVideoEntity?
+
+    @Query("SELECT * FROM youtubeVideos WHERE youtubeID = :youtubeID")
+    fun observeById(youtubeID: String): Flow<YouTubeVideoEntity?>
 
     /** Personal catalog only: sermon dedup-index rows (`sermonId` set) stay out of Video UI. */
     @Query("SELECT * FROM youtubeVideos WHERE deletedAt IS NULL AND sermonId IS NULL ORDER BY createdAt DESC")

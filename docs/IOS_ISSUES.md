@@ -6,7 +6,7 @@
 
 状态：🔴 待修 · 🟡 待确认 / 产品决定 · ✅ 已处理
 
-最后更新：2026-10-28
+最后更新：2026-10-28（K 节）
 
 ---
 
@@ -39,9 +39,9 @@
 
 | # | iOS 位置 | 问题 | 影响 | 安卓做法 | iOS 修后安卓要改吗 |
 | --- | --- | --- | --- | --- | --- |
-| D1 🔴 | `NotesManager.swift` 1875/1920/1966 行调用 `BibleReadingManager.markChapterRead` | 这个函数实际是**切换**（`toggleChapterRead`）；新建讲道时对章节调用它 | **今天已经读过的章节会被取消已读** | 新建讲道（T3，尚未实现）将只"标记已读"，不切换 | 不用 |
-| D2 🔴 | `CreateSermonSheet` | 自动识别的系列覆盖用户手动选的系列 | 用户选择丢失 | T3 实现时用户选择优先 | 不用 |
-| D3 🔴 | `CreateSermonSheet` | 讲道重复提示设好后弹窗立即关闭 | 提示永远看不到 | T3 实现时正常显示 | 不用 |
+| D1 🔴 | `NotesManager.swift` 1875/1920/1966 行调用 `BibleReadingManager.markChapterRead` | 这个函数实际是**切换**（`toggleChapterRead`）；手填新建讲道、YouTube 导入讲道时都对章节调用它 | **今天已经读过的章节会被取消已读** | 只"标记已读"，今天已读的不动（`ReadingRepository.markChapterRead`，阶段 3 S1） | 不用 |
+| D2 🔴 | `NotesManager.createSermon(title:refText:preacher:series:)`（`CreateSermonSheet` 调用） | 存好用户选的系列后，又自动识别一次并覆盖 | 用户选择丢失 | 用户选的系列优先；没选时才自动识别（规则见 K3） | 不用 |
+| D3 🔴 | `CreateSermonSheet`、`CreateYouTubeVideoSheet` | "讲道已存在 / 视频已保存"提示设好后弹窗立即关闭 | 提示永远看不到 | 打开原来的讲道或视频后，在那一页底部显示提示 | 不用 |
 | D4 🔴 | `BibleReadingManager.toggleChapterRead` / `isChapterReadToday` | 用"`readOn` **等于**今天零点"判断今天是否读过 | 换时区（旅行）后，今天的记录认不出来：再点一次会**多建一条记录**而不是取消，颜色也不对 | 按"本地日期范围"判断；**写入仍是本地零点**，与 iOS 兼容 | 不用 |
 | D5 🔴 | `BibleReadingManager.toggleChapterRead`（新建进度分支） | 新开一本书时不设 `completedOn`；只有一章的书（俄巴底亚书、腓利门书、约翰二/三书、犹大书）读完了也不算完成 | 这几卷不显示"重新开始"，统计不算读完 | 新建时若已全部读完就设 `completedOn` | 不用 |
 | D6 🔴 | `BibleReadingManager.toggleChapterRead` | `readChapters[chapter - 1]` 没有越界检查 | 同步来的数据长度不对时**崩溃** | 越界直接忽略 | 不用 |
@@ -99,7 +99,7 @@
 | H6 🟡 | `ChapterSermonView.groupedSermons` | 同一年内不排序（Realm 原始顺序）；没有日期的"Unknown"组排在最前（字母比较 `U` > `2`），且"Unknown"没有翻译 | 顺序不稳定 | 年内按讲道日期从新到旧；没有日期的放最后，显示"日期不详" | 不用 |
 | H7 🟡 | `ChapterPlainNoteRow` | 整章笔记卡片不能点 | 在章节页里无法编辑、删除整章笔记 | 点开进笔记详情 | 不用 |
 | H8 🟡 | `ChapterNoteDetailsView`、锚点的 `NoteDetailActionsMenuButton`、各语言 `Localizable.strings` | 经文锚点下面的内容叫"评论"："Comments (N)"、"No comments or prayers yet."、分段"Comment / Prayer"、"⋯"里的"Add Comment"；zh-Hans 的"Delete Comment?"译成"删除注释？"，zh-Hant 写成"刪除注释？"（混了简体字） | 用词与笔记详情不一致 | 锚点下一律叫"感想"：标题、空状态、分段、"⋯"里的"写感想"（笔记列表和详情的"⋯"也一起改了） | 不用 |
-| H9 🟡 | `SermonRow` | 没有简介时也显示展开箭头；"Listen / Watch / Read"没有翻译 | 小问题 | 有简介才显示箭头；三种语言都翻译。T3 之前"看 / 听 / 读"用系统打开链接 | T3 时再对一次 |
+| H9 🟡 | `SermonRow` | 没有简介时也显示展开箭头；"Listen / Watch / Read"没有翻译 | 小问题 | 有简介才显示箭头；三种语言都翻译。阶段 3 S1 起，"听""看"进讲道页在 App 里播放（与 iOS 相同），"读"和不是 YouTube 的视频链接用浏览器打开 | 不用 |
 
 ## I. Moments 与 Calendar（M1）
 
@@ -126,6 +126,36 @@
 | --- | --- | --- | --- | --- | --- |
 | J1 🔴 | `Services/FirebaseEmulatorBootstrap.swift`（全量模拟） | 只调用了 `Firestore.firestore().useEmulator`；Firebase 12.11 的 `useEmulator` 只改地址、不关 SSL，而本地模拟器只收明文连接 | iOS 连本地 Firestore 时 TLS 握手失败、一直"离线"，登录后显示"Could not load your encryption key"，无法做本机互通测试 | 安卓不涉及（安卓连本地模拟器正常） | 不用。已在 iOS 工作区加上三行：读出 `settings`、`isSSLEnabled = false`、写回（**未提交**，等你确认） |
 | J2 🟡 | Swift 包 `realm-core` 14.14.0 | 用 Xcode 27（iOS 27 SDK）从头编译失败：内带的 s2 几何库特化了 `std::is_pod`，还有 `std::less<void>` 的编译错误 | 现有的编译缓存还能增量编译；一旦 Clean Build Folder、换机器或换编译目录，iOS 就编不过 | 安卓不涉及 | 不用。建议升级 Realm |
+
+
+## K. 讲道与视频（阶段 3 S1）
+
+方案与验证见 [SERMONS_SERIES_PLAN.md](SERMONS_SERIES_PLAN.md)。K17–K20 属于 Series tab，S2 时再核对一次。
+
+| # | iOS 位置 | 问题 | 影响 | 安卓做法 | iOS 修后安卓要改吗 |
+| --- | --- | --- | --- | --- | --- |
+| K1 🔴 | `FirestoreUserDataPush`（讲道、视频、系列；笔记也是同样写法） | 合并写入（`merge: true`）时，空的字段直接不写；拉取时又把缺的字段当成空 | 本机清空的值传不到云端：编辑讲道时删掉经文（`book`、`bookOrd`、`chapterRange` 留着旧值），视频索引行清掉的 `sermonId` 也留着。别的设备、换机恢复时拿到的还是旧值 | 讲道、视频、系列的可选字段为空时，推送写"删除该字段"（`FieldValue.delete()`），云端文档与 iOS 新写的一样。**笔记**的 `answeredAt` 等还没处理，另开一项 | 不用 |
+| K2 🟡 | `DateFormatter.systemFormatter`（`CalendarDayKey.from`） | 没有固定公历和数字格式 | 设备用佛历、日本年号或阿拉伯数字时，`preachedOn` / `startedOn` 写成"25691028"之类，讲道落到错误的日子，别的设备也解析不了 | 固定公历、半角数字 | 不用 |
+| K3 🟡 | `NotesManager.detectSeries` | 同一卷书找不到系列时，不管讲道讲哪卷书，都挂到最新的主题系列；已结束的、教会导入的系列也会被选中（导入的系列只在本机，`seriesId` 指向别的设备没有的系列） | 讲道被挂进无关的系列 | **按你的决定**：只挂"同一卷书、6 个月内开始、还没结束、自己建的"系列，找不到就不挂；编辑页「识别系列」同一规则 | 如果 iOS 保留原规则，两端识别结果会不同（数据格式不受影响） |
+| K4 🔴 | `parseSermonInfo`（从 YouTube 标题拆标题、经文、讲员） | 左边以经文开头时按第一个冒号拆，"John 3:16 \| Pastor Kim" 拆成讲员"John 3"、标题"16"；没有竖线时按"-"拆，"Romans 8:1-11" 拆成标题"Romans 8:1"、讲员"11" | 导入后标题、讲员错乱 | 左边整段是经文时保留整段；只按两边有空格的" - "拆 | 不用 |
+| K5 🟡 | `CreateYouTubeVideoSheet`「添加为讲道」 | 先把标题里识别出的章节标为已读（同 D1，实际是切换），再用经文框覆盖经文 | 填的章节没有标，标题里的章节却被切换了 | 用最后确定的经文标记已读，只标不切换 | 不用 |
+| K6 🔴 | `createSermon(from:)` → `upsertSermonYouTubeVideoIndex` | 只查有没有同一视频的讲道，不查个人视频；链接已经存为视频时，这条视频被改成讲道的隐藏索引 | 视频从今日活动和视频页消失，它的笔记再也回不到视频页 | 提示"这个链接已经存为视频"，打开那条视频，不改视频行 | 不用 |
+| K7 🟡 | `deleteSermon`、`mergeSermon`、`deleteYouTubeVideo`、`updateSermon` | 只处理笔记和评论：笔记的置顶记录不删（单独删笔记时会删）；讲道的隐藏视频索引行不处理，`sermonId` 一直指向已删除的讲道，以后被清掉时会变成一条"个人视频"；编辑时换了视频链接，旧索引行也留着 | 多余的置顶记录；凭空出现视频 | 删除讲道或视频时一起删置顶记录和索引行；合并时索引行转给目标讲道；换视频链接时删掉旧索引行 | 不用 |
+| K8 🟡 | `youtubeVideoIndexRowRevivingIfNeeded` | 重新添加删过的视频时恢复旧行，`createdAt` 还是第一次添加的日子，标题也不更新 | 今天的活动里看不到刚加的视频 | 恢复时 `createdAt`、`updatedAt` 设为现在，并重新取标题 | 不用 |
+| K9 🟡 | `mergeSermon` | 只搬笔记和评论；被合并那篇的视频、音频、PDF、经文、讲员、简介、系列、标签全部丢掉；`preferredMergeTarget` 写了没用 | 合并后可能少了视频或音频 | 目标是自己建的讲道时，目标空着的字段用被合并那篇的补上，标签合在一起；目标是教会导入的不改 | 不用 |
+| K10 🟡 | `SermonEditView`、`createSermon` | 没有地方改讲道日期，讲道永远在新建那一天 | 星期一补记星期天的讲道，日期就错了 | **按你的决定**：编辑页加"讲道日期"（不能选今天以后），新建仍默认今天；写入格式不变 | 如果 iOS 不加，iOS 上改不了，但能正常显示安卓改过的日期 |
+| K11 🟡 | `updateSermon` 的视频链接 | 只认 `watch?v=` 和 `youtu.be`，不认 `/live/`、`/embed/`、`/shorts/`，与 `YouTubeLinkParser` 不一致；清空视频链接时 `URL(string: "")` 为空，`youtubeID` 不清 | 页面照样放原来的视频，删不掉；有些链接识别不了 | 用同一个链接解析；清空就去掉 `youtubeID` | 不用 |
+| K12 🟡 | `CreateSermonSheet` | 贴 YouTube 链接失败（没网、链接打不开）时没有任何提示；创建中按钮不变灰 | 用户不知道发生了什么；连按可能建出两篇 | 显示原因；创建中按钮变灰并转圈 | 不用 |
+| K13 🟡 | `SermonEditView`、`SeriesPickerView` | 编辑页的经文框没有校验（新建弹窗有）；不能把讲道移出系列（取消勾选没有作用）；新建弹窗里打开系列选择再按"取消"会清掉已选的系列 | 小问题 | 编辑页用同一个讲道经文框；系列旁有「移出」；"取消"不改原来的选择 | 不用 |
+| K14 🟡 | `AudioPlayerManager.load` | 点"听"只加载，不播放 | 要再按一次播放 | 点"听"直接开始播放 | 不用 |
+| K15 🟡 | `NoteReaderSermonView` / `NoteReaderListView`（回看页） | 经文锚点显示的是占位符"·"，不是经文；挂在锚点下的感想不显示 | 回看时看不到经文和感想 | 显示经文正文，感想和评论按时间列在下面 | 不用 |
+| K16 🟡 | 各语言 `Localizable.strings`、`SeriesTabView` | "Ungrouped Sermons"、"Reader"、"Listen / Watch / Read"、"Using YouTube link"、"Sermon Already Exists" 及说明没有中文；新建系列的书卷菜单固定显示英文书名 | 界面中英混杂 | 三种语言都翻译；书名跟随界面语言 | 不用 |
+| K17 🟡 | `SermonSeries.isVisibleInTopicalSeriesSection` | 自己建、带书卷的系列在「主题讲道」和「按书卷」两段都出现（代码注释说是有意的，但名字对不上） | 同一个系列出现两次 | S2 开始前再问你 | 视决定而定 |
+| K18 🟡 | `SeriesListLogic.sort` | 排序菜单只管「主题讲道」一段；"按书卷顺序""按书名"取系列里"第一篇"讲道，而这个顺序不确定 | 排序结果每次可能不同 | 系列自己的书卷，否则最早一篇讲道的书卷（系列选择弹窗已经这样排） | 不用 |
+| K19 🟡 | `UngroupedSermonsRowView`、`SeriesRowView` | 未分组的讲道没有删除入口；系列列表里的 PDF 图标点不了 | 没有系列的讲道删不掉 | 编辑讲道页底部有「删除讲道」（S1）；S2 的列表也能长按删除，PDF 图标可以点 | 不用 |
+| K20 🟡 | `SeriesTabView` | 一个系列都没有时也写"没有匹配的系列" | 用词错误 | 没有系列时写"还没有系列"，搜索没有结果才写"没有匹配的系列"（系列选择弹窗已经这样） | 不用 |
+| K21 🔴 | `SermonReferenceParser.parse` | 只把第一个词当书名：`"1 John 3"` 的书名是 `"1"`，`"Song of Solomon 2"` 是 `"Song"`，`"约翰一书3"` 整个是一个词，都认不出；而经文框认为它们有效，书卷选择器自己填进去的就是 `"1 John "` | 这些讲道没有 `bookOrd` 和 `chapters`：章节页看不到、不标已读、不能自动识别系列 | 先照 iOS 试第一个词，不行再试前面几个词连起来、再试数字前面的部分；iOS 能解析的结果完全不变 | 不用 |
+| K22 🔴 | `BibleBookHelper.extractValidChapters` | 写反的章范围（`"Genesis 5-3"`）走到 `for c in start...end`，Swift 直接崩溃 | 新建讲道时闪退 | 反过来的范围当作 3–5 章 | 不用 |
 
 ---
 

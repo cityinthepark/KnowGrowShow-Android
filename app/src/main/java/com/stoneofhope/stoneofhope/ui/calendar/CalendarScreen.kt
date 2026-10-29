@@ -61,6 +61,7 @@ import com.stoneofhope.stoneofhope.data.today.CalendarGrid
 import com.stoneofhope.stoneofhope.data.today.DayMarks
 import com.stoneofhope.stoneofhope.data.today.TodayActivity.TileKind
 import com.stoneofhope.stoneofhope.ui.chapter.ChapterTab
+import com.stoneofhope.stoneofhope.ui.sermon.SermonNavigation
 import com.stoneofhope.stoneofhope.ui.notes.chipLabel
 import com.stoneofhope.stoneofhope.ui.notes.icon
 import com.stoneofhope.stoneofhope.ui.notes.textStyle
@@ -82,7 +83,7 @@ import java.util.Locale
  */
 @Composable
 fun CalendarScreen(
-    onOpen: (title: String) -> Unit,
+    nav: SermonNavigation,
     onOpenChapter: (bookOrd: Int, chapter: Int, tab: ChapterTab) -> Unit,
     onOpenNotes: (NoteFilter, LocalDate) -> Unit,
     onOpenReview: (LocalDate) -> Unit,
@@ -141,7 +142,7 @@ fun CalendarScreen(
             }
             TodayActivitySection(
                 activity = activity,
-                onOpen = onOpen,
+                nav = nav,
                 onOpenChapter = onOpenChapter,
                 onOpenTile = { kind -> onOpenNotes(kind.noteFilter, selected) },
                 onReview = { onOpenReview(selected) },

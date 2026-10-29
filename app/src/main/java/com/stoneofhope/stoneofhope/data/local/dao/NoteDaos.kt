@@ -56,6 +56,13 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE deletedAt IS NULL AND isDeleted = 0 AND youtubeID IN (:videoIds)")
     fun observeForVideos(videoIds: List<String>): Flow<List<NoteEntity>>
 
+    /** iOS `notes(forSermonId:)`. */
+    @Query("SELECT * FROM notes WHERE deletedAt IS NULL AND isDeleted = 0 AND sermonId = :sermonId")
+    suspend fun activeForSermon(sermonId: String): List<NoteEntity>
+
+    @Query("SELECT * FROM notes WHERE deletedAt IS NULL AND isDeleted = 0 AND youtubeID = :youtubeID")
+    suspend fun activeForVideo(youtubeID: String): List<NoteEntity>
+
     @Query(
         "SELECT * FROM notes WHERE deletedAt IS NULL AND isDeleted = 0 " +
             "AND tagIds LIKE '%\"' || :tagId || '\"%' ORDER BY createdAt DESC"
@@ -118,6 +125,10 @@ interface NoteCommentDao {
     /** Every active comment (note lists match tags, stars and days through them). */
     @Query("SELECT * FROM noteComments WHERE deletedAt IS NULL AND isDeleted = 0 ORDER BY createdAt")
     fun observeActive(): Flow<List<NoteCommentEntity>>
+
+    /** Comments carry their note's `sermonId` (iOS `addNoteComment`); a merge moves them along. */
+    @Query("SELECT * FROM noteComments WHERE deletedAt IS NULL AND isDeleted = 0 AND sermonId = :sermonId")
+    suspend fun activeWithSermonId(sermonId: String): List<NoteCommentEntity>
 
     @Query(
         "SELECT * FROM noteComments WHERE deletedAt IS NULL AND isDeleted = 0 " +
