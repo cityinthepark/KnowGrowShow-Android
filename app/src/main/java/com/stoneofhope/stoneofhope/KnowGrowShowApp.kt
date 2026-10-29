@@ -37,6 +37,8 @@ import com.stoneofhope.stoneofhope.ui.sermon.SermonNotice
 import com.stoneofhope.stoneofhope.ui.sermon.SermonReaderScreen
 import com.stoneofhope.stoneofhope.ui.sermon.SermonScreen
 import com.stoneofhope.stoneofhope.ui.sermon.SermonViewModel
+import com.stoneofhope.stoneofhope.ui.sermon.SeriesDetailScreen
+import com.stoneofhope.stoneofhope.ui.sermon.SeriesDetailViewModel
 import com.stoneofhope.stoneofhope.ui.sermon.VideoEntry
 import com.stoneofhope.stoneofhope.ui.sermon.VideoScreen
 import com.stoneofhope.stoneofhope.ui.sermon.VideoViewModel
@@ -78,6 +80,7 @@ private object Routes {
         "&${SermonViewModel.ARG_CHAPTER}={${SermonViewModel.ARG_CHAPTER}}&${SermonViewModel.ARG_ENTRY}={${SermonViewModel.ARG_ENTRY}}" +
         "&${SermonViewModel.ARG_NOTICE}={${SermonViewModel.ARG_NOTICE}}"
     const val SermonReader = "sermonReader/{${SermonViewModel.ARG_ID}}"
+    const val SeriesDetail = "seriesDetail/{${SeriesDetailViewModel.ARG_ID}}"
     const val SermonEdit = "sermonEdit/{${SermonViewModel.ARG_ID}}"
     const val Video = "video/{${VideoViewModel.ARG_ID}}?${SermonViewModel.ARG_NOTICE}={${SermonViewModel.ARG_NOTICE}}"
 
@@ -99,6 +102,8 @@ private object Routes {
         "sermon/$id?book=${chapter?.bookOrd ?: -1}&chapter=${chapter?.chapterOrd ?: -1}&entry=${entry.ordinal}&notice=${notice.ordinal}"
 
     fun sermonReader(id: String) = "sermonReader/$id"
+
+    fun seriesDetail(id: String) = "seriesDetail/$id"
 
     fun sermonEdit(id: String) = "sermonEdit/$id"
 
@@ -163,6 +168,7 @@ fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel(), audioBar: Au
                         onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
                         sermonNav = sermonNav,
                         onOpenDestination = openDestination,
+                        onOpenSeries = { id -> navController.navigate(Routes.seriesDetail(id)) },
                     )
                 }
                 composable(
@@ -251,6 +257,9 @@ fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel(), audioBar: Au
                         onBack = { navController.popBackStack() },
                         onOpenSermon = { id, entry -> navController.navigate(Routes.sermon(id, entry = entry)) },
                     )
+                }
+                composable(Routes.SeriesDetail, arguments = listOf(navArgument(SeriesDetailViewModel.ARG_ID) { type = NavType.StringType })) {
+                    SeriesDetailScreen(onBack = { navController.popBackStack() })
                 }
                 composable(Routes.SermonEdit, arguments = listOf(navArgument(SermonViewModel.ARG_ID) { type = NavType.StringType })) {
                     SermonEditScreen(

@@ -343,4 +343,25 @@
     <plurals name="merge_subtitle">
         <item quantity="other">将 %1$d 条笔记从「%2$s」合并到：</item>
     </plurals>
+
+    <!-- Series tab (phase 3, S2) -->
+    <string name="series_topical">主题讲道</string>
+    <string name="series_by_books">按书卷</string>
+    <string name="series_by_last_preached">按最近讲道</string>
+    <string name="series_ungrouped">未分组的讲道</string>
+    <string name="series_create">新建系列</string>
+    <string name="series_book_optional">书卷（可选）</string>
+    <string name="series_book_none">无</string>
+    <string name="series_info">系列信息</string>
+    <string name="series_start_date">开始日期</string>
+    <string name="series_status">状态</string>
+    <string name="series_in_progress">进行中</string>
+    <string name="series_finished">已完成</string>
+    <string name="series_sermon_count">讲道数</string>
+    <string name="series_delete">删除系列</string>
+    <string name="series_delete_title">删除这个系列？</string>
+    <string name="series_read_only">教会导入的系列不能修改。</string>
+    <string name="series_not_found">这个系列已不存在。</string>
+    <string name="series_edit">编辑系列</string>
+    <string name="series_expand">展开讲道</string>
 </resources>

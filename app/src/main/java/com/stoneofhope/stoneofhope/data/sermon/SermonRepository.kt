@@ -27,6 +27,7 @@ import java.time.format.FormatStyle
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.first
 
 /** Why a link could not be saved. */
 enum class LinkFailure { InvalidLink, Shorts, Unavailable }
@@ -255,6 +256,31 @@ class SermonRepository @Inject constructor(
         )
         seriesDao.upsert(series)
         return series
+    }
+
+    /** iOS `updateSeriesTitle`: blank titles and church series are ignored. */
+    suspend fun renameSeries(seriesId: String, title: String) {
+        val trimmed = SwiftText.trim(title)
+        if (trimmed.isEmpty()) return
+        val live = seriesDao.getById(seriesId)?.takeIf { it.isUserData && it.deletedAt == null } ?: return
+        if (live.title != trimmed) seriesDao.upsert(live.copy(title = trimmed, needsSync = true))
+    }
+
+    /** iOS `updateSeriesStatus`. */
+    suspend fun setSeriesFinished(seriesId: String, finished: Boolean) {
+        val live = seriesDao.getById(seriesId)?.takeIf { it.isUserData && it.deletedAt == null } ?: return
+        if (live.isFinished != finished) seriesDao.upsert(live.copy(isFinished = finished, needsSync = true))
+    }
+
+    /**
+     * iOS `SeriesDetailView` deletes a series only when it has no sermons left (the series becomes a
+     * tombstone). False when it still has sermons or is a church series.
+     */
+    suspend fun deleteEmptySeries(seriesId: String): Boolean = db.withTransaction {
+        val live = seriesDao.getById(seriesId)?.takeIf { it.isUserData && it.deletedAt == null } ?: return@withTransaction false
+        if (sermonDao.observeActive().first().any { it.seriesId == seriesId }) return@withTransaction false
+        seriesDao.upsert(live.copy(deletedAt = clock.instant(), needsSync = true))
+        true
     }
 
     private suspend fun touchSeries(series: SermonSeriesEntity) {

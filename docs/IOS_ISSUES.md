@@ -130,7 +130,7 @@
 
 ## K. 讲道与视频（阶段 3 S1）
 
-方案与验证见 [SERMONS_SERIES_PLAN.md](SERMONS_SERIES_PLAN.md)。K17–K20 属于 Series tab，S2 时再核对一次。
+方案与验证见 [SERMONS_SERIES_PLAN.md](SERMONS_SERIES_PLAN.md)。K17–K20 属于 Series tab，已在 S2 实现。
 
 K1 补充：笔记推送也省略空字段。目前笔记里会被清空的只有取消"已应允"时的 `answeredAt`；这时 `isAnswered` 明确写成 false，而两端都只在 `isAnswered` 为 true 时才读 `answeredAt`，所以云端留下的旧时间现在看不出影响。安卓（2026-10-28 起）清空时也写"删除该字段"，以免以后按应允日期统计（D10）时读到旧时间。
 
@@ -153,9 +153,9 @@ K1 补充：笔记推送也省略空字段。目前笔记里会被清空的只�
 | K15 🟡 | `NoteReaderSermonView` / `NoteReaderListView`（回看页） | 经文锚点显示的是占位符"·"，不是经文；挂在锚点下的感想不显示 | 回看时看不到经文和感想 | 显示经文正文，感想和评论按时间列在下面 | 不用 |
 | K16 🟡 | 各语言 `Localizable.strings`、`SeriesTabView` | "Ungrouped Sermons"、"Reader"、"Listen / Watch / Read"、"Using YouTube link"、"Sermon Already Exists" 及说明没有中文；新建系列的书卷菜单固定显示英文书名 | 界面中英混杂 | 三种语言都翻译；书名跟随界面语言 | 不用 |
 | K17 🟡 | `SermonSeries.isVisibleInTopicalSeriesSection` | 自己建、带书卷的系列在「主题讲道」和「按书卷」两段都出现（代码注释说是有意的，但名字对不上） | 同一个系列出现两次 | **按你的决定（2026-10-28）**：带书卷的系列只在「按书卷」出现，「主题讲道」只放没有书卷的系列 | 如果 iOS 保留原样，两端分段会不同（数据格式不受影响） |
-| K18 🟡 | `SeriesListLogic.sort` | 排序菜单只管「主题讲道」一段；"按书卷顺序""按书名"取系列里"第一篇"讲道，而这个顺序不确定 | 排序结果每次可能不同 | 系列自己的书卷，否则最早一篇讲道的书卷（系列选择弹窗已经这样排） | 不用 |
-| K19 🟡 | `UngroupedSermonsRowView`、`SeriesRowView` | 未分组的讲道没有删除入口；系列列表里的 PDF 图标点不了 | 没有系列的讲道删不掉 | 编辑讲道页底部有「删除讲道」（S1）；S2 的列表也能长按删除，PDF 图标可以点 | 不用 |
-| K20 🟡 | `SeriesTabView` | 一个系列都没有时也写"没有匹配的系列" | 用词错误 | 没有系列时写"还没有系列"，搜索没有结果才写"没有匹配的系列"（系列选择弹窗已经这样） | 不用 |
+| K18 🟡 | `SeriesListLogic.sort` | 排序菜单只管「主题讲道」一段；"按书卷顺序""按书名"取系列里"第一篇"讲道，而这个顺序不确定 | 排序结果每次可能不同 | 系列自己的书卷，否则最早一篇讲道的书卷 | 不用 |
+| K19 🟡 | `UngroupedSermonsRowView`、`SeriesRowView` | 未分组的讲道没有删除入口；系列列表里的 PDF 图标点不了 | 没有系列的讲道删不掉 | 编辑讲道页底部有「删除讲道」；Series tab 里所有讲道都能长按删除，PDF 图标可以点 | 不用 |
+| K20 🟡 | `SeriesTabView` | 一个系列都没有时也写"没有匹配的系列" | 用词错误 | 没有系列时写"还没有系列"，搜索没有结果才写"没有匹配的系列" | 不用 |
 | K21 🔴 | `SermonReferenceParser.parse` | 只把第一个词当书名：`"1 John 3"` 的书名是 `"1"`，`"Song of Solomon 2"` 是 `"Song"`，`"约翰一书3"` 整个是一个词，都认不出；而经文框认为它们有效，书卷选择器自己填进去的就是 `"1 John "` | 这些讲道没有 `bookOrd` 和 `chapters`：章节页看不到、不标已读、不能自动识别系列 | 先照 iOS 试第一个词，不行再试前面几个词连起来、再试数字前面的部分；iOS 能解析的结果完全不变 | 不用 |
 | K22 🔴 | `BibleBookHelper.extractValidChapters` | 写反的章范围（`"Genesis 5-3"`）走到 `for c in start...end`，Swift 直接崩溃 | 新建讲道时闪退 | 反过来的范围当作 3–5 章 | 不用 |
 

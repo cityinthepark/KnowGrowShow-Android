@@ -35,6 +35,7 @@ import com.stoneofhope.stoneofhope.ui.moments.MomentsScreen
 import com.stoneofhope.stoneofhope.ui.sermon.FloatingAudioBar
 import com.stoneofhope.stoneofhope.ui.sermon.SermonDestination
 import com.stoneofhope.stoneofhope.ui.sermon.SermonNavigation
+import com.stoneofhope.stoneofhope.ui.sermon.SeriesScreen
 import java.time.LocalDate
 import com.stoneofhope.stoneofhope.ui.today.TodayScreen
 
@@ -59,6 +60,7 @@ fun MainScreen(
     onOpenNote: (noteId: String) -> Unit,
     sermonNav: SermonNavigation,
     onOpenDestination: (SermonDestination) -> Unit,
+    onOpenSeries: (seriesId: String) -> Unit,
 ) {
     var selected by rememberSaveable { mutableStateOf(MainTab.Today) }
 
@@ -97,7 +99,7 @@ fun MainScreen(
                     nav = sermonNav,
                     onOpenDestination = onOpenDestination,
                 )
-                MainTab.Series -> PlaceholderTab(MainTab.Series)
+                MainTab.Series -> SeriesScreen(nav = sermonNav, onOpenSeries = onOpenSeries)
                 MainTab.Moments -> MomentsScreen(onOpenNote = onOpenNote)
                 MainTab.Calendar -> CalendarScreen(
                     nav = sermonNav,

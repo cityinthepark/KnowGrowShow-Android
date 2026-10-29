@@ -317,6 +317,35 @@ class SermonRepositoryTest {
         assertNull(script.bookOrd)
     }
 
+    // MARK: - Series (S2)
+
+    @Test fun seriesDetailEditsAndDeleteOnlyWhenEmpty() = runTest {
+        val series = sermons.createSeries("  Romans  ", 45, zone)
+        assertEquals("Romans", series.title)
+        assertEquals("20261028", series.startedOn)
+        sermons.renameSeries(series.id, "  ")
+        assertEquals("Romans", db.sermonSeriesDao().getById(series.id)!!.title)
+        sermons.renameSeries(series.id, "Romans 2026")
+        sermons.setSeriesFinished(series.id, true)
+        val edited = db.sermonSeriesDao().getById(series.id)!!
+        assertEquals("Romans 2026", edited.title)
+        assertTrue(edited.isFinished && edited.needsSync)
+
+        val s = sermons.createManual("A", "Romans 1", "", series.id, zone)
+        assertFalse(sermons.deleteEmptySeries(series.id))
+        assertNull(db.sermonSeriesDao().getById(series.id)!!.deletedAt)
+        sermons.setSeries(s.id, null)
+        assertTrue(sermons.deleteEmptySeries(series.id))
+        assertNotNull(db.sermonSeriesDao().getById(series.id)!!.deletedAt)
+
+        // Church series are read-only.
+        val church = SermonSeriesEntity(id = "64a0000000000000000000c9", title = "Church", isUserData = false)
+        db.sermonSeriesDao().upsert(church)
+        sermons.renameSeries(church.id, "Mine")
+        assertFalse(sermons.deleteEmptySeries(church.id))
+        assertEquals(church, db.sermonSeriesDao().getById(church.id))
+    }
+
     // MARK: - Videos
 
     @Test fun videoFromOEmbedAnchoredByTitleOrReference() = runTest {

@@ -25,8 +25,12 @@ object SeriesList {
         return series.filter { it.deletedAt == null }.map { SeriesWithSermons(it, bySeries[it.id].orEmpty()) }
     }
 
-    /** iOS `isVisibleInTopicalSeriesSection`: the user's own series and church series without a book. */
-    fun topical(rows: List<SeriesWithSermons>) = rows.filter { it.series.isUserData || it.series.bookOrd == null }
+    /**
+     * The "Topical Series" section: series without a book. iOS also lists the user's own series that
+     * have a book here, so they show twice (IOS_ISSUES K17; the user decided they belong only under
+     * "By Books").
+     */
+    fun topical(rows: List<SeriesWithSermons>) = rows.filter { it.series.bookOrd == null }
 
     /** iOS `isVisibleInBookSeriesSection`. */
     fun bookTracked(rows: List<SeriesWithSermons>) = rows.filter { it.series.bookOrd != null }
@@ -66,6 +70,34 @@ object SeriesList {
         sermon.title.contains(q, ignoreCase = true) ||
             sermon.book?.contains(q, ignoreCase = true) == true ||
             sermon.chapterRange?.contains(q, ignoreCase = true) == true
+
+    /** iOS `compareByStartedOnDescending`: newest start (or latest sermon) first, then title. */
+    fun sortByStartedOnDescending(rows: List<SeriesWithSermons>): List<SeriesWithSermons> =
+        rows.sortedWith(compareByDescending<SeriesWithSermons> { startedOnKey(it) }.thenBy(collator) { it.series.title })
+
+    /** One book of the "By Books" section (iOS `BookSeriesGroup`). */
+    data class BookGroup(val bookOrd: Int, val series: List<SeriesWithSermons>)
+
+    /** iOS `groupByBook`: books in canon order, each newest series first. */
+    fun groupByBook(rows: List<SeriesWithSermons>): List<BookGroup> =
+        rows.filter { (it.series.bookOrd ?: 0) > 0 }.groupBy { it.series.bookOrd!! }.toSortedMap()
+            .map { (ord, list) -> BookGroup(ord, sortByStartedOnDescending(list)) }
+
+    /** iOS `preachedOnSortKey`: oldest first, undated last. */
+    fun sermonsInOrder(sermons: List<SermonEntity>): List<SermonEntity> =
+        sermons.sortedWith(compareBy<SermonEntity> { it.preachedOn.ifEmpty { "99999999" } }.thenBy { it.createdAt })
+
+    /**
+     * iOS `ungroupedSermons` (`series == nil`). A sermon whose series is gone or deleted (e.g. on another
+     * device) also lands here; on iOS it would show nowhere.
+     */
+    fun ungrouped(sermons: List<SermonEntity>, liveSeriesIds: Set<String>, query: String): List<SermonEntity> {
+        val q = query.trim()
+        return sermonsInOrder(
+            sermons.filter { it.deletedAt == null && (it.seriesId == null || it.seriesId !in liveSeriesIds) }
+                .filter { q.isEmpty() || sermonMatches(it, q) },
+        )
+    }
 
     /** iOS `SeriesViewModel.displaySeries`: the picker's flat list, topical first, without repeats. */
     fun pickerRows(rows: List<SeriesWithSermons>, sortBy: SeriesSort, query: String): List<SeriesWithSermons> {

@@ -364,4 +364,25 @@
         <item quantity="one">Move %1$d note from “%2$s” to:</item>
         <item quantity="other">Move %1$d notes from “%2$s” to:</item>
     </plurals>
+
+    <!-- Series tab (phase 3, S2) -->
+    <string name="series_topical">Topical Series</string>
+    <string name="series_by_books">By Books</string>
+    <string name="series_by_last_preached">By Last Preached</string>
+    <string name="series_ungrouped">Ungrouped Sermons</string>
+    <string name="series_create">Create Series</string>
+    <string name="series_book_optional">Book (Optional)</string>
+    <string name="series_book_none">None</string>
+    <string name="series_info">Series Info</string>
+    <string name="series_start_date">Start Date</string>
+    <string name="series_status">Status</string>
+    <string name="series_in_progress">In Progress</string>
+    <string name="series_finished">Finished</string>
+    <string name="series_sermon_count">Sermon Count</string>
+    <string name="series_delete">Delete Series</string>
+    <string name="series_delete_title">Delete this series?</string>
+    <string name="series_read_only">Church-imported series cannot be edited.</string>
+    <string name="series_not_found">This series no longer exists.</string>
+    <string name="series_edit">Edit series</string>
+    <string name="series_expand">Show sermons</string>
 </resources>
