@@ -190,7 +190,7 @@ object WireEncoder {
             "isPinned" to note.isPinned,
             "isOngoing" to WireValue.DeleteField,
             "isAnswered" to note.isAnswered,
-            "answeredAt" to note.answeredAt,
+            "answeredAt" to note.answeredAt.orDelete(),
             // Pushed even if the local Sermon row is orphaned (NOTE_CONTAINER_ID_REFACTOR §7.1).
             "sermonId" to note.sermonId,
             "isDeleted" to false,

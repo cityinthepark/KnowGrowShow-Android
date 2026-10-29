@@ -132,9 +132,11 @@
 
 方案与验证见 [SERMONS_SERIES_PLAN.md](SERMONS_SERIES_PLAN.md)。K17–K20 属于 Series tab，S2 时再核对一次。
 
+K1 补充：笔记推送也省略空字段。目前笔记里会被清空的只有取消"已应允"时的 `answeredAt`；这时 `isAnswered` 明确写成 false，而两端都只在 `isAnswered` 为 true 时才读 `answeredAt`，所以云端留下的旧时间现在看不出影响。安卓（2026-10-28 起）清空时也写"删除该字段"，以免以后按应允日期统计（D10）时读到旧时间。
+
 | # | iOS 位置 | 问题 | 影响 | 安卓做法 | iOS 修后安卓要改吗 |
 | --- | --- | --- | --- | --- | --- |
-| K1 🔴 | `FirestoreUserDataPush`（讲道、视频、系列；笔记也是同样写法） | 合并写入（`merge: true`）时，空的字段直接不写；拉取时又把缺的字段当成空 | 本机清空的值传不到云端：编辑讲道时删掉经文（`book`、`bookOrd`、`chapterRange` 留着旧值），视频索引行清掉的 `sermonId` 也留着。别的设备、换机恢复时拿到的还是旧值 | 讲道、视频、系列的可选字段为空时，推送写"删除该字段"（`FieldValue.delete()`），云端文档与 iOS 新写的一样。**笔记**的 `answeredAt` 等还没处理，另开一项 | 不用 |
+| K1 🔴 | `FirestoreUserDataPush`（讲道、视频、系列；笔记也是同样写法） | 合并写入（`merge: true`）时，空的字段直接不写；拉取时又把缺的字段当成空 | 本机清空的值传不到云端：编辑讲道时删掉经文（`book`、`bookOrd`、`chapterRange` 留着旧值），视频索引行清掉的 `sermonId` 也留着。别的设备、换机恢复时拿到的还是旧值 | 讲道、视频、系列的可选字段为空时，以及笔记取消"已应允"后的 `answeredAt`，推送写"删除该字段"（`FieldValue.delete()`），云端文档与 iOS 新写的一样 | 不用 |
 | K2 🟡 | `DateFormatter.systemFormatter`（`CalendarDayKey.from`） | 没有固定公历和数字格式 | 设备用佛历、日本年号或阿拉伯数字时，`preachedOn` / `startedOn` 写成"25691028"之类，讲道落到错误的日子，别的设备也解析不了 | 固定公历、半角数字 | 不用 |
 | K3 🟡 | `NotesManager.detectSeries` | 同一卷书找不到系列时，不管讲道讲哪卷书，都挂到最新的主题系列；已结束的、教会导入的系列也会被选中（导入的系列只在本机，`seriesId` 指向别的设备没有的系列） | 讲道被挂进无关的系列 | **按你的决定**：只挂"同一卷书、6 个月内开始、还没结束、自己建的"系列，找不到就不挂；编辑页「识别系列」同一规则 | 如果 iOS 保留原规则，两端识别结果会不同（数据格式不受影响） |
 | K4 🔴 | `parseSermonInfo`（从 YouTube 标题拆标题、经文、讲员） | 左边以经文开头时按第一个冒号拆，"John 3:16 \| Pastor Kim" 拆成讲员"John 3"、标题"16"；没有竖线时按"-"拆，"Romans 8:1-11" 拆成标题"Romans 8:1"、讲员"11" | 导入后标题、讲员错乱 | 左边整段是经文时保留整段；只按两边有空格的" - "拆 | 不用 |
@@ -150,7 +152,7 @@
 | K14 🟡 | `AudioPlayerManager.load` | 点"听"只加载，不播放 | 要再按一次播放 | 点"听"直接开始播放 | 不用 |
 | K15 🟡 | `NoteReaderSermonView` / `NoteReaderListView`（回看页） | 经文锚点显示的是占位符"·"，不是经文；挂在锚点下的感想不显示 | 回看时看不到经文和感想 | 显示经文正文，感想和评论按时间列在下面 | 不用 |
 | K16 🟡 | 各语言 `Localizable.strings`、`SeriesTabView` | "Ungrouped Sermons"、"Reader"、"Listen / Watch / Read"、"Using YouTube link"、"Sermon Already Exists" 及说明没有中文；新建系列的书卷菜单固定显示英文书名 | 界面中英混杂 | 三种语言都翻译；书名跟随界面语言 | 不用 |
-| K17 🟡 | `SermonSeries.isVisibleInTopicalSeriesSection` | 自己建、带书卷的系列在「主题讲道」和「按书卷」两段都出现（代码注释说是有意的，但名字对不上） | 同一个系列出现两次 | S2 开始前再问你 | 视决定而定 |
+| K17 🟡 | `SermonSeries.isVisibleInTopicalSeriesSection` | 自己建、带书卷的系列在「主题讲道」和「按书卷」两段都出现（代码注释说是有意的，但名字对不上） | 同一个系列出现两次 | **按你的决定（2026-10-28）**：带书卷的系列只在「按书卷」出现，「主题讲道」只放没有书卷的系列 | 如果 iOS 保留原样，两端分段会不同（数据格式不受影响） |
 | K18 🟡 | `SeriesListLogic.sort` | 排序菜单只管「主题讲道」一段；"按书卷顺序""按书名"取系列里"第一篇"讲道，而这个顺序不确定 | 排序结果每次可能不同 | 系列自己的书卷，否则最早一篇讲道的书卷（系列选择弹窗已经这样排） | 不用 |
 | K19 🟡 | `UngroupedSermonsRowView`、`SeriesRowView` | 未分组的讲道没有删除入口；系列列表里的 PDF 图标点不了 | 没有系列的讲道删不掉 | 编辑讲道页底部有「删除讲道」（S1）；S2 的列表也能长按删除，PDF 图标可以点 | 不用 |
 | K20 🟡 | `SeriesTabView` | 一个系列都没有时也写"没有匹配的系列" | 用词错误 | 没有系列时写"还没有系列"，搜索没有结果才写"没有匹配的系列"（系列选择弹窗已经这样） | 不用 |

@@ -84,7 +84,7 @@ peer-gated pulls) against real Room and an in-memory Firestore.
 | Chapter page verse details | one anchor of the verse (`.first`) | every anchor of the verse (all days, versions) | IOS_ISSUES H1 |
 | Chapter-page note whose field names another chapter | anchored to the page's chapter | anchored to the field's chapter | IOS_ISSUES H5 |
 | Reflection written on a chapter verse | only once an anchor exists; on that anchor's version | always; today's anchor in the primary version | IOS_ISSUES H1 |
-| Empty optional field of a sermon / video / series on push | left out of the merge write (old remote value survives) | `FieldValue.delete()` | IOS_ISSUES K1 |
+| Empty optional field of a sermon / video / series, and a note's cleared `answeredAt`, on push | left out of the merge write (old remote value survives) | `FieldValue.delete()` | IOS_ISSUES K1 |
 | Sermon reference with a multi-word book ("1 John 3") | not parsed (first word only) | parsed; iOS-parseable input unchanged | IOS_ISSUES K21 |
 | Saving a sermon over a chapter read today | chapter toggled to unread | left read | IOS_ISSUES D1 |
 | Series auto-detection | same book within 6 months, else newest topical series | same book, 6 months, unfinished, user's own; else none | IOS_ISSUES K3 (user's decision) |

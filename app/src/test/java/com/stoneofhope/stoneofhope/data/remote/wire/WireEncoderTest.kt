@@ -90,12 +90,31 @@ class WireEncoderTest {
             setOf(
                 "ownerUid", "noteType", "iv", "ciphertext", "encVersion", "content", "createdAt",
                 "calendarDay", "updatedAt", "contentUpdatedAt", "starLevel", "tagIds", "schemaVersion",
-                "isOngoing", "isDeleted", "prayerOngoingIntervals",
+                "isOngoing", "isDeleted", "prayerOngoingIntervals", "answeredAt",
             ),
             w.data.keys,
         )
         assertEquals("note", w.data["noteType"])
         assertEquals(emptyList<String>(), w.data["tagIds"])
+        // The one optional a note ever clears (IOS_ISSUES K1); iOS leaves it out.
+        assertEquals(WireValue.DeleteField, w.data["answeredAt"])
+    }
+
+    @Test
+    fun unansweringDeletesAnsweredAtRemotely() {
+        val server = FakeFirestore()
+        val answered = NoteEntity(
+            id = "64a0000000000000000000aa", noteType = NoteType.Prayer, createdAt = t0, updatedAt = t1,
+            isAnswered = true, answeredAt = t1,
+        )
+        server.apply(WireEncoder.note(answered, uid, body, ZoneId.of("UTC")))
+        assertEquals(t1, server.get(FirestoreSchema.NOTES, answered.id)!!["answeredAt"])
+
+        // Un-answering: iOS writes `isAnswered: false` but leaves the old `answeredAt` in Firestore.
+        server.apply(WireEncoder.note(answered.copy(isAnswered = false, answeredAt = null), uid, body, ZoneId.of("UTC")))
+        val doc = server.get(FirestoreSchema.NOTES, answered.id)!!
+        assertEquals(false, doc["isAnswered"])
+        assertFalse(doc.containsKey("answeredAt"))
     }
 
     @Test
