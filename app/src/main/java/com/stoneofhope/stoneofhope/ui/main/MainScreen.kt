@@ -54,6 +54,7 @@ fun MainScreen(
     onOpenAccount: () -> Unit,
     onOpenPlaceholder: (title: String) -> Unit,
     onOpenFlashCards: () -> Unit,
+    onOpenProfile: () -> Unit,
     onOpenReadingLog: (bookOrd: Int) -> Unit,
     onOpenChapter: (bookOrd: Int, chapter: Int, tab: ChapterTab) -> Unit,
     onOpenNotes: (NoteFilter, LocalDate) -> Unit,
@@ -98,6 +99,7 @@ fun MainScreen(
                     onOpenNotes = onOpenNotes,
                     onOpenReview = onOpenReview,
                     onOpenFlashCards = onOpenFlashCards,
+                    onOpenProfile = onOpenProfile,
                     nav = sermonNav,
                     onOpenDestination = onOpenDestination,
                 )

@@ -20,6 +20,10 @@ interface NoteDao {
     @Upsert suspend fun upsert(note: NoteEntity)
     @Upsert suspend fun upsertAll(notes: List<NoteEntity>)
 
+    /** Rows carrying [tagId], deleted or not (iOS `reassignTag` walks every object). */
+    @Query("SELECT * FROM notes WHERE tagIds LIKE '%\"' || :tagId || '\"%'")
+    suspend fun withTag(tagId: String): List<NoteEntity>
+
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun getById(id: String): NoteEntity?
 
@@ -100,6 +104,10 @@ interface NoteDao {
 interface NoteCommentDao {
     @Upsert suspend fun upsert(comment: NoteCommentEntity)
     @Upsert suspend fun upsertAll(comments: List<NoteCommentEntity>)
+
+    /** Rows carrying [tagId], deleted or not (iOS `reassignTag` walks every object). */
+    @Query("SELECT * FROM noteComments WHERE tagIds LIKE '%\"' || :tagId || '\"%'")
+    suspend fun withTag(tagId: String): List<NoteCommentEntity>
 
     @Query("SELECT * FROM noteComments WHERE id = :id")
     suspend fun getById(id: String): NoteCommentEntity?

@@ -46,6 +46,10 @@ interface SermonSeriesDao {
 interface SermonDao {
     @Upsert suspend fun upsert(sermon: SermonEntity)
 
+    /** Rows carrying [tagId], deleted or not (iOS `reassignTag` walks every object). */
+    @Query("SELECT * FROM sermons WHERE tagIds LIKE '%\"' || :tagId || '\"%'")
+    suspend fun withTag(tagId: String): List<SermonEntity>
+
     @Query("SELECT * FROM sermons WHERE id = :id")
     suspend fun getById(id: String): SermonEntity?
 
@@ -115,6 +119,10 @@ interface SermonDao {
 @Dao
 interface YouTubeVideoDao {
     @Upsert suspend fun upsert(video: YouTubeVideoEntity)
+
+    /** Rows carrying [tagId], deleted or not (iOS `reassignTag` walks every object). */
+    @Query("SELECT * FROM youtubeVideos WHERE tagIds LIKE '%\"' || :tagId || '\"%'")
+    suspend fun withTag(tagId: String): List<YouTubeVideoEntity>
 
     @Query("SELECT * FROM youtubeVideos WHERE youtubeID = :youtubeID")
     suspend fun getById(youtubeID: String): YouTubeVideoEntity?

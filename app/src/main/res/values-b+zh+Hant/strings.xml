@@ -396,4 +396,32 @@
     <string name="flash_restored">已恢復到抽認卡</string>
     <string name="flash_already_toast">已在抽認卡中</string>
     <string name="flash_add_failed_note">無法加入抽認卡（這個譯本沒有經文文字）</string>
+
+    <!-- Tags -->
+    <string name="tags_my">我的標籤</string>
+    <string name="tag_new">新增標籤</string>
+    <string name="tags_empty">還沒有標籤。</string>
+    <string name="tag_rename">重新命名</string>
+    <string name="tag_edit_hint">編輯標籤</string>
+    <string name="tag_delete">刪除</string>
+    <string name="tag_delete_title">刪除標籤</string>
+    <string name="tag_delete_message">確定要刪除「%1$s」吗？</string>
+    <string name="tag_duplicate">已有同名標籤，可以改用「合併」。</string>
+    <string name="tag_merge_action">合併到…</string>
+    <string name="tag_merge_do">合併</string>
+    <string name="tag_merge_title">合併標籤？</string>
+    <string name="tag_merge_pick">將「%1$s」合併到：</string>
+    <string name="tag_merge_confirm">將「%1$s」合併到「%2$s」。「%1$s」下的 %3$d 項內容會移到「%2$s」下，「%1$s」將被刪除。此操作無法復原。</string>
+    <string name="tag_nothing">还没有打標籤的内容。</string>
+    <string name="tag_empty_note">空筆記</string>
+    <string name="tag_section_sermons">講道</string>
+    <string name="tag_section_videos">影片</string>
+    <string name="tag_section_notes">筆記</string>
+    <string name="tag_recommended">推薦</string>
+    <string name="tag_preset_trash">回收站</string>
+    <string name="tag_preset_milestone">里程碑</string>
+    <plurals name="tag_count_notes"><item quantity="other">%d 則筆記</item></plurals>
+    <plurals name="tag_count_comments"><item quantity="other">%d 則留言</item></plurals>
+    <plurals name="tag_count_sermons"><item quantity="other">%d 篇講道</item></plurals>
+    <plurals name="tag_count_videos"><item quantity="other">%d 部影片</item></plurals>
 </resources>

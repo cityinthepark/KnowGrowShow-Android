@@ -114,6 +114,10 @@ interface BookProgressDao {
 interface UserVerseDao {
     @Upsert suspend fun upsert(verse: UserVerseEntity)
 
+    /** Rows carrying [tagId], deleted or not (iOS `reassignTag` walks every object). */
+    @Query("SELECT * FROM userVerses WHERE tagIds LIKE '%\"' || :tagId || '\"%'")
+    suspend fun withTag(tagId: String): List<UserVerseEntity>
+
     @Query("SELECT * FROM userVerses WHERE id = :id")
     suspend fun getById(id: String): UserVerseEntity?
 

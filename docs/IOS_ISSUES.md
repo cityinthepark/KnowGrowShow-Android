@@ -174,6 +174,7 @@ K1 补充：笔记推送也省略空字段。目前笔记里会被清空的只�
 | L9 🟡 | `NotesManager.taggedItemCount` | 合并确认里的数字：经文、讲道、视频没有排除已删除的；笔记和它的评论分别计数 | 确认框里的数与列表不一致 | 与 L8 用同一套计数 | 不用 |
 | L10 🟡 | `MyTagsView`、`TagPickerPopup`、`TagEditRow` | "Delete Tag"、"Delete"、"Cancel"、"Edit tag"、"Choose Tags"、"By Name"、"By Create Date"、"Close"、"Add new tag..." 等没有走本地化 | 中文界面有英文 | 三种语言都有 | 不用 |
 | L11 🟡 | `NotesManager.reassignTag`（合并 / 删除标签） | 把受影响的笔记 `updatedAt` 改成现在，评论还带动所属笔记 | 合并或删除一个标签后，一批旧笔记的"最近修改"变成今天，排序和 Today / Moments 里的日期被打乱 | **按你的决定（2026-10-28）**：只设 `needsSync`，不动 `updatedAt`（`tagIds` 照常同步） | 不用 |
+| L12 🟡 | `zh-Hant.lproj/Localizable.strings` | 缺 "Trash Tag Name"、"Milestone Tag Name"，繁体中文界面推荐栏显示英文 | 未翻译 | 繁体用与简体相同的"回收站""里程碑"，两种名字都按预设标签识别 | 不用 |
 
 ---
 

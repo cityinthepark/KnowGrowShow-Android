@@ -417,4 +417,32 @@
     <string name="flash_restored">Restored to flash cards</string>
     <string name="flash_already_toast">Already in flash cards</string>
     <string name="flash_add_failed_note">Could not add to flash cards (no verse text for this version)</string>
+
+    <!-- Tags -->
+    <string name="tags_my">My Tags</string>
+    <string name="tag_new">New tag</string>
+    <string name="tags_empty">No tags yet.</string>
+    <string name="tag_rename">Rename</string>
+    <string name="tag_edit_hint">Edit tag</string>
+    <string name="tag_delete">Delete</string>
+    <string name="tag_delete_title">Delete Tag</string>
+    <string name="tag_delete_message">Are you sure you want to delete \"%1$s\"?</string>
+    <string name="tag_duplicate">A tag with this name already exists. You can merge them instead.</string>
+    <string name="tag_merge_action">Merge into…</string>
+    <string name="tag_merge_do">Merge</string>
+    <string name="tag_merge_title">Merge Tags?</string>
+    <string name="tag_merge_pick">Merge \"%1$s\" into:</string>
+    <string name="tag_merge_confirm">\"%1$s\" will be merged into \"%2$s\". Everything tagged \"%1$s\" (%3$d in all) will move to \"%2$s\", and \"%1$s\" will be removed. This can\'t be undone.</string>
+    <string name="tag_nothing">Nothing tagged yet.</string>
+    <string name="tag_empty_note">Empty note</string>
+    <string name="tag_section_sermons">Sermons</string>
+    <string name="tag_section_videos">Videos</string>
+    <string name="tag_section_notes">Notes</string>
+    <string name="tag_recommended">Recommended</string>
+    <string name="tag_preset_trash">Trash</string>
+    <string name="tag_preset_milestone">Milestone</string>
+    <plurals name="tag_count_notes"><item quantity="one">%d note</item><item quantity="other">%d notes</item></plurals>
+    <plurals name="tag_count_comments"><item quantity="one">%d comment</item><item quantity="other">%d comments</item></plurals>
+    <plurals name="tag_count_sermons"><item quantity="one">%d sermon</item><item quantity="other">%d sermons</item></plurals>
+    <plurals name="tag_count_videos"><item quantity="one">%d video</item><item quantity="other">%d videos</item></plurals>
 </resources>

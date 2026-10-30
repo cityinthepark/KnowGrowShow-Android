@@ -165,7 +165,7 @@ fun Pill(color: Color, modifier: Modifier = Modifier, content: @Composable () ->
 fun TagPill(name: String, compact: Boolean = false) {
     Surface(shape = RoundedCornerShape(50), color = AppTheme.colors.pageBackground) {
         Text(
-            "#$name",
+            "#${com.stoneofhope.stoneofhope.data.tag.PresetTag.label(name)}",
             style = textStyle(12),
             color = AppTheme.colors.neutral90,
             maxLines = 1,

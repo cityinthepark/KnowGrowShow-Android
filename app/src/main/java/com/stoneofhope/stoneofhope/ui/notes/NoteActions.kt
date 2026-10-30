@@ -164,7 +164,7 @@ fun NoteActionsHost(
             }
         })
         Sub.Star -> StarDialog(onDismiss = state::close) { state.close(); act(NoteAction.Star(it)) }
-        Sub.Tags -> TagPickerSheet(allTags, note.tagIds.toSet(), onAdd = { act(NoteAction.AddTag(it)) }, onRemove = { act(NoteAction.RemoveTag(it)) }, onDismiss = state::close)
+        Sub.Tags -> TagPickerSheet(allTags, note.tagIds.toSet(), onAdd = { act(NoteAction.AddTag(it)) }, onRemove = { act(NoteAction.RemoveTag(it)) }, onDismiss = state::close, recommend = true)
         Sub.Edit -> EditNoteSheet(note.content, onDismiss = state::close) { state.close(); act(NoteAction.Edit(it)) }
         Sub.Comment -> CommentSheet(
             t.displayContent, canMarkAnswered = false, onDismiss = state::close, isReflection = note.noteType == NoteType.BibleVerse,
@@ -410,6 +410,8 @@ internal fun TagPickerSheet(
     onAdd: (String) -> Unit,
     onRemove: (String) -> Unit,
     onDismiss: () -> Unit,
+    /** iOS: only a note's picker offers the preset tags (Trash, Milestone) that don't exist yet. */
+    recommend: Boolean = false,
 ) {
     var byName by rememberSaveable { mutableStateOf(true) }
     var sortMenu by remember { mutableStateOf(false) }
@@ -435,9 +437,20 @@ internal fun TagPickerSheet(
                     FilterChip(
                         selected = selected,
                         onClick = { if (selected) onRemove(tag.id) else onAdd(tag.name) },
-                        label = { Text(tag.name) },
+                        label = { Text(com.stoneofhope.stoneofhope.data.tag.PresetTag.label(tag.name)) },
                         modifier = Modifier.testTag("tag_${tag.name}"),
                     )
+                }
+            }
+            val missing = com.stoneofhope.stoneofhope.data.tag.PresetTag.entries.filter { kind -> allTags.none { com.stoneofhope.stoneofhope.data.tag.PresetTag.of(it.name) == kind } }
+            if (recommend && missing.isNotEmpty()) {
+                HorizontalDivider()
+                Text(stringResource(R.string.tag_recommended), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    missing.forEach { kind ->
+                        val name = stringResource(if (kind == com.stoneofhope.stoneofhope.data.tag.PresetTag.Trash) R.string.tag_preset_trash else R.string.tag_preset_milestone)
+                        androidx.compose.material3.AssistChip(onClick = { onAdd(name) }, label = { Text(com.stoneofhope.stoneofhope.data.tag.PresetTag.label(name)) }, modifier = Modifier.testTag("preset_${kind.name}"))
+                    }
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -63,6 +63,10 @@ import com.stoneofhope.stoneofhope.ui.flashcard.FlashCardListScreen
 import com.stoneofhope.stoneofhope.ui.flashcard.FlashCardsViewModel
 import com.stoneofhope.stoneofhope.ui.flashcard.LaunchDeckViewModel
 import com.stoneofhope.stoneofhope.ui.main.MainScreen
+import com.stoneofhope.stoneofhope.ui.profile.ProfileScreen
+import com.stoneofhope.stoneofhope.ui.tag.MyTagsScreen
+import com.stoneofhope.stoneofhope.ui.tag.TagNotesScreen
+import com.stoneofhope.stoneofhope.ui.tag.TagNotesViewModel
 import com.stoneofhope.stoneofhope.ui.notes.NoteDetailsScreen
 import com.stoneofhope.stoneofhope.ui.notes.NoteDetailsViewModel
 import com.stoneofhope.stoneofhope.ui.notes.NoteListScreen
@@ -80,6 +84,9 @@ private object Routes {
     const val Account = "account"
     const val ComingSoon = "comingSoon/{title}"
     const val FlashCards = "flashCards"
+    const val Profile = "profile"
+    const val MyTags = "myTags"
+    const val TagNotes = "tag/{${TagNotesViewModel.ARG_ID}}"
     const val FlashCardDetail = "flashCard/{${FlashCardsViewModel.ARG_ID}}"
     const val FlashDeck = "flashDeck/{${FlashCardsViewModel.ARG_LIMIT}}"
     const val ReadingLog = "readingLog/{${ReadingLogViewModel.ARG_BOOK_ORD}}"
@@ -96,6 +103,8 @@ private object Routes {
     const val SeriesDetail = "seriesDetail/{${SeriesDetailViewModel.ARG_ID}}"
     const val SermonEdit = "sermonEdit/{${SermonViewModel.ARG_ID}}"
     const val Video = "video/{${VideoViewModel.ARG_ID}}?${SermonViewModel.ARG_NOTICE}={${SermonViewModel.ARG_NOTICE}}"
+
+    fun tagNotes(id: String) = "tag/$id"
 
     fun flashCardDetail(id: String) = "flashCard/$id"
 
@@ -197,6 +206,7 @@ fun KnowGrowShowApp(
                         onOpenAccount = { navController.navigate(Routes.Account) },
                         onOpenPlaceholder = { title -> navController.navigate(Routes.comingSoon(title)) },
                         onOpenFlashCards = { navController.navigate(Routes.FlashCards) },
+                        onOpenProfile = { navController.navigate(Routes.Profile) },
                         onOpenReadingLog = { bookOrd -> navController.navigate(Routes.readingLog(bookOrd)) },
                         onOpenChapter = { bookOrd, chapter, tab -> navController.navigate(Routes.chapter(bookOrd, chapter, tab)) },
                         onOpenNotes = { filter, day -> navController.navigate(Routes.noteList(filter, day)) },
@@ -314,6 +324,20 @@ fun KnowGrowShowApp(
                     VideoScreen(
                         onBack = { navController.popBackStack() },
                         onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
+                    )
+                }
+                composable(Routes.Profile) {
+                    ProfileScreen(onBack = { navController.popBackStack() }, onOpenTags = { navController.navigate(Routes.MyTags) })
+                }
+                composable(Routes.MyTags) {
+                    MyTagsScreen(onBack = { navController.popBackStack() }, onOpenTag = { id -> navController.navigate(Routes.tagNotes(id)) })
+                }
+                composable(Routes.TagNotes, arguments = listOf(navArgument(TagNotesViewModel.ARG_ID) { type = NavType.StringType })) {
+                    TagNotesScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
+                        onOpenSermon = { id -> navController.navigate(Routes.sermon(id)) },
+                        onOpenVideo = { id -> navController.navigate(Routes.video(id)) },
                     )
                 }
                 composable(Routes.FlashCards) {

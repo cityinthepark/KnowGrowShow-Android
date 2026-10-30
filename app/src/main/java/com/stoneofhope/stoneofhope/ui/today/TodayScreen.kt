@@ -76,6 +76,7 @@ fun TodayScreen(
     onOpenNotes: (NoteFilter, LocalDate) -> Unit,
     onOpenReview: (LocalDate) -> Unit,
     onOpenFlashCards: () -> Unit,
+    onOpenProfile: () -> Unit,
     nav: SermonNavigation,
     onOpenDestination: (SermonDestination) -> Unit,
     viewModel: TodayViewModel = hiltViewModel(),
@@ -87,7 +88,6 @@ fun TodayScreen(
     val flashCount by viewModel.activeFlashCards.collectAsStateWithLifecycle()
     val tagNames by viewModel.tagNames.collectAsStateWithLifecycle()
     var sheet by rememberSaveable { mutableStateOf<TodaySheet?>(null) }
-    val profileTitle = stringResource(R.string.today_profile)
 
     LifecycleResumeEffect(Unit) {
         viewModel.refreshDay()
@@ -98,7 +98,7 @@ fun TodayScreen(
         modifier = Modifier.fillMaxSize().testTag("todayList"),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        item { GreetingHeader(day, onProfile = { onOpen(profileTitle) }) }
+        item { GreetingHeader(day, onProfile = onOpenProfile) }
         item {
             ReadingCarousel(
                 books = carousel,
