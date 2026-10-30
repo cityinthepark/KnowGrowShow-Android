@@ -445,4 +445,38 @@
     <plurals name="tag_count_comments"><item quantity="one">%d comment</item><item quantity="other">%d comments</item></plurals>
     <plurals name="tag_count_sermons"><item quantity="one">%d sermon</item><item quantity="other">%d sermons</item></plurals>
     <plurals name="tag_count_videos"><item quantity="one">%d video</item><item quantity="other">%d videos</item></plurals>
+
+    <!-- Settings -->
+    <string name="ok">OK</string>
+    <string name="settings_app">App Settings</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_font_size">Font Size</string>
+    <string name="theme_system">Follow System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="font_small">Small</string>
+    <string name="font_medium">Medium</string>
+    <string name="font_large">Large</string>
+    <string name="font_extra_large">Extra Large</string>
+    <string name="settings_show_verse">Show Bible Verse on Launch</string>
+    <string name="settings_script_duration">Script Duration</string>
+    <plurals name="settings_script_value"><item quantity="one">%d second</item><item quantity="other">%d seconds</item></plurals>
+    <string name="settings_script_footer">Video and audio Script buttons capture this many seconds of transcript (1–30).</string>
+    <string name="settings_legal">Legal</string>
+    <string name="settings_privacy">Privacy Policy</string>
+    <string name="settings_terms">Terms of Use</string>
+    <string name="profile_bible_version">Selected Bible Version</string>
+    <string name="versions_title">Select Bible Versions</string>
+    <string name="versions_info_title">About reference versions</string>
+    <string name="versions_intro">Choose up to two Bible translations for your notes and flashcards.\n\nYour first selection is the primary reference; the second is optional for side-by-side comparison.\n\nAt least one version must remain selected.</string>
+    <string name="versions_unavailable_title">Not available yet</string>
+    <string name="versions_limit_title">Selection limit</string>
+    <string name="versions_limit_message">You can select up to two Bible versions. Deselect one to add another.</string>
+    <string name="versions_unavailable_message">This version needs an internet connection to load its verses, which isn\'t supported on Android yet.</string>
+    <string name="versions_footer">Stone of Hope does not claim ownership of any Bible translation. Copyright belongs to the respective publishers and licensors.</string>
+    <string name="version_built_in">Built in</string>
+    <string name="version_not_yet">Uses internet for verses · not available yet</string>
+    <string name="language_english">English</string>
+    <string name="language_chinese_simplified">Chinese (Simplified)</string>
+    <string name="language_chinese_traditional">Chinese (Traditional)</string>
 </resources>

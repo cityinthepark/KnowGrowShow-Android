@@ -424,4 +424,38 @@
     <plurals name="tag_count_comments"><item quantity="other">%d 条评论</item></plurals>
     <plurals name="tag_count_sermons"><item quantity="other">%d 篇讲道</item></plurals>
     <plurals name="tag_count_videos"><item quantity="other">%d 个视频</item></plurals>
+
+    <!-- Settings -->
+    <string name="ok">确定</string>
+    <string name="settings_app">应用设置</string>
+    <string name="settings_theme">主题</string>
+    <string name="settings_font_size">字体大小</string>
+    <string name="theme_system">跟随系统</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_dark">深色</string>
+    <string name="font_small">小</string>
+    <string name="font_medium">中</string>
+    <string name="font_large">大</string>
+    <string name="font_extra_large">特大</string>
+    <string name="settings_show_verse">启动时显示经文</string>
+    <string name="settings_script_duration">字幕截取时长</string>
+    <plurals name="settings_script_value"><item quantity="other">%d 秒</item></plurals>
+    <string name="settings_script_footer">视频和音频的“字幕”按钮会按此秒数抓取内容（1–30）。</string>
+    <string name="settings_legal">法律信息</string>
+    <string name="settings_privacy">隐私政策</string>
+    <string name="settings_terms">使用条款</string>
+    <string name="profile_bible_version">已选圣经版本</string>
+    <string name="versions_title">选择圣经版本</string>
+    <string name="versions_info_title">参考译本说明</string>
+    <string name="versions_intro">最多可选择两个圣经译本，用于笔记和抽认卡。\n\n第一个为主参考译本，第二个可选，便于对照。\n\n至少需保留一个已选译本。</string>
+    <string name="versions_unavailable_title">暂不可用</string>
+    <string name="versions_limit_title">选择数量已达上限</string>
+    <string name="versions_limit_message">最多只能选择两个圣经版本。请先取消一个已选版本，再选择其他版本。</string>
+    <string name="versions_unavailable_message">这个版本的经文需要联网加载，安卓版暂时还不支持。</string>
+    <string name="versions_footer">本应用不主张对任何圣经译本的版权。版权归各出版方及许可方所有。</string>
+    <string name="version_built_in">已内置</string>
+    <string name="version_not_yet">经文需联网加载 · 暂不可用</string>
+    <string name="language_english">英文</string>
+    <string name="language_chinese_simplified">中文（简体）</string>
+    <string name="language_chinese_traditional">中文（繁体）</string>
 </resources>

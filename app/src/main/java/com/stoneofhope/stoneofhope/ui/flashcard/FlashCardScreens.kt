@@ -122,6 +122,7 @@ fun FlashCardListScreen(
     onBack: () -> Unit,
     onOpenCard: (String) -> Unit,
     onStartReview: () -> Unit,
+    onOpenVersions: () -> Unit,
     viewModel: FlashCardsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -149,7 +150,9 @@ fun FlashCardListScreen(
                     TextButton(onClick = viewModel::toggleSort, modifier = Modifier.testTag("flashSort")) {
                         Text(stringResource(if (sort == FlashCardSort.ByDate) R.string.flash_sort_by_book else R.string.flash_sort_by_date))
                     }
-                    Text(viewModel.versionsLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(end = 12.dp))
+                    TextButton(onClick = onOpenVersions, modifier = Modifier.testTag("flashVersions")) {
+                        Text(viewModel.versionsLabel, style = MaterialTheme.typography.labelSmall, textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline)
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                 windowInsets = androidx.compose.foundation.layout.WindowInsets(0),

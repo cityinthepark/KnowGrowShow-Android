@@ -64,6 +64,7 @@ import com.stoneofhope.stoneofhope.ui.flashcard.FlashCardsViewModel
 import com.stoneofhope.stoneofhope.ui.flashcard.LaunchDeckViewModel
 import com.stoneofhope.stoneofhope.ui.main.MainScreen
 import com.stoneofhope.stoneofhope.ui.profile.ProfileScreen
+import com.stoneofhope.stoneofhope.ui.settings.BibleVersionsScreen
 import com.stoneofhope.stoneofhope.ui.tag.MyTagsScreen
 import com.stoneofhope.stoneofhope.ui.tag.TagNotesScreen
 import com.stoneofhope.stoneofhope.ui.tag.TagNotesViewModel
@@ -86,6 +87,7 @@ private object Routes {
     const val FlashCards = "flashCards"
     const val Profile = "profile"
     const val MyTags = "myTags"
+    const val BibleVersions = "bibleVersions"
     const val TagNotes = "tag/{${TagNotesViewModel.ARG_ID}}"
     const val FlashCardDetail = "flashCard/{${FlashCardsViewModel.ARG_ID}}"
     const val FlashDeck = "flashDeck/{${FlashCardsViewModel.ARG_LIMIT}}"
@@ -327,7 +329,14 @@ fun KnowGrowShowApp(
                     )
                 }
                 composable(Routes.Profile) {
-                    ProfileScreen(onBack = { navController.popBackStack() }, onOpenTags = { navController.navigate(Routes.MyTags) })
+                    ProfileScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenTags = { navController.navigate(Routes.MyTags) },
+                        onOpenVersions = { navController.navigate(Routes.BibleVersions) },
+                    )
+                }
+                composable(Routes.BibleVersions) {
+                    BibleVersionsScreen(onBack = { navController.popBackStack() })
                 }
                 composable(Routes.MyTags) {
                     MyTagsScreen(onBack = { navController.popBackStack() }, onOpenTag = { id -> navController.navigate(Routes.tagNotes(id)) })
@@ -345,6 +354,7 @@ fun KnowGrowShowApp(
                         onBack = { navController.popBackStack() },
                         onOpenCard = { id -> navController.navigate(Routes.flashCardDetail(id)) },
                         onStartReview = { navController.navigate(Routes.flashDeck(0)) },
+                        onOpenVersions = { navController.navigate(Routes.BibleVersions) },
                     )
                 }
                 composable(Routes.FlashCardDetail, arguments = listOf(navArgument(FlashCardsViewModel.ARG_ID) { type = NavType.StringType })) {

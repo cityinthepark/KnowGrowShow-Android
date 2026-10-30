@@ -24,6 +24,9 @@ object BibleVersions {
     /** Versions whose text ships inside the app (iOS bundles `KJV.json` and `CUV.xml`). */
     val bundled: List<String> = listOf("KJV", "CUV")
 
+    /** Versions whose text the app can read now: the bundled ones. */
+    fun isSelectable(abbr: String): Boolean = bundled.any { it.equals(abbr, ignoreCase = true) }
+
     private val displayToStorage = mapOf("KJV" to "KJV", "和合本" to "CUV", "NIV" to "NIV", "NKJV" to "NKJV")
     private val storageToDisplay = mapOf("KJV" to "KJV", "CUV" to "和合本", "NIV" to "NIV", "NKJV" to "NKJV")
 
