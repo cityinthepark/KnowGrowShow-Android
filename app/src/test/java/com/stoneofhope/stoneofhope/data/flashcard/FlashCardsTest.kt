@@ -28,6 +28,12 @@ class FlashCardsTest {
         // no book last; same verse: version "CUV" < "KJV"
         assertEquals(listOf("b", "e", "c", "a", "d"), FlashCards.sorted(listOf(a, b, c, d, e), FlashCardSort.ByBook).map { it.id })
 
+    @Test fun byBookBreaksAFullTieWithTheNewestFirst() {
+        val older = card("old", 43, 3, 16, "KJV", 5)
+        val newer = card("new", 43, 3, 16, "KJV", 50)
+        assertEquals(listOf("new", "old"), FlashCards.sorted(listOf(older, newer), FlashCardSort.ByBook).map { it.id })
+    }
+
     @Test fun displayRefReadsRefKeyAndVersion() {
         assertEquals("John 3:16 (KJV)", FlashCards.displayRef(a))
         assertNull(FlashCards.displayRef(d))
