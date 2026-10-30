@@ -4,6 +4,12 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.material.icons.outlined.Style
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.stoneofhope.stoneofhope.data.flashcard.FlashCardAddStatus
+import com.stoneofhope.stoneofhope.ui.flashcard.FlashCardAdderViewModel
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -130,6 +136,9 @@ fun NoteActionsHost(
     onAction: (NoteEntity, NoteAction) -> Unit,
     onAddComment: ((NoteEntity) -> Unit)? = null,
 ) {
+    val flashAdder: FlashCardAdderViewModel = hiltViewModel()
+    val flashScope = rememberCoroutineScope()
+    val flashContext = LocalContext.current
     // Handlers inside the sheet can outlive a recomposition; they must act on the note as it is now
     // (a second Pin tap has to see the first one).
     val latest by rememberUpdatedState(target)
@@ -142,6 +151,17 @@ fun NoteActionsHost(
     when (state.current) {
         null -> ActionsSheet(t, onDismiss = state::close, onSub = state::show, onAction = act, onAddComment = {
             if (onAddComment != null) { state.close(); onAddComment(note) } else state.show(Sub.Comment)
+        }, onAddFlashCard = {
+            state.close()
+            flashScope.launch {
+                val message = when (flashAdder.addFromBibleVerseNote(note.id).status) {
+                    FlashCardAddStatus.Created -> R.string.flash_added
+                    FlashCardAddStatus.RestoredToActive -> R.string.flash_restored
+                    FlashCardAddStatus.AlreadyActive -> R.string.flash_already_toast
+                    FlashCardAddStatus.Failed -> R.string.flash_add_failed_note
+                }
+                Toast.makeText(flashContext, message, Toast.LENGTH_SHORT).show()
+            }
         })
         Sub.Star -> StarDialog(onDismiss = state::close) { state.close(); act(NoteAction.Star(it)) }
         Sub.Tags -> TagPickerSheet(allTags, note.tagIds.toSet(), onAdd = { act(NoteAction.AddTag(it)) }, onRemove = { act(NoteAction.RemoveTag(it)) }, onDismiss = state::close)
@@ -166,7 +186,7 @@ fun NoteActionsHost(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ActionsSheet(t: NoteActionTarget, onDismiss: () -> Unit, onSub: (Sub) -> Unit, onAction: (NoteAction) -> Unit, onAddComment: () -> Unit) {
+private fun ActionsSheet(t: NoteActionTarget, onDismiss: () -> Unit, onSub: (Sub) -> Unit, onAction: (NoteAction) -> Unit, onAddComment: () -> Unit, onAddFlashCard: () -> Unit) {
     val c = AppTheme.colors
     val context = LocalContext.current
     val copied = stringResource(R.string.action_copied)
@@ -233,6 +253,11 @@ private fun ActionsSheet(t: NoteActionTarget, onDismiss: () -> Unit, onSub: (Sub
                         // Under a verse anchor this writes a reflection (and says so).
                         val addLabel = if (note.noteType == NoteType.BibleVerse) R.string.action_add_reflection else R.string.action_add_comment
                         ListRow(Icons.Outlined.ChatBubbleOutline, stringResource(addLabel), null, Modifier.testTag("sheetComment"), onClick = onAddComment)
+                        // iOS: the verse badge's menu; the card's whole row opens the note here, so it lives in this sheet.
+                        if (note.noteType == NoteType.BibleVerse) {
+                            HorizontalDivider(Modifier.padding(start = 56.dp), color = c.neutral20)
+                            ListRow(Icons.Outlined.Style, stringResource(R.string.flash_add_to_card), null, Modifier.testTag("sheetFlashCard"), onClick = onAddFlashCard)
+                        }
                     }
                 }
                 Surface(onClick = { onSub(Sub.Delete) }, shape = RoundedCornerShape(18.dp), color = c.red20, modifier = Modifier.fillMaxWidth().testTag("noteDelete")) {

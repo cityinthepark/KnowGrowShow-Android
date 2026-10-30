@@ -159,6 +159,22 @@ K1 补充：笔记推送也省略空字段。目前笔记里会被清空的只�
 | K21 🔴 | `SermonReferenceParser.parse` | 只把第一个词当书名：`"1 John 3"` 的书名是 `"1"`，`"Song of Solomon 2"` 是 `"Song"`，`"约翰一书3"` 整个是一个词，都认不出；而经文框认为它们有效，书卷选择器自己填进去的就是 `"1 John "` | 这些讲道没有 `bookOrd` 和 `chapters`：章节页看不到、不标已读、不能自动识别系列 | 先照 iOS 试第一个词，不行再试前面几个词连起来、再试数字前面的部分；iOS 能解析的结果完全不变 | 不用 |
 | K22 🔴 | `BibleBookHelper.extractValidChapters` | 写反的章范围（`"Genesis 5-3"`）走到 `for c in start...end`，Swift 直接崩溃 | 新建讲道时闪退 | 反过来的范围当作 3–5 章 | 不用 |
 
+## L. 阶段 4：抽认卡、标签、设置（2026-10-28 起）
+
+| # | iOS 位置 | 问题 | 影响 | 安卓做法 | iOS 修后安卓要改吗 |
+| --- | --- | --- | --- | --- | --- |
+| L1 🟡 | `FlashCardListView` 新建回调、`AddFlashCardSheet` | 经文已在进行中时，`alreadyActive` 被当作成功，"已添加"提示永远不会弹出，弹窗直接关闭；那张已有的卡悄悄跳到最前面 | 用户不知道这张卡早就有了 | 弹出"这张卡已经在进行中"，不关闭弹窗 | 不用 |
+| L2 🟡 | `FlashCardListView` ▶、`FlashCardDetailView.displayCards` | "开始复习"只翻前 5 张（启动弹出才该限制 5 张） | 超过 5 张的卡无法通过 ▶ 复习 | ▶ 翻全部进行中的卡；启动弹出仍是 5 张 | 不用 |
+| L3 🟡 | `NoteCellView.bibleVerseBadgeMenu` | "加入抽认卡"的结果被丢弃：没有成功 / 失败提示；对已归档的卡会悄悄恢复 | 点了没反应，不知道成没成功 | 用提示条说"已加入抽认卡 / 已恢复 / 已在抽认卡中 / 无法添加" | 不用 |
+| L4 🟡 | `MainTabView.presentActiveFlashCardsIfNeeded` | 不只启动时弹，**每次从后台回到前台**都弹全屏卡片；名字叫 "daily" 但没有按天限制 | 每次切回 App 都被卡片挡住一次，要点关闭 | 见 §4 问题 3 | 若 iOS 改成每天一次，安卓跟着改 |
+| L5 🟡 | `HowToUseView`、`NavigationCoordinator.goToHowToUse` | 帮助页写好了但没有任何入口，文案也没有本地化键 | 无用代码 | 不移植 | 不用 |
+| L6 🟡 | `NotesManager.addFlashCards` | 经文只有一个译本取不到正文时，那个译本悄悄跳过，仍显示"成功" | 选了 NIV + KJV，NIV 没网时只得到 KJV 一张，用户不知道 | 成功后提示"以下译本没有经文正文：NIV，未添加" | 不用 |
+| L7 🟡 | `NotesManager.renameTag` | 改名不检查重名（新建会检查）；可以改成与另一个标签相同的名字，之后按名字选标签会选到不确定的一个 | 出现两个同名标签 | 重名时拒绝，提示"已有同名标签，可以用合并" | 不用 |
+| L8 🟡 | `MyTagsView.TagRowContent` | 摘要只统计笔记和评论，且包含已删除的笔记；"Notes / Comments" 写死英文；只带讲道 / 视频的标签摘要是空的 | 数字不对，中文界面有英文 | 统计未删除的笔记、评论、讲道、视频，用界面语言 | 不用 |
+| L9 🟡 | `NotesManager.taggedItemCount` | 合并确认里的数字：经文、讲道、视频没有排除已删除的；笔记和它的评论分别计数 | 确认框里的数与列表不一致 | 与 L8 用同一套计数 | 不用 |
+| L10 🟡 | `MyTagsView`、`TagPickerPopup`、`TagEditRow` | "Delete Tag"、"Delete"、"Cancel"、"Edit tag"、"Choose Tags"、"By Name"、"By Create Date"、"Close"、"Add new tag..." 等没有走本地化 | 中文界面有英文 | 三种语言都有 | 不用 |
+| L11 🟡 | `NotesManager.reassignTag`（合并 / 删除标签） | 把受影响的笔记 `updatedAt` 改成现在，评论还带动所属笔记 | 合并或删除一个标签后，一批旧笔记的"最近修改"变成今天，排序和 Today / Moments 里的日期被打乱 | **按你的决定（2026-10-28）**：只设 `needsSync`，不动 `updatedAt`（`tagIds` 照常同步） | 不用 |
+
 ---
 
 ## 安卓有意不同、但不算 iOS bug 的地方

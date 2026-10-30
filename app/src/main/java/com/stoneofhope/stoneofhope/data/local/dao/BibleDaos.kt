@@ -25,6 +25,13 @@ interface FlashCardDao {
     @Query("SELECT * FROM flashCards WHERE deletedAt IS NULL ORDER BY updatedAt DESC")
     fun observeActive(): Flow<List<FlashCardEntity>>
 
+    /** iOS `flashCardMatching`: live cards for one reference key (the version is compared by the caller). */
+    @Query("SELECT * FROM flashCards WHERE refKey = :refKey AND deletedAt IS NULL")
+    suspend fun liveByRefKey(refKey: String): List<FlashCardEntity>
+
+    @Query("SELECT COUNT(*) FROM flashCards WHERE deletedAt IS NULL AND isArchived = 0")
+    suspend fun activeCount(): Int
+
     /** iOS `flashCardActiveAndTotalCounts().active`. */
     @Query("SELECT COUNT(*) FROM flashCards WHERE deletedAt IS NULL AND isArchived = 0")
     fun observeActiveCount(): Flow<Int>

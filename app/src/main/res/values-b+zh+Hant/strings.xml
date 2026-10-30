@@ -364,4 +364,36 @@
     <string name="series_not_found">這個系列已不存在。</string>
     <string name="series_edit">編輯系列</string>
     <string name="series_expand">展開講道</string>
+
+    <!-- Flash cards -->
+    <string name="flashcards_title">抽認卡</string>
+    <string name="flash_sort_by_book">按書卷</string>
+    <string name="flash_sort_by_date">按日期</string>
+    <string name="flash_active">進行中</string>
+    <string name="flash_completed">已完成</string>
+    <string name="flash_start_review">開始複習</string>
+    <string name="flash_mark_completed">標為已完成</string>
+    <string name="flash_restore">恢復為進行中</string>
+    <string name="flash_delete">刪除</string>
+    <string name="flash_delete_title">刪除抽認卡</string>
+    <string name="flash_delete_message">確定要刪除 %1$s 吗？</string>
+    <string name="flash_empty">還沒有抽認卡。點 + 新增经文。</string>
+    <string name="flash_add">新增</string>
+    <string name="flash_new_title">新增抽認卡</string>
+    <string name="flash_new_hint">輸入一節經文或一段經文，例如 約翰福音 3:16 或 約翰福音 3:16–17。</string>
+    <string name="flash_topic">主題（可选）</string>
+    <string name="flash_already">這張抽認卡已經在進行中。</string>
+    <string name="flash_add_failed">無法新增抽認卡。請檢查經文，並確認有這段經文的文字。</string>
+    <string name="flash_skipped">%1$s 沒有這段經文的文字，所以沒有為該譯本建卡。</string>
+    <string name="flash_card_n_of_m">第 %1$d 張 / 共 %2$d 張</string>
+    <string name="flash_tap_close">點任意處關閉</string>
+    <string name="flash_dont_show">不再顯示最近經文</string>
+    <string name="flash_more">更多</string>
+    <string name="flash_not_found">找不到這張抽認卡。</string>
+    <string name="flash_loading">載入中…</string>
+    <string name="flash_add_to_card">加入抽認卡</string>
+    <string name="flash_added">已加入抽認卡</string>
+    <string name="flash_restored">已恢復到抽認卡</string>
+    <string name="flash_already_toast">已在抽認卡中</string>
+    <string name="flash_add_failed_note">無法加入抽認卡（這個譯本沒有經文文字）</string>
 </resources>

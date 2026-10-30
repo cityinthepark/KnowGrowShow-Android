@@ -53,6 +53,7 @@ enum class MainTab(@param:StringRes val title: Int, val icon: ImageVector) {
 fun MainScreen(
     onOpenAccount: () -> Unit,
     onOpenPlaceholder: (title: String) -> Unit,
+    onOpenFlashCards: () -> Unit,
     onOpenReadingLog: (bookOrd: Int) -> Unit,
     onOpenChapter: (bookOrd: Int, chapter: Int, tab: ChapterTab) -> Unit,
     onOpenNotes: (NoteFilter, LocalDate) -> Unit,
@@ -96,6 +97,7 @@ fun MainScreen(
                     onOpenChapter = onOpenChapter,
                     onOpenNotes = onOpenNotes,
                     onOpenReview = onOpenReview,
+                    onOpenFlashCards = onOpenFlashCards,
                     nav = sermonNav,
                     onOpenDestination = onOpenDestination,
                 )

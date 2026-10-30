@@ -385,4 +385,36 @@
     <string name="series_not_found">This series no longer exists.</string>
     <string name="series_edit">Edit series</string>
     <string name="series_expand">Show sermons</string>
+
+    <!-- Flash cards -->
+    <string name="flashcards_title">Flash Cards</string>
+    <string name="flash_sort_by_book">By Book</string>
+    <string name="flash_sort_by_date">By Date</string>
+    <string name="flash_active">Active</string>
+    <string name="flash_completed">Completed</string>
+    <string name="flash_start_review">Start Review</string>
+    <string name="flash_mark_completed">Mark as Completed</string>
+    <string name="flash_restore">Restore to Active</string>
+    <string name="flash_delete">Delete</string>
+    <string name="flash_delete_title">Delete Flash Card</string>
+    <string name="flash_delete_message">Are you sure you want to delete %1$s?</string>
+    <string name="flash_empty">No flash cards yet. Tap + to add a verse.</string>
+    <string name="flash_add">Add</string>
+    <string name="flash_new_title">New Flash Card</string>
+    <string name="flash_new_hint">Type a verse or a verse range, for example John 3:16 or John 3:16–17.</string>
+    <string name="flash_topic">Topic (optional)</string>
+    <string name="flash_already">This flash card is already active.</string>
+    <string name="flash_add_failed">Could not add the flash card. Check the reference and that the verse text is available.</string>
+    <string name="flash_skipped">No verse text for %1$s, so no card was made for that version.</string>
+    <string name="flash_card_n_of_m">Card %1$d of %2$d</string>
+    <string name="flash_tap_close">Tap to close</string>
+    <string name="flash_dont_show">Don\'t show recent verses</string>
+    <string name="flash_more">More</string>
+    <string name="flash_not_found">Flash card not found.</string>
+    <string name="flash_loading">Loading…</string>
+    <string name="flash_add_to_card">Add to Flash Card</string>
+    <string name="flash_added">Added to flash cards</string>
+    <string name="flash_restored">Restored to flash cards</string>
+    <string name="flash_already_toast">Already in flash cards</string>
+    <string name="flash_add_failed_note">Could not add to flash cards (no verse text for this version)</string>
 </resources>

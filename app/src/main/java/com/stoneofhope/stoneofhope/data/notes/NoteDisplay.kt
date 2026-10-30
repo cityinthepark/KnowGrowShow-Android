@@ -222,7 +222,15 @@ object VerseDisplay {
         versesById: Map<String, UserVerseEntity>,
         marksByVerseId: Map<String, List<IndexedTextEntity>> = emptyMap(),
     ): ResolvedVerse? {
-        val anchor = BibleAnchor.from(note) ?: return null
+        return resolve(BibleAnchor.from(note) ?: return null, versesById, marksByVerseId)
+    }
+
+    /** The same read for any verse range in one version (a flash card is a range over `userVerses`). */
+    fun resolve(
+        anchor: BibleAnchor,
+        versesById: Map<String, UserVerseEntity>,
+        marksByVerseId: Map<String, List<IndexedTextEntity>> = emptyMap(),
+    ): ResolvedVerse? {
         if (anchor.isChapterLevel) return null
         val ids = anchor.verseOrds.associateWith { UserVerseEntity.makeId(anchor.versionAbbr, anchor.bookOrd, anchor.chapterOrd, it) }
         val verses = anchor.verseOrds.map { v -> v to versesById[ids.getValue(v)]?.content.orEmpty() }

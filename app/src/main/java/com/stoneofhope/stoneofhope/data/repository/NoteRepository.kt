@@ -422,6 +422,19 @@ class NoteRepository @Inject constructor(
         return byVersion
     }
 
+    /**
+     * iOS flash card path (`resolvedUserVerseContents` + `persistUserVerses`): freezes the range's text
+     * into `userVerses` for the selected versions plus [extraVersions] and returns it per version.
+     */
+    suspend fun freezeVerseRange(
+        bookOrd: Int, chapterOrd: Int, verseStart: Int, verseEnd: Int, extraVersions: List<String> = emptyList(),
+    ): Map<String, Map<Int, String>> {
+        val contents = resolvedUserVerseContents(versions().selected, bookOrd, chapterOrd, verseStart, verseEnd, extraVersions)
+        val now = clock.instant()
+        db.withTransaction { persistUserVerses(bookOrd, chapterOrd, verseStart, verseEnd, contents, now) }
+        return contents
+    }
+
     /** Merged text across the selected versions, `"<block> [KJV]"` each; "" when no version has text. */
     private suspend fun mergedVerseContent(selected: List<String>, bookOrd: Int, chapter: Int, range: IntRange): String {
         val merged = StringBuilder()

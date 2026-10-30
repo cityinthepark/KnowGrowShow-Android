@@ -20,11 +20,16 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.stoneofhope.stoneofhope.data.bible.BookChapter
+import com.stoneofhope.stoneofhope.data.flashcard.FlashCards
 import com.stoneofhope.stoneofhope.data.sermon.YouTubeLinkParser
 import com.stoneofhope.stoneofhope.ui.sermon.AudioBarViewModel
 import com.stoneofhope.stoneofhope.ui.sermon.CreateVideoSheet
@@ -52,6 +57,11 @@ import com.stoneofhope.stoneofhope.ui.chapter.ChapterTab
 import com.stoneofhope.stoneofhope.ui.chapter.ChapterVerseScreen
 import com.stoneofhope.stoneofhope.ui.chapter.ChapterVerseViewModel
 import com.stoneofhope.stoneofhope.ui.chapter.ChapterViewModel
+import com.stoneofhope.stoneofhope.ui.flashcard.FlashCardDeckScreen
+import com.stoneofhope.stoneofhope.ui.flashcard.FlashCardDetailScreen
+import com.stoneofhope.stoneofhope.ui.flashcard.FlashCardListScreen
+import com.stoneofhope.stoneofhope.ui.flashcard.FlashCardsViewModel
+import com.stoneofhope.stoneofhope.ui.flashcard.LaunchDeckViewModel
 import com.stoneofhope.stoneofhope.ui.main.MainScreen
 import com.stoneofhope.stoneofhope.ui.notes.NoteDetailsScreen
 import com.stoneofhope.stoneofhope.ui.notes.NoteDetailsViewModel
@@ -69,6 +79,9 @@ private object Routes {
     const val Main = "main"
     const val Account = "account"
     const val ComingSoon = "comingSoon/{title}"
+    const val FlashCards = "flashCards"
+    const val FlashCardDetail = "flashCard/{${FlashCardsViewModel.ARG_ID}}"
+    const val FlashDeck = "flashDeck/{${FlashCardsViewModel.ARG_LIMIT}}"
     const val ReadingLog = "readingLog/{${ReadingLogViewModel.ARG_BOOK_ORD}}"
     const val NoteList = "notes/{${NoteListViewModel.ARG_FILTER}}/{${NoteListViewModel.ARG_DAY}}"
     const val NoteDetails = "note/{${NoteDetailsViewModel.ARG_NOTE_ID}}"
@@ -83,6 +96,11 @@ private object Routes {
     const val SeriesDetail = "seriesDetail/{${SeriesDetailViewModel.ARG_ID}}"
     const val SermonEdit = "sermonEdit/{${SermonViewModel.ARG_ID}}"
     const val Video = "video/{${VideoViewModel.ARG_ID}}?${SermonViewModel.ARG_NOTICE}={${SermonViewModel.ARG_NOTICE}}"
+
+    fun flashCardDetail(id: String) = "flashCard/$id"
+
+    /** [limit] 0 = every active card (▶ on the list); the launch deck passes the iOS cap. */
+    fun flashDeck(limit: Int) = "flashDeck/$limit"
 
     fun noteList(filter: NoteFilter, day: LocalDate?) = "notes/${filter.ordinal}/${day?.toEpochDay() ?: NoteListViewModel.NO_DAY}"
 
@@ -111,7 +129,11 @@ private object Routes {
 }
 
 @Composable
-fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel(), audioBar: AudioBarViewModel = hiltViewModel()) {
+fun KnowGrowShowApp(
+    rootViewModel: RootViewModel = hiltViewModel(),
+    audioBar: AudioBarViewModel = hiltViewModel(),
+    launchDeck: LaunchDeckViewModel = hiltViewModel(),
+) {
     val navController = rememberNavController()
     // Decided once per launch: the welcome flow only until the user has made a choice.
     val startDestination = remember { if (rootViewModel.showWelcome) Routes.Welcome else Routes.Main }
@@ -133,6 +155,19 @@ fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel(), audioBar: Au
     // On pushed pages the audio bar sits below the page (MainScreen puts it above the tab bar).
     val barBelowPage = audio.visible && backStack?.destination?.route.let { it != null && it != Routes.Main && it != Routes.Welcome }
     val share by IncomingShare.pending.collectAsStateWithLifecycle()
+
+    // iOS pops the verse deck on every return to the foreground; here: first foreground and after 30+ min away (IOS_ISSUES L4).
+    val scope = rememberCoroutineScope()
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { launchDeck.onStop() }
+    LifecycleEventEffect(Lifecycle.Event.ON_START) {
+        scope.launch {
+            if (!launchDeck.shouldShow()) return@launch
+            val route = navController.currentDestination?.route
+            if (route != null && route != Routes.Welcome && route != Routes.FlashDeck && IncomingShare.pending.value == null) {
+                navController.navigate(Routes.flashDeck(FlashCards.LAUNCH_DECK_SIZE))
+            }
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -161,6 +196,7 @@ fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel(), audioBar: Au
                     MainScreen(
                         onOpenAccount = { navController.navigate(Routes.Account) },
                         onOpenPlaceholder = { title -> navController.navigate(Routes.comingSoon(title)) },
+                        onOpenFlashCards = { navController.navigate(Routes.FlashCards) },
                         onOpenReadingLog = { bookOrd -> navController.navigate(Routes.readingLog(bookOrd)) },
                         onOpenChapter = { bookOrd, chapter, tab -> navController.navigate(Routes.chapter(bookOrd, chapter, tab)) },
                         onOpenNotes = { filter, day -> navController.navigate(Routes.noteList(filter, day)) },
@@ -279,6 +315,19 @@ fun KnowGrowShowApp(rootViewModel: RootViewModel = hiltViewModel(), audioBar: Au
                         onBack = { navController.popBackStack() },
                         onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
                     )
+                }
+                composable(Routes.FlashCards) {
+                    FlashCardListScreen(
+                        onBack = { navController.popBackStack() },
+                        onOpenCard = { id -> navController.navigate(Routes.flashCardDetail(id)) },
+                        onStartReview = { navController.navigate(Routes.flashDeck(0)) },
+                    )
+                }
+                composable(Routes.FlashCardDetail, arguments = listOf(navArgument(FlashCardsViewModel.ARG_ID) { type = NavType.StringType })) {
+                    FlashCardDetailScreen(onBack = { navController.popBackStack() })
+                }
+                composable(Routes.FlashDeck, arguments = listOf(navArgument(FlashCardsViewModel.ARG_LIMIT) { type = NavType.IntType })) {
+                    FlashCardDeckScreen(onClose = { navController.popBackStack() })
                 }
                 composable(Routes.ComingSoon) { entry ->
                     ComingSoonScreen(title = entry.arguments?.getString("title").orEmpty(), onBack = { navController.popBackStack() })
