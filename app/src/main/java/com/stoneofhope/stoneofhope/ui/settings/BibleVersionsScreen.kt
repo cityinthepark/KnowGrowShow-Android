@@ -49,11 +49,11 @@ import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 /**
  * iOS `AvailableVersionsView`: versions grouped by language, a check circle to choose up to two (the
  * first is primary). Android's two bundled texts are always "built in"; NIV / NKJV are listed but can't
- * be chosen until API.Bible is wired. The per-version copyright pages are not ported yet.
+ * be chosen until API.Bible is wired.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BibleVersionsScreen(onBack: () -> Unit, viewModel: BibleVersionsViewModel = hiltViewModel()) {
+fun BibleVersionsScreen(onBack: () -> Unit, onOpenCopyright: (String) -> Unit, viewModel: BibleVersionsViewModel = hiltViewModel()) {
     val selected by viewModel.selected.collectAsStateWithLifecycle()
     var showIntro by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf<Int?>(null) }
@@ -75,7 +75,7 @@ fun BibleVersionsScreen(onBack: () -> Unit, viewModel: BibleVersionsViewModel = 
                     item(key = version.abbreviation) {
                         val isSelected = selected.any { it.equals(version.abbreviation, ignoreCase = true) }
                         val usable = BibleVersions.isSelectable(version.abbreviation)
-                        Surface(shape = RoundedCornerShape(14.dp), color = c.surface0, modifier = Modifier.fillMaxWidth().testTag("version_${version.abbreviation}")) {
+                        Surface(onClick = { onOpenCopyright(version.abbreviation) }, shape = RoundedCornerShape(14.dp), color = c.surface0, modifier = Modifier.fillMaxWidth().testTag("version_${version.abbreviation}")) {
                             Row(Modifier.padding(start = 16.dp, top = 6.dp, bottom = 6.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
                                     Text(version.displayName, style = textStyle(17, weight = FontWeight.SemiBold), color = c.neutral100)

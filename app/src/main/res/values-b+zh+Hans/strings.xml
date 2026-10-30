@@ -452,10 +452,27 @@
     <string name="versions_limit_title">选择数量已达上限</string>
     <string name="versions_limit_message">最多只能选择两个圣经版本。请先取消一个已选版本，再选择其他版本。</string>
     <string name="versions_unavailable_message">这个版本的经文需要联网加载，安卓版暂时还不支持。</string>
-    <string name="versions_footer">本应用不主张对任何圣经译本的版权。版权归各出版方及许可方所有。</string>
+    <string name="versions_footer">本应用不主张对任何圣经译本的版权。版权归各出版方及许可方所有。\n\nNIV® 与 NKJV® 经文通过 API.Bible 在非商业许可下提供，可在设备上缓存供个人使用，并会定期更新。\n\n完整声明请点击上方各译本查看。</string>
     <string name="version_built_in">已内置</string>
     <string name="version_not_yet">经文需联网加载 · 暂不可用</string>
     <string name="language_english">英文</string>
     <string name="language_chinese_simplified">中文（简体）</string>
     <string name="language_chinese_traditional">中文（繁体）</string>
+
+    <!-- Bible version copyright pages (iOS BibleVersionCopyrightInfo) -->
+    <string name="bible_copyright_section_about">关于</string>
+    <string name="bible_copyright_section_how_provided">经文提供方式</string>
+    <string name="bible_copyright_section_copyright">版权</string>
+    <string name="bible_copyright_kjv_about">《圣经》钦定版（KJV，1611），又称 Authorized Version，是英语世界广泛使用的经典译本。</string>
+    <string name="bible_copyright_kjv_how_provided">随应用内置，安装后保存在设备上，可离线使用。</string>
+    <string name="bible_copyright_kjv_notice">经文由 GetBible.net 提供。KJV 在美国属于公有领域；在英国，正文仍受 Crown copyright 约束。\n\n本应用仅供个人研读经用，不授予额外的出版或分发权利。本应用不主张对 KJV 文本的版权。</string>
+    <string name="bible_copyright_cuv_about">《新标点和合本》是中文基督宗教广泛使用的和合本译本。</string>
+    <string name="bible_copyright_cuv_how_provided">随应用内置，安装后保存在设备上，可离线使用。</string>
+    <string name="bible_copyright_cuv_notice">经文文件来自 eBible.org（cmn-cu89t，新标点和合本），采用 USFX（Unified Standard Format XML）格式。eBible.org 将该文本列为公有领域。\n\n为使经节编号与本应用的 KJV 式经节表一致，少数经节的分界作了调整（如约翰福音 7:53、历代志上 22 章），经文文字未作改动。\n\n本应用不主张对该译本的版权。</string>
+    <string name="bible_copyright_niv_about">新国际版（NIV®）是当代广泛使用的英语圣经译本。</string>
+    <string name="bible_copyright_niv_how_provided">在笔记或记忆卡片中引用经节时，经 API.Bible 按需联网加载。已获取的章节可在设备上缓存最多约 30 天，之后会自动刷新。</string>
+    <string name="bible_copyright_niv_notice">标注 (NIV®) 的经文引自 The Holy Bible, New International Version®, NIV®。Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.® Used by permission. All rights reserved worldwide.\n\n本应用中的 NIV® 经文通过 American Bible Society 运营的 API.Bible 在非商业许可下提供。\n\n本应用不主张对 NIV® 文本的版权。</string>
+    <string name="bible_copyright_nkjv_about">新钦定版（NKJV®）是在 KJV 传统上更新的现代英语译本。</string>
+    <string name="bible_copyright_nkjv_how_provided">在笔记或记忆卡片中引用经节时，经 API.Bible 按需联网加载。已获取的章节可在设备上缓存最多约 30 天，之后会自动刷新。</string>
+    <string name="bible_copyright_nkjv_notice">标注 (NKJV®) 的经文引自 New King James Version®。Copyright © 1982 by Thomas Nelson. Used by permission. All rights reserved.\n\n本应用中的 NKJV® 经文通过 American Bible Society 运营的 API.Bible 在非商业许可下提供。\n\n本应用不主张对 NKJV® 文本的版权。</string>
 </resources>

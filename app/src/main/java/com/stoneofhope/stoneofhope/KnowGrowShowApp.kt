@@ -64,6 +64,7 @@ import com.stoneofhope.stoneofhope.ui.flashcard.FlashCardsViewModel
 import com.stoneofhope.stoneofhope.ui.flashcard.LaunchDeckViewModel
 import com.stoneofhope.stoneofhope.ui.main.MainScreen
 import com.stoneofhope.stoneofhope.ui.profile.ProfileScreen
+import com.stoneofhope.stoneofhope.ui.settings.BibleVersionCopyrightScreen
 import com.stoneofhope.stoneofhope.ui.settings.BibleVersionsScreen
 import com.stoneofhope.stoneofhope.ui.tag.MyTagsScreen
 import com.stoneofhope.stoneofhope.ui.tag.TagNotesScreen
@@ -88,6 +89,7 @@ private object Routes {
     const val Profile = "profile"
     const val MyTags = "myTags"
     const val BibleVersions = "bibleVersions"
+    const val VersionCopyright = "bibleVersion/{abbr}"
     const val TagNotes = "tag/{${TagNotesViewModel.ARG_ID}}"
     const val FlashCardDetail = "flashCard/{${FlashCardsViewModel.ARG_ID}}"
     const val FlashDeck = "flashDeck/{${FlashCardsViewModel.ARG_LIMIT}}"
@@ -336,7 +338,10 @@ fun KnowGrowShowApp(
                     )
                 }
                 composable(Routes.BibleVersions) {
-                    BibleVersionsScreen(onBack = { navController.popBackStack() })
+                    BibleVersionsScreen(onBack = { navController.popBackStack() }, onOpenCopyright = { abbr -> navController.navigate("bibleVersion/$abbr") })
+                }
+                composable(Routes.VersionCopyright, arguments = listOf(navArgument("abbr") { type = NavType.StringType })) { entry ->
+                    BibleVersionCopyrightScreen(abbr = entry.arguments?.getString("abbr").orEmpty(), onBack = { navController.popBackStack() })
                 }
                 composable(Routes.MyTags) {
                     MyTagsScreen(onBack = { navController.popBackStack() }, onOpenTag = { id -> navController.navigate(Routes.tagNotes(id)) })

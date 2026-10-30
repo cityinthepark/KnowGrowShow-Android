@@ -473,10 +473,27 @@
     <string name="versions_limit_title">Selection limit</string>
     <string name="versions_limit_message">You can select up to two Bible versions. Deselect one to add another.</string>
     <string name="versions_unavailable_message">This version needs an internet connection to load its verses, which isn\'t supported on Android yet.</string>
-    <string name="versions_footer">Stone of Hope does not claim ownership of any Bible translation. Copyright belongs to the respective publishers and licensors.</string>
+    <string name="versions_footer">Stone of Hope does not claim ownership of any Bible translation. Copyright belongs to the respective publishers and licensors.\n\nNIV® and NKJV® text is provided through API.Bible under a non-commercial license. Text may be cached on your device for personal use and refreshed periodically.\n\nFor full notices, tap each translation above.</string>
     <string name="version_built_in">Built in</string>
     <string name="version_not_yet">Uses internet for verses · not available yet</string>
     <string name="language_english">English</string>
     <string name="language_chinese_simplified">Chinese (Simplified)</string>
     <string name="language_chinese_traditional">Chinese (Traditional)</string>
+
+    <!-- Bible version copyright pages (iOS BibleVersionCopyrightInfo) -->
+    <string name="bible_copyright_section_about">About</string>
+    <string name="bible_copyright_section_how_provided">How verses are provided</string>
+    <string name="bible_copyright_section_copyright">Copyright</string>
+    <string name="bible_copyright_kjv_about">The King James Version (1611), also known as the Authorized Version, is a classic English translation widely used in Protestant churches.</string>
+    <string name="bible_copyright_kjv_how_provided">Bundled with the app and stored on your device for offline use.</string>
+    <string name="bible_copyright_kjv_notice">Scripture text is provided via GetBible.net. The KJV is in the public domain in the United States. In the United Kingdom, the base text remains under Crown copyright.\n\nThis app is for personal study only and does not grant additional publication rights. Stone of Hope does not claim ownership of the KJV text.</string>
+    <string name="bible_copyright_cuv_about">The Chinese Union Version with New Punctuation (新標點和合本) is a widely used Chinese Protestant translation.</string>
+    <string name="bible_copyright_cuv_how_provided">Bundled with the app and stored on your device for offline use.</string>
+    <string name="bible_copyright_cuv_notice">Text obtained from eBible.org (cmn-cu89t, Chinese Union Version with New Punctuation) in USFX (Unified Standard Format XML). eBible.org lists this text as public domain.\n\nA few verse boundaries are adjusted so verse numbers match the app\'s KJV-style verse table (e.g. John 7:53, 1 Chronicles 22); the wording is unchanged.\n\nStone of Hope does not claim ownership of this translation.</string>
+    <string name="bible_copyright_niv_about">The New International Version® (NIV®) is a contemporary, widely used English translation.</string>
+    <string name="bible_copyright_niv_how_provided">Verse text is loaded on demand over the internet via API.Bible when you cite a passage in a note or flashcard. Fetched chapters may be cached on your device for up to 30 days, then refreshed.</string>
+    <string name="bible_copyright_niv_notice">Scripture quotations marked (NIV®) are taken from The Holy Bible, New International Version®, NIV®. Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.® Used by permission. All rights reserved worldwide.\n\nNIV® text in this app is accessed through API.Bible, operated by American Bible Society, under a non-commercial license.\n\nStone of Hope does not claim ownership of the NIV® text.</string>
+    <string name="bible_copyright_nkjv_about">The New King James Version® (NKJV®) is a modern English translation in the King James tradition.</string>
+    <string name="bible_copyright_nkjv_how_provided">Verse text is loaded on demand over the internet via API.Bible when you cite a passage in a note or flashcard. Fetched chapters may be cached on your device for up to 30 days, then refreshed.</string>
+    <string name="bible_copyright_nkjv_notice">Scripture quotations marked (NKJV®) are taken from the New King James Version®. Copyright © 1982 by Thomas Nelson. Used by permission. All rights reserved.\n\nNKJV® text in this app is accessed through API.Bible, operated by American Bible Society, under a non-commercial license.\n\nStone of Hope does not claim ownership of the NKJV® text.</string>
 </resources>

@@ -32,3 +32,12 @@ class BibleVersionSelectionTest {
         assertEquals(1.3f, FontSizePreference.of("extraLarge").scale, 0f)
     }
 }
+
+class VersionCopyrightTest {
+    @org.junit.Test fun everyListedVersionHasItsThreeTexts() {
+        BibleVersions.available.forEach { v ->
+            org.junit.Assert.assertNotNull(v.abbreviation, com.stoneofhope.stoneofhope.ui.settings.VersionCopyright.of(v.abbreviation))
+        }
+        org.junit.Assert.assertNull(com.stoneofhope.stoneofhope.ui.settings.VersionCopyright.of("XYZ"))
+    }
+}
