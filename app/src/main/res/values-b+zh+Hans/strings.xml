@@ -455,6 +455,8 @@
     <string name="online_import_incomplete">有部分文件没有下载成功，请点"导入最新更新"再试一次。</string>
     <string name="online_website">网站</string>
     <string name="online_youtube">YouTube</string>
+    <string name="online_primary">主教会</string>
+    <string name="online_set_primary">设为主教会</string>
     <string name="settings_legal">法律信息</string>
     <string name="settings_privacy">隐私政策</string>
     <string name="settings_terms">使用条款</string>

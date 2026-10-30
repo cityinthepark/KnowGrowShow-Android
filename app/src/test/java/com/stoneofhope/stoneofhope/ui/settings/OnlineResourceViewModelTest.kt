@@ -12,7 +12,11 @@ import com.stoneofhope.stoneofhope.data.church.ChurchImportResult
 import com.stoneofhope.stoneofhope.data.church.ChurchProfile
 import com.stoneofhope.stoneofhope.data.church.ChurchProfileStore
 import com.stoneofhope.stoneofhope.data.church.ChurchSermonImporter
+import com.stoneofhope.stoneofhope.data.church.OnlineChurches
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -51,7 +55,8 @@ class OnlineResourceViewModelTest {
     private val riverside = ChurchProfile(churchKey = "riverside", name = "Riverside Calvary Chapel", sermonImportRepoURL = base)
     private val store = ChurchProfileStore(object : ChurchCatalog { override suspend fun fetchChurches() = null }, prefs) { listOf(riverside) }
     private val feed = Feed()
-    private val importer = ChurchSermonImporter(db, store, feed, prefs)
+    private val churches = OnlineChurches(db, Clock.fixed(Instant.parse("2026-10-30T08:00:00Z"), ZoneOffset.UTC))
+    private val importer = ChurchSermonImporter(db, store, feed, prefs, churches)
 
     @Before
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -62,7 +67,7 @@ class OnlineResourceViewModelTest {
         db.close()
     }
 
-    private fun viewModel() = OnlineResourceViewModel(SavedStateHandle(mapOf(OnlineResourceViewModel.ARG_KEY to "riverside")), store, importer)
+    private fun viewModel() = OnlineResourceViewModel(SavedStateHandle(mapOf(OnlineResourceViewModel.ARG_KEY to "riverside")), store, importer, churches)
 
     private fun repo() {
         feed.files[base + "manifest.json"] = """{"latestVersion":"20260802","files":["series_20260802.json","20260701.json","20260802.json"]}"""
@@ -100,12 +105,40 @@ class OnlineResourceViewModelTest {
     }
 
     @Test
+    fun importFollowsTheChurchAndPrimaryCanMove() {
+        repo()
+        runBlocking { churches.recordImport("zion", "20260901") } // followed first, so primary
+        val vm = viewModel()
+        assertFalse(vm.state.value.followed)
+
+        vm.import()
+        vm.finish()
+        val followed = runBlocking { withTimeout(10_000) { vm.state.first { it.followed } } }
+        assertFalse(followed.primary)
+        assertEquals("20260802", runBlocking { churches.followed() }.first { it.churchKey == "riverside" }.lastImportedVersion)
+
+        vm.setPrimary()
+        runBlocking { withTimeout(10_000) { vm.state.first { it.primary } } }
+        assertEquals(listOf("riverside"), runBlocking { churches.followed() }.filter { it.isPrimary }.map { it.churchKey })
+    }
+
+    @Test
+    fun emptyRepoDoesNotFollow() {
+        feed.files[base + "manifest.json"] = """{"latestVersion":"20260802","files":[]}"""
+        val vm = viewModel()
+        vm.import()
+        assertEquals(ImportMessage(R.string.online_import_nothing_new), vm.finish().message)
+        assertTrue(runBlocking { churches.followed() }.isEmpty())
+    }
+
+    @Test
     fun offlineSaysSoAndKeepsImportAll() {
         val vm = viewModel()
         vm.import()
         val state = vm.finish()
         assertEquals(ImportMessage(R.string.online_import_unreachable), state.message)
         assertFalse(state.imported)
+        assertTrue(runBlocking { churches.followed() }.isEmpty()) // nothing imported, not followed
     }
 
     @Test

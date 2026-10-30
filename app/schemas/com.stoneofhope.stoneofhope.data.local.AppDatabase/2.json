@@ -1,0 +1,1859 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "3ad838b28709d03a56c66d8050f5b848",
+    "entities": [
+      {
+        "tableName": "notes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `noteType` TEXT NOT NULL, `content` TEXT NOT NULL, `bookOrd` INTEGER, `chapterOrd` INTEGER, `verseStart` INTEGER, `verseEnd` INTEGER, `versionAbbr` TEXT, `refKey` TEXT, `chapterKey` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `starLevel` INTEGER NOT NULL, `imagePath` TEXT, `thumbnailPath` TEXT, `thumbnailUrl` TEXT, `isPinned` INTEGER, `isAnswered` INTEGER, `answeredAt` INTEGER, `tagIds` TEXT NOT NULL, `sermonId` TEXT, `youtubeID` TEXT, `deletedAt` INTEGER, `isDeleted` INTEGER NOT NULL, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "noteType",
+            "columnName": "noteType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bookOrd",
+            "columnName": "bookOrd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "chapterOrd",
+            "columnName": "chapterOrd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "verseStart",
+            "columnName": "verseStart",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "verseEnd",
+            "columnName": "verseEnd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "versionAbbr",
+            "columnName": "versionAbbr",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "refKey",
+            "columnName": "refKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "chapterKey",
+            "columnName": "chapterKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "starLevel",
+            "columnName": "starLevel",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "imagePath",
+            "columnName": "imagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "thumbnailPath",
+            "columnName": "thumbnailPath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "thumbnailUrl",
+            "columnName": "thumbnailUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isPinned",
+            "columnName": "isPinned",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isAnswered",
+            "columnName": "isAnswered",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "answeredAt",
+            "columnName": "answeredAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "tagIds",
+            "columnName": "tagIds",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sermonId",
+            "columnName": "sermonId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "youtubeID",
+            "columnName": "youtubeID",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "isDeleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_notes_bookOrd",
+            "unique": false,
+            "columnNames": [
+              "bookOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_bookOrd` ON `${TABLE_NAME}` (`bookOrd`)"
+          },
+          {
+            "name": "index_notes_chapterOrd",
+            "unique": false,
+            "columnNames": [
+              "chapterOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_chapterOrd` ON `${TABLE_NAME}` (`chapterOrd`)"
+          },
+          {
+            "name": "index_notes_refKey",
+            "unique": false,
+            "columnNames": [
+              "refKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_refKey` ON `${TABLE_NAME}` (`refKey`)"
+          },
+          {
+            "name": "index_notes_chapterKey",
+            "unique": false,
+            "columnNames": [
+              "chapterKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_chapterKey` ON `${TABLE_NAME}` (`chapterKey`)"
+          },
+          {
+            "name": "index_notes_isPinned",
+            "unique": false,
+            "columnNames": [
+              "isPinned"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_isPinned` ON `${TABLE_NAME}` (`isPinned`)"
+          },
+          {
+            "name": "index_notes_sermonId",
+            "unique": false,
+            "columnNames": [
+              "sermonId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_sermonId` ON `${TABLE_NAME}` (`sermonId`)"
+          },
+          {
+            "name": "index_notes_youtubeID",
+            "unique": false,
+            "columnNames": [
+              "youtubeID"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_youtubeID` ON `${TABLE_NAME}` (`youtubeID`)"
+          },
+          {
+            "name": "index_notes_isDeleted",
+            "unique": false,
+            "columnNames": [
+              "isDeleted"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_isDeleted` ON `${TABLE_NAME}` (`isDeleted`)"
+          },
+          {
+            "name": "index_notes_needsSync",
+            "unique": false,
+            "columnNames": [
+              "needsSync"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_needsSync` ON `${TABLE_NAME}` (`needsSync`)"
+          },
+          {
+            "name": "index_notes_createdAt",
+            "unique": false,
+            "columnNames": [
+              "createdAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_createdAt` ON `${TABLE_NAME}` (`createdAt`)"
+          }
+        ]
+      },
+      {
+        "tableName": "noteComments",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `noteId` TEXT, `sermonId` TEXT, `youtubeID` TEXT, `bookOrd` INTEGER, `chapterOrd` INTEGER, `verseStart` INTEGER, `verseEnd` INTEGER, `versionAbbr` TEXT, `refKey` TEXT, `chapterKey` TEXT, `content` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `starLevel` INTEGER NOT NULL, `tagIds` TEXT NOT NULL, `deletedAt` INTEGER, `isDeleted` INTEGER NOT NULL, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "noteId",
+            "columnName": "noteId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sermonId",
+            "columnName": "sermonId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "youtubeID",
+            "columnName": "youtubeID",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bookOrd",
+            "columnName": "bookOrd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "chapterOrd",
+            "columnName": "chapterOrd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "verseStart",
+            "columnName": "verseStart",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "verseEnd",
+            "columnName": "verseEnd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "versionAbbr",
+            "columnName": "versionAbbr",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "refKey",
+            "columnName": "refKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "chapterKey",
+            "columnName": "chapterKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "starLevel",
+            "columnName": "starLevel",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tagIds",
+            "columnName": "tagIds",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "isDeleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_noteComments_noteId",
+            "unique": false,
+            "columnNames": [
+              "noteId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_noteComments_noteId` ON `${TABLE_NAME}` (`noteId`)"
+          },
+          {
+            "name": "index_noteComments_sermonId",
+            "unique": false,
+            "columnNames": [
+              "sermonId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_noteComments_sermonId` ON `${TABLE_NAME}` (`sermonId`)"
+          },
+          {
+            "name": "index_noteComments_youtubeID",
+            "unique": false,
+            "columnNames": [
+              "youtubeID"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_noteComments_youtubeID` ON `${TABLE_NAME}` (`youtubeID`)"
+          },
+          {
+            "name": "index_noteComments_bookOrd",
+            "unique": false,
+            "columnNames": [
+              "bookOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_noteComments_bookOrd` ON `${TABLE_NAME}` (`bookOrd`)"
+          },
+          {
+            "name": "index_noteComments_chapterOrd",
+            "unique": false,
+            "columnNames": [
+              "chapterOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_noteComments_chapterOrd` ON `${TABLE_NAME}` (`chapterOrd`)"
+          },
+          {
+            "name": "index_noteComments_refKey",
+            "unique": false,
+            "columnNames": [
+              "refKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_noteComments_refKey` ON `${TABLE_NAME}` (`refKey`)"
+          },
+          {
+            "name": "index_noteComments_chapterKey",
+            "unique": false,
+            "columnNames": [
+              "chapterKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_noteComments_chapterKey` ON `${TABLE_NAME}` (`chapterKey`)"
+          },
+          {
+            "name": "index_noteComments_isDeleted",
+            "unique": false,
+            "columnNames": [
+              "isDeleted"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_noteComments_isDeleted` ON `${TABLE_NAME}` (`isDeleted`)"
+          },
+          {
+            "name": "index_noteComments_needsSync",
+            "unique": false,
+            "columnNames": [
+              "needsSync"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_noteComments_needsSync` ON `${TABLE_NAME}` (`needsSync`)"
+          }
+        ]
+      },
+      {
+        "tableName": "tags",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `deletedAt` INTEGER, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_tags_needsSync",
+            "unique": false,
+            "columnNames": [
+              "needsSync"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tags_needsSync` ON `${TABLE_NAME}` (`needsSync`)"
+          }
+        ]
+      },
+      {
+        "tableName": "PinLog",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`noteId` TEXT NOT NULL, `pinnedDays` TEXT NOT NULL, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, PRIMARY KEY(`noteId`))",
+        "fields": [
+          {
+            "fieldPath": "noteId",
+            "columnName": "noteId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pinnedDays",
+            "columnName": "pinnedDays",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "noteId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_PinLog_needsSync",
+            "unique": false,
+            "columnNames": [
+              "needsSync"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_PinLog_needsSync` ON `${TABLE_NAME}` (`needsSync`)"
+          }
+        ]
+      },
+      {
+        "tableName": "pinLogPendingDeletes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`firestoreDocumentId` TEXT NOT NULL, PRIMARY KEY(`firestoreDocumentId`))",
+        "fields": [
+          {
+            "fieldPath": "firestoreDocumentId",
+            "columnName": "firestoreDocumentId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "firestoreDocumentId"
+          ]
+        }
+      },
+      {
+        "tableName": "sermonSeries",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `bookOrd` INTEGER, `startedOn` TEXT NOT NULL, `isFinished` INTEGER NOT NULL, `churchKey` TEXT, `isUserData` INTEGER NOT NULL, `deletedAt` INTEGER, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bookOrd",
+            "columnName": "bookOrd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "startedOn",
+            "columnName": "startedOn",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFinished",
+            "columnName": "isFinished",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "churchKey",
+            "columnName": "churchKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isUserData",
+            "columnName": "isUserData",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_sermonSeries_startedOn",
+            "unique": false,
+            "columnNames": [
+              "startedOn"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sermonSeries_startedOn` ON `${TABLE_NAME}` (`startedOn`)"
+          },
+          {
+            "name": "index_sermonSeries_churchKey",
+            "unique": false,
+            "columnNames": [
+              "churchKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sermonSeries_churchKey` ON `${TABLE_NAME}` (`churchKey`)"
+          },
+          {
+            "name": "index_sermonSeries_needsSync",
+            "unique": false,
+            "columnNames": [
+              "needsSync"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sermonSeries_needsSync` ON `${TABLE_NAME}` (`needsSync`)"
+          }
+        ]
+      },
+      {
+        "tableName": "sermons",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `preacher` TEXT, `youtubeID` TEXT, `churchKey` TEXT, `book` TEXT, `bookOrd` INTEGER, `chapterRange` TEXT, `chapters` TEXT NOT NULL, `audioUrl` TEXT, `videoUrl` TEXT, `pdfUrl` TEXT, `preachedOn` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `seriesId` TEXT, `intro` TEXT, `tagIds` TEXT NOT NULL, `deletedAt` INTEGER, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, `isUserData` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preacher",
+            "columnName": "preacher",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "youtubeID",
+            "columnName": "youtubeID",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "churchKey",
+            "columnName": "churchKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "book",
+            "columnName": "book",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bookOrd",
+            "columnName": "bookOrd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "chapterRange",
+            "columnName": "chapterRange",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "chapters",
+            "columnName": "chapters",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "audioUrl",
+            "columnName": "audioUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "videoUrl",
+            "columnName": "videoUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "pdfUrl",
+            "columnName": "pdfUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "preachedOn",
+            "columnName": "preachedOn",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seriesId",
+            "columnName": "seriesId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "intro",
+            "columnName": "intro",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "tagIds",
+            "columnName": "tagIds",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isUserData",
+            "columnName": "isUserData",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_sermons_churchKey",
+            "unique": false,
+            "columnNames": [
+              "churchKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sermons_churchKey` ON `${TABLE_NAME}` (`churchKey`)"
+          },
+          {
+            "name": "index_sermons_preachedOn",
+            "unique": false,
+            "columnNames": [
+              "preachedOn"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sermons_preachedOn` ON `${TABLE_NAME}` (`preachedOn`)"
+          },
+          {
+            "name": "index_sermons_seriesId",
+            "unique": false,
+            "columnNames": [
+              "seriesId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sermons_seriesId` ON `${TABLE_NAME}` (`seriesId`)"
+          },
+          {
+            "name": "index_sermons_needsSync",
+            "unique": false,
+            "columnNames": [
+              "needsSync"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sermons_needsSync` ON `${TABLE_NAME}` (`needsSync`)"
+          }
+        ]
+      },
+      {
+        "tableName": "youtubeVideos",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`youtubeID` TEXT NOT NULL, `title` TEXT NOT NULL, `channelName` TEXT, `thumbnailUrl` TEXT, `channelId` TEXT, `bookOrd` INTEGER, `chapterOrd` INTEGER, `sermonId` TEXT, `tagIds` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, PRIMARY KEY(`youtubeID`))",
+        "fields": [
+          {
+            "fieldPath": "youtubeID",
+            "columnName": "youtubeID",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "channelName",
+            "columnName": "channelName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "thumbnailUrl",
+            "columnName": "thumbnailUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "channelId",
+            "columnName": "channelId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bookOrd",
+            "columnName": "bookOrd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "chapterOrd",
+            "columnName": "chapterOrd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "sermonId",
+            "columnName": "sermonId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "tagIds",
+            "columnName": "tagIds",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "youtubeID"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_youtubeVideos_channelId",
+            "unique": false,
+            "columnNames": [
+              "channelId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_youtubeVideos_channelId` ON `${TABLE_NAME}` (`channelId`)"
+          },
+          {
+            "name": "index_youtubeVideos_bookOrd",
+            "unique": false,
+            "columnNames": [
+              "bookOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_youtubeVideos_bookOrd` ON `${TABLE_NAME}` (`bookOrd`)"
+          },
+          {
+            "name": "index_youtubeVideos_chapterOrd",
+            "unique": false,
+            "columnNames": [
+              "chapterOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_youtubeVideos_chapterOrd` ON `${TABLE_NAME}` (`chapterOrd`)"
+          },
+          {
+            "name": "index_youtubeVideos_sermonId",
+            "unique": false,
+            "columnNames": [
+              "sermonId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_youtubeVideos_sermonId` ON `${TABLE_NAME}` (`sermonId`)"
+          },
+          {
+            "name": "index_youtubeVideos_needsSync",
+            "unique": false,
+            "columnNames": [
+              "needsSync"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_youtubeVideos_needsSync` ON `${TABLE_NAME}` (`needsSync`)"
+          }
+        ]
+      },
+      {
+        "tableName": "flashCards",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `bookOrd` INTEGER, `chapterOrd` INTEGER, `verseStart` INTEGER, `verseEnd` INTEGER, `versionAbbr` TEXT, `refKey` TEXT, `topic` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `isArchived` INTEGER NOT NULL, `deletedAt` INTEGER, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bookOrd",
+            "columnName": "bookOrd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "chapterOrd",
+            "columnName": "chapterOrd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "verseStart",
+            "columnName": "verseStart",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "verseEnd",
+            "columnName": "verseEnd",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "versionAbbr",
+            "columnName": "versionAbbr",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "refKey",
+            "columnName": "refKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "topic",
+            "columnName": "topic",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isArchived",
+            "columnName": "isArchived",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_flashCards_bookOrd",
+            "unique": false,
+            "columnNames": [
+              "bookOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_flashCards_bookOrd` ON `${TABLE_NAME}` (`bookOrd`)"
+          },
+          {
+            "name": "index_flashCards_chapterOrd",
+            "unique": false,
+            "columnNames": [
+              "chapterOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_flashCards_chapterOrd` ON `${TABLE_NAME}` (`chapterOrd`)"
+          },
+          {
+            "name": "index_flashCards_refKey",
+            "unique": false,
+            "columnNames": [
+              "refKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_flashCards_refKey` ON `${TABLE_NAME}` (`refKey`)"
+          },
+          {
+            "name": "index_flashCards_needsSync",
+            "unique": false,
+            "columnNames": [
+              "needsSync"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_flashCards_needsSync` ON `${TABLE_NAME}` (`needsSync`)"
+          }
+        ]
+      },
+      {
+        "tableName": "chapterLogs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `bookOrd` INTEGER NOT NULL, `chapter` INTEGER NOT NULL, `readOn` INTEGER NOT NULL, `deletedAt` INTEGER, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bookOrd",
+            "columnName": "bookOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "chapter",
+            "columnName": "chapter",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "readOn",
+            "columnName": "readOn",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_chapterLogs_bookOrd",
+            "unique": false,
+            "columnNames": [
+              "bookOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_chapterLogs_bookOrd` ON `${TABLE_NAME}` (`bookOrd`)"
+          },
+          {
+            "name": "index_chapterLogs_readOn",
+            "unique": false,
+            "columnNames": [
+              "readOn"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_chapterLogs_readOn` ON `${TABLE_NAME}` (`readOn`)"
+          },
+          {
+            "name": "index_chapterLogs_needsSync",
+            "unique": false,
+            "columnNames": [
+              "needsSync"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_chapterLogs_needsSync` ON `${TABLE_NAME}` (`needsSync`)"
+          }
+        ]
+      },
+      {
+        "tableName": "bookProgress",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `bookOrd` INTEGER NOT NULL, `readChapters` TEXT NOT NULL, `createdOn` INTEGER NOT NULL, `completedOn` INTEGER, `lastUpdatedOn` INTEGER NOT NULL, `deletedAt` INTEGER, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bookOrd",
+            "columnName": "bookOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "readChapters",
+            "columnName": "readChapters",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdOn",
+            "columnName": "createdOn",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedOn",
+            "columnName": "completedOn",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastUpdatedOn",
+            "columnName": "lastUpdatedOn",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_bookProgress_bookOrd",
+            "unique": false,
+            "columnNames": [
+              "bookOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_bookProgress_bookOrd` ON `${TABLE_NAME}` (`bookOrd`)"
+          },
+          {
+            "name": "index_bookProgress_needsSync",
+            "unique": false,
+            "columnNames": [
+              "needsSync"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_bookProgress_needsSync` ON `${TABLE_NAME}` (`needsSync`)"
+          }
+        ]
+      },
+      {
+        "tableName": "userVerses",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `versionAbbr` TEXT NOT NULL, `bookOrd` INTEGER NOT NULL, `chapterOrd` INTEGER NOT NULL, `verseOrd` INTEGER NOT NULL, `content` TEXT NOT NULL, `tagIds` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `isDeleted` INTEGER NOT NULL, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "versionAbbr",
+            "columnName": "versionAbbr",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bookOrd",
+            "columnName": "bookOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "chapterOrd",
+            "columnName": "chapterOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "verseOrd",
+            "columnName": "verseOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tagIds",
+            "columnName": "tagIds",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "isDeleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_userVerses_versionAbbr",
+            "unique": false,
+            "columnNames": [
+              "versionAbbr"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_userVerses_versionAbbr` ON `${TABLE_NAME}` (`versionAbbr`)"
+          },
+          {
+            "name": "index_userVerses_bookOrd",
+            "unique": false,
+            "columnNames": [
+              "bookOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_userVerses_bookOrd` ON `${TABLE_NAME}` (`bookOrd`)"
+          },
+          {
+            "name": "index_userVerses_chapterOrd",
+            "unique": false,
+            "columnNames": [
+              "chapterOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_userVerses_chapterOrd` ON `${TABLE_NAME}` (`chapterOrd`)"
+          },
+          {
+            "name": "index_userVerses_verseOrd",
+            "unique": false,
+            "columnNames": [
+              "verseOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_userVerses_verseOrd` ON `${TABLE_NAME}` (`verseOrd`)"
+          },
+          {
+            "name": "index_userVerses_isDeleted",
+            "unique": false,
+            "columnNames": [
+              "isDeleted"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_userVerses_isDeleted` ON `${TABLE_NAME}` (`isDeleted`)"
+          },
+          {
+            "name": "index_userVerses_needsSync",
+            "unique": false,
+            "columnNames": [
+              "needsSync"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_userVerses_needsSync` ON `${TABLE_NAME}` (`needsSync`)"
+          }
+        ]
+      },
+      {
+        "tableName": "indexedTexts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `sourceType` TEXT NOT NULL, `sourceId` TEXT NOT NULL, `startOffset` INTEGER NOT NULL, `endOffset` INTEGER NOT NULL, `markStyle` TEXT NOT NULL, `colorKey` TEXT NOT NULL, `indexedText` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `isDeleted` INTEGER NOT NULL, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceType",
+            "columnName": "sourceType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceId",
+            "columnName": "sourceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startOffset",
+            "columnName": "startOffset",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endOffset",
+            "columnName": "endOffset",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "markStyle",
+            "columnName": "markStyle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "colorKey",
+            "columnName": "colorKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "indexedText",
+            "columnName": "indexedText",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "isDeleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_indexedTexts_sourceId",
+            "unique": false,
+            "columnNames": [
+              "sourceId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_indexedTexts_sourceId` ON `${TABLE_NAME}` (`sourceId`)"
+          },
+          {
+            "name": "index_indexedTexts_isDeleted",
+            "unique": false,
+            "columnNames": [
+              "isDeleted"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_indexedTexts_isDeleted` ON `${TABLE_NAME}` (`isDeleted`)"
+          },
+          {
+            "name": "index_indexedTexts_needsSync",
+            "unique": false,
+            "columnNames": [
+              "needsSync"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_indexedTexts_needsSync` ON `${TABLE_NAME}` (`needsSync`)"
+          }
+        ]
+      },
+      {
+        "tableName": "syncConflicts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `recordType` TEXT NOT NULL, `recordId` TEXT NOT NULL, `localPreview` TEXT NOT NULL, `remotePreview` TEXT NOT NULL, `localUpdatedAt` INTEGER NOT NULL, `remoteUpdatedAt` INTEGER NOT NULL, `detectedAt` INTEGER NOT NULL, `resolvedAt` INTEGER, `resolution` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recordType",
+            "columnName": "recordType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recordId",
+            "columnName": "recordId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localPreview",
+            "columnName": "localPreview",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remotePreview",
+            "columnName": "remotePreview",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localUpdatedAt",
+            "columnName": "localUpdatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remoteUpdatedAt",
+            "columnName": "remoteUpdatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "detectedAt",
+            "columnName": "detectedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "resolvedAt",
+            "columnName": "resolvedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "resolution",
+            "columnName": "resolution",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_syncConflicts_recordId",
+            "unique": false,
+            "columnNames": [
+              "recordId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_syncConflicts_recordId` ON `${TABLE_NAME}` (`recordId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "downloadedVerses",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `versionAbbr` TEXT NOT NULL, `bookOrd` INTEGER NOT NULL, `chapterOrd` INTEGER NOT NULL, `verseOrd` INTEGER NOT NULL, `verseContent` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "versionAbbr",
+            "columnName": "versionAbbr",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bookOrd",
+            "columnName": "bookOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "chapterOrd",
+            "columnName": "chapterOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "verseOrd",
+            "columnName": "verseOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "verseContent",
+            "columnName": "verseContent",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_downloadedVerses_versionAbbr",
+            "unique": false,
+            "columnNames": [
+              "versionAbbr"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_downloadedVerses_versionAbbr` ON `${TABLE_NAME}` (`versionAbbr`)"
+          }
+        ]
+      },
+      {
+        "tableName": "downloadedVersions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`versionAbbr` TEXT NOT NULL, `downloadedOn` INTEGER NOT NULL, `latestHistoryVersionNumber` TEXT, `latestVersionDate` INTEGER, `copyrightInfo` TEXT, PRIMARY KEY(`versionAbbr`))",
+        "fields": [
+          {
+            "fieldPath": "versionAbbr",
+            "columnName": "versionAbbr",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "downloadedOn",
+            "columnName": "downloadedOn",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latestHistoryVersionNumber",
+            "columnName": "latestHistoryVersionNumber",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "latestVersionDate",
+            "columnName": "latestVersionDate",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "copyrightInfo",
+            "columnName": "copyrightInfo",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "versionAbbr"
+          ]
+        }
+      },
+      {
+        "tableName": "fetchedVerseCache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `versionAbbr` TEXT NOT NULL, `bookOrd` INTEGER NOT NULL, `chapterOrd` INTEGER NOT NULL, `verseOrd` INTEGER NOT NULL, `verseContent` TEXT NOT NULL, `fetchedAt` INTEGER NOT NULL, `lastAccessedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "versionAbbr",
+            "columnName": "versionAbbr",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bookOrd",
+            "columnName": "bookOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "chapterOrd",
+            "columnName": "chapterOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "verseOrd",
+            "columnName": "verseOrd",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "verseContent",
+            "columnName": "verseContent",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fetchedAt",
+            "columnName": "fetchedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastAccessedAt",
+            "columnName": "lastAccessedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_fetchedVerseCache_versionAbbr",
+            "unique": false,
+            "columnNames": [
+              "versionAbbr"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fetchedVerseCache_versionAbbr` ON `${TABLE_NAME}` (`versionAbbr`)"
+          },
+          {
+            "name": "index_fetchedVerseCache_bookOrd",
+            "unique": false,
+            "columnNames": [
+              "bookOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fetchedVerseCache_bookOrd` ON `${TABLE_NAME}` (`bookOrd`)"
+          },
+          {
+            "name": "index_fetchedVerseCache_chapterOrd",
+            "unique": false,
+            "columnNames": [
+              "chapterOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fetchedVerseCache_chapterOrd` ON `${TABLE_NAME}` (`chapterOrd`)"
+          },
+          {
+            "name": "index_fetchedVerseCache_verseOrd",
+            "unique": false,
+            "columnNames": [
+              "verseOrd"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_fetchedVerseCache_verseOrd` ON `${TABLE_NAME}` (`verseOrd`)"
+          }
+        ]
+      },
+      {
+        "tableName": "onlineChurches",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`churchKey` TEXT NOT NULL, `isPrimary` INTEGER NOT NULL, `importedAt` INTEGER NOT NULL, `lastImportedVersion` TEXT, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `needsSync` INTEGER NOT NULL, `lastSyncedAt` INTEGER, PRIMARY KEY(`churchKey`))",
+        "fields": [
+          {
+            "fieldPath": "churchKey",
+            "columnName": "churchKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPrimary",
+            "columnName": "isPrimary",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "importedAt",
+            "columnName": "importedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastImportedVersion",
+            "columnName": "lastImportedVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deletedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "needsSync",
+            "columnName": "needsSync",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "churchKey"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3ad838b28709d03a56c66d8050f5b848')"
+    ]
+  }
+}

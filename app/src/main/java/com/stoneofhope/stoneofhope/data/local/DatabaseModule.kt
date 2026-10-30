@@ -16,7 +16,7 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.NAME).build()
+        Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.NAME).addMigrations(*Migrations.ALL).build()
 
     @Provides fun noteDao(db: AppDatabase) = db.noteDao()
     @Provides fun noteCommentDao(db: AppDatabase) = db.noteCommentDao()
@@ -32,4 +32,5 @@ object DatabaseModule {
     @Provides fun indexedTextDao(db: AppDatabase) = db.indexedTextDao()
     @Provides fun syncConflictDao(db: AppDatabase) = db.syncConflictDao()
     @Provides fun bibleCacheDao(db: AppDatabase) = db.bibleCacheDao()
+    @Provides fun onlineChurchDao(db: AppDatabase) = db.onlineChurchDao()
 }

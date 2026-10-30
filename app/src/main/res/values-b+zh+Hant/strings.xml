@@ -455,6 +455,8 @@
     <string name="online_import_incomplete">有部分檔案沒有下載成功，請點「匯入最新更新」再試一次。</string>
     <string name="online_website">網站</string>
     <string name="online_youtube">YouTube</string>
+    <string name="online_primary">主教會</string>
+    <string name="online_set_primary">設為主教會</string>
     <string name="settings_legal">法律資訊</string>
     <string name="settings_privacy">隱私權政策</string>
     <string name="settings_terms">使用條款</string>

@@ -191,3 +191,19 @@ churchesUpdatedAt: <服务器时间戳>                 // 不动 Web 已有的 
 - "网站"按钮打开 Chrome。
 
 已知行为：目录读成功但一份教会都没有时（例如本地模拟器是空的），保留上次缓存，不清空——这样空目录不会让教会消失；某教会下架请用 `enabled=false`。
+
+**C3 我的教会与主教会（已完成，未提交，2026-10-30）**：
+- Room 新表 `onlineChurches`（`OnlineChurchEntity`：`churchKey`、`isPrimary`、`importedAt`、`lastImportedVersion`、`updatedAt`、`deletedAt`、`needsSync`、`lastSyncedAt`），`AppDatabase` 升到 2，`Migrations.MIGRATION_1_2` 建表，schema `2.json` 已导出。这是 `AppDatabase` 第一次升级。
+- 规则在 `data.church.OnlineChurches`：
+  - 导入后本机有了这个教会的讲道，就加进"我的教会"（导入器里做，不靠界面）；导入失败、仓库为空都不加；
+  - 第一个加入的自动成为主教会；"设为主教会"把标记移过来，原来的自动取消；只改了的行才标 `needsSync`；
+  - 移除（本轮无界面）留墓碑、标 `needsSync`，主教会被移除时由最早加入的接任；移除后再导入算重新加入；
+  - 同时出现两个主教会（C4 合并两台设备时可能）时保留最近改动的那个；
+  - `updatedAt` 只在主教会标记或删除变化时更新，版本号变化不更新——这样别的设备后来导入一次，不会盖掉你选的主教会。
+- 界面：设置行的教会名后面加"主教会"小标；详情页教会名下面一个 Material `FilterChip`：已关注但不是主教会时显示"设为主教会"，点了变成打勾的"主教会"（已是主教会时点它不做事——必须始终有一个）。没导入过的教会不显示这个 chip。
+- 云端推送 / 拉取留给 C4：`needsSync` 已在记，C4 还要把这张表加进 `LocalSyncOps.markAllUserScopedDataForResync` 和墓碑清理。
+
+验证：新增 `OnlineChurchesTest` 5 个、`MigrationTest` 1 个（按导出的 `1.json` 真建一个版本 1 的库，放一条数据，再让 Room 按版本 2 打开：迁移跑完、表结构与代码对得上、数据还在；MigrationTestHelper 在 Robolectric 下读不到 schema，所以用这种做法），`OnlineResourceViewModelTest` 加 2 个（导入后加入"我的教会"并可改主教会、空仓库不加入）。变异检查 11 处全部被抓到（第一次 2 处没抓到，补了"移除会标记推送"和"空仓库不加入"两个断言）。全部 382 个测试通过，lint 52 个、新代码里没有。
+模拟器实测：在 C2 留下的版本 1 数据库上直接装新包，升级成功（`user_version` = 2，1560 篇讲道都在）；那批讲道是 C3 之前导入的，所以"我的教会"一开始是空的、详情页没有 chip；点"导入最新更新"后 Riverside 自动加入并成为主教会（详情页显示打勾的"主教会"，设置行出现"主教会"小标，表里 `isPrimary=1`、`lastImportedVersion=20260802`、`needsSync=1`）。"把主教会换到另一个教会"需要第二个可导入的教会，设备上没测，由单测覆盖。
+
+已知：C3 之前导入过讲道的设备要再点一次导入才会出现在"我的教会"里。安卓还没发布，所以没做开机自动补登记。

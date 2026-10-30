@@ -6,8 +6,10 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.SermonEntity
+import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
+import java.time.ZoneOffset
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -43,7 +45,8 @@ class ChurchSermonImporterTest {
     private val catalog = FakeCatalog()
     private val profiles = ChurchProfileStore(catalog, prefs) { listOf(riverside) }
     private val feed = FakeFeed()
-    private val importer = ChurchSermonImporter(db, profiles, feed, prefs)
+    private val churches = OnlineChurches(db, Clock.fixed(Instant.parse("2026-10-30T08:00:00Z"), ZoneOffset.UTC))
+    private val importer = ChurchSermonImporter(db, profiles, feed, prefs, churches)
 
     private val seriesA = "6a166ac5f315e27a81e5b126"
     private val seriesB = "6a78f7c09523fa297872371f"
@@ -218,9 +221,9 @@ class ChurchSermonImporterTest {
     @Test
     fun notImportableWithoutRepoOrWhenDisabled() = runTest {
         assertEquals(ChurchImportResult.NotImportable, importer.importAll("unknown", zone))
-        val disabled = ChurchSermonImporter(db, ChurchProfileStore(catalog, prefs) { listOf(riverside.copy(enabled = false)) }, feed, prefs)
+        val disabled = ChurchSermonImporter(db, ChurchProfileStore(catalog, prefs) { listOf(riverside.copy(enabled = false)) }, feed, prefs, churches)
         assertEquals(ChurchImportResult.NotImportable, disabled.importAll("riverside", zone))
-        val noRepo = ChurchSermonImporter(db, ChurchProfileStore(catalog, prefs) { listOf(riverside.copy(sermonImportRepoURL = " ")) }, feed, prefs)
+        val noRepo = ChurchSermonImporter(db, ChurchProfileStore(catalog, prefs) { listOf(riverside.copy(sermonImportRepoURL = " ")) }, feed, prefs, churches)
         assertEquals(ChurchImportResult.NotImportable, noRepo.importAll("riverside", zone))
         assertTrue(feed.requested.isEmpty())
     }

@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material3.AlertDialog
@@ -31,6 +32,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -75,7 +77,8 @@ import kotlinx.coroutines.withContext
 /**
  * iOS `OnlineResourceDetailView`: name, logo, intro, one import button, the internet note, a
  * dimmed "Importing Sermons..." overlay and a result dialog. Also the church's website and YouTube
- * links, which iOS keeps in the profile but never shows (IOS_ISSUES M6).
+ * links, which iOS keeps in the profile but never shows (IOS_ISSUES M6), and the primary-church
+ * chip (no iOS counterpart yet).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,6 +109,16 @@ fun OnlineResourceScreen(onBack: () -> Unit, viewModel: OnlineResourceViewModel 
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Text(profile.name, style = textStyle(12, weight = FontWeight.SemiBold), color = c.neutral100)
+                    // Only followed churches can be primary; there is always exactly one, so it can't be switched off here.
+                    if (state.followed) {
+                        FilterChip(
+                            selected = state.primary,
+                            onClick = { if (!state.primary) viewModel.setPrimary() },
+                            label = { Text(stringResource(if (state.primary) R.string.online_primary else R.string.online_set_primary)) },
+                            leadingIcon = if (state.primary) { { Icon(Icons.Filled.Check, null, Modifier.size(18.dp)) } } else null,
+                            modifier = Modifier.testTag("onlinePrimary"),
+                        )
+                    }
                     Card(
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = c.surface0),

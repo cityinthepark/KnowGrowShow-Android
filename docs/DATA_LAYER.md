@@ -20,10 +20,14 @@ production. Known example: tombstones on the wire are `{isDeleted: true, updated
 | `data.bible` | Book table (generated from iOS), name matching, `BibleReferenceValidator` (field), `BibleReferenceParser` (note-body shortcut, `vN`), `BibleFormatter`, `BibleVersions`, `BibleAnchor` |
 | `data.chapter` | Chapter page: `ChapterNotesBuilder` (chapter notes and verse groups, iOS `ChapterNoteViewModel` / `ChapterNoteDetailsView`), `ChapterSermons` |
 | `data.sermon` | Sermons, videos, series: `SermonRepository`, `VideoRepository`, `SermonReferenceParser`, `YouTubeLinkParser`, YouTube title / transcript parsing, `YouTubeWeb` (oEmbed + captions), `SermonRules`, `SeriesList` |
-| `data.church` | Online resources / church import (docs/CHURCH_IMPORT_PLAN.md): `ChurchProfile` + `ChurchProfileStore` (Firestore `onlineResourceProfiles` over REST — no SDK, no sign-in, so local-only users read it too — cached, bundled `assets/churches/` fallback), `ChurchSermonImporter` (iOS `ChurchSermonImportService`, repo `manifest.json` → `isUserData = false` series / sermons that never sync), `ChurchFeed` (HTTP GET) |
+| `data.church` | Online resources / church import (docs/CHURCH_IMPORT_PLAN.md): `ChurchProfile` + `ChurchProfileStore` (Firestore `onlineResourceProfiles` over REST — no SDK, no sign-in, so local-only users read it too — cached, bundled `assets/churches/` fallback), `ChurchSermonImporter` (iOS `ChurchSermonImportService`, repo `manifest.json` → `isUserData = false` series / sermons that never sync), `ChurchFeed` (HTTP GET), `OnlineChurches` ("My churches" in Room `onlineChurches`: first import becomes primary, one primary at a time) |
 | `data.bible.text` | `BibleTextDatabase` — read-only bundled KJV/CUV (Room `createFromAsset`), `BibleVerseReader` (iOS `BibleVerseRangeReader`), `OnDemandVerseSource` (NIV/NKJV; not implemented) |
 
 Room is the only store the UI reads. Firestore is a transport; local-only use never touches it.
+
+`AppDatabase` schema changes go through `data.local.Migrations` (version 2 added `onlineChurches`);
+`MigrationTest` builds each old version from its exported `app/schemas/…AppDatabase/<n>.json` and
+lets Room migrate and validate it.
 
 Bundled Bible text is a second, read-only Room database built at compile time from `app/bible-data/`
 (buildSrc `GenerateBibleTextDb`, schema from `app/schemas/…BibleTextDatabase/`). Its verse text is

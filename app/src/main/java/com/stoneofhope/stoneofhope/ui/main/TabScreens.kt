@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.CloudSync
@@ -37,6 +38,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -94,6 +96,7 @@ fun SettingsTab(
     online: OnlineResourcesViewModel = hiltViewModel(),
 ) {
     val churches by online.churches.collectAsStateWithLifecycle()
+    val primaryKey by online.primaryKey.collectAsStateWithLifecycle()
     val theme by viewModel.theme.collectAsStateWithLifecycle()
     val fontSize by viewModel.fontSize.collectAsStateWithLifecycle()
     val showOnLaunch by viewModel.showOnLaunch.collectAsStateWithLifecycle()
@@ -108,7 +111,12 @@ fun SettingsTab(
             SectionTitle(stringResource(R.string.online_resources))
             churches.forEach { church ->
                 ListItem(
-                    headlineContent = { Text(church.name) },
+                    headlineContent = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(church.name, modifier = Modifier.weight(1f, fill = false))
+                            if (church.churchKey == primaryKey) PrimaryBadge()
+                        }
+                    },
                     supportingContent = church.subtitle?.let { { Text(it) } },
                     trailingContent = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
                     modifier = Modifier.testTag("church_${church.churchKey}").clickable { onOpenChurch(church.churchKey) },
@@ -172,6 +180,22 @@ private fun FontSizePreference.title() = when (this) {
     FontSizePreference.Medium -> R.string.font_medium
     FontSizePreference.Large -> R.string.font_large
     FontSizePreference.ExtraLarge -> R.string.font_extra_large
+}
+
+@Composable
+private fun PrimaryBadge() {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        modifier = Modifier.padding(start = 8.dp).testTag("primaryBadge"),
+    ) {
+        Text(
+            stringResource(R.string.online_primary),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+        )
+    }
 }
 
 @Composable

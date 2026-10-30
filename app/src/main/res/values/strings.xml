@@ -476,6 +476,8 @@
     <string name="online_import_incomplete">Some files couldn\'t be downloaded. Tap Import Latest Updates to try again.</string>
     <string name="online_website">Website</string>
     <string name="online_youtube">YouTube</string>
+    <string name="online_primary">Primary church</string>
+    <string name="online_set_primary">Set as primary church</string>
     <string name="settings_legal">Legal</string>
     <string name="settings_privacy">Privacy Policy</string>
     <string name="settings_terms">Terms of Use</string>

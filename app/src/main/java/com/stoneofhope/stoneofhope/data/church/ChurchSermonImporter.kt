@@ -85,6 +85,7 @@ object ChurchRepoFiles {
  * iOS `ChurchSermonImportService`: downloads a church's sermon repo into Room as `isUserData = false`
  * rows, which never sync. The imported version is device-local (`sermonsLastImported_<churchKey>`,
  * the iOS key). Unlike iOS, it moves forward only past files that fully imported (IOS_ISSUES M1, M5).
+ * A church whose sermons are imported joins "My churches" ([OnlineChurches]).
  */
 @Singleton
 class ChurchSermonImporter(
@@ -92,10 +93,11 @@ class ChurchSermonImporter(
     private val profiles: ChurchProfileStore,
     private val feed: ChurchFeed,
     private val prefs: SharedPreferences,
+    private val churches: OnlineChurches,
 ) {
     @Inject
-    constructor(db: AppDatabase, profiles: ChurchProfileStore, feed: ChurchFeed, @ApplicationContext context: Context) :
-        this(db, profiles, feed, context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE))
+    constructor(db: AppDatabase, profiles: ChurchProfileStore, feed: ChurchFeed, @ApplicationContext context: Context, churches: OnlineChurches) :
+        this(db, profiles, feed, context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE), churches)
 
     private val sermonDao get() = db.sermonDao()
     private val seriesDao get() = db.sermonSeriesDao()
@@ -139,6 +141,8 @@ class ChurchSermonImporter(
             ?: manifest.latestVersion.takeIf { Regex("^[0-9]{8}$").matches(it) }
             ?: files.mapNotNull(ChurchRepoFiles::version).maxOrNull()
         next?.let { prefs.edit { putString(versionKey(churchKey), it) } }
+        // Followed once its sermons are here; the first church followed becomes primary.
+        if (hasImported(churchKey)) churches.recordImport(churchKey, next)
 
         return ChurchImportResult.Done(
             counts.newSeries, counts.updatedSeries, counts.newSermons, counts.updatedSermons, incomplete.sorted(),
