@@ -100,6 +100,10 @@ interface SermonDao {
     @Query("UPDATE sermons SET seriesId = :seriesId WHERE id = :sermonId")
     suspend fun setSeries(sermonId: String, seriesId: String?)
 
+    /** Live church-import sermons of [churchKey] (iOS `hasImported`'s Realm check). */
+    @Query("SELECT COUNT(*) FROM sermons WHERE churchKey = :churchKey AND isUserData = 0 AND deletedAt IS NULL")
+    suspend fun countActiveForChurch(churchKey: String): Int
+
     @Query("SELECT * FROM sermons WHERE needsSync = 1 AND isUserData = 1")
     suspend fun dirty(): List<SermonEntity>
 

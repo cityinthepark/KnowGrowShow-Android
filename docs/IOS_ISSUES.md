@@ -6,7 +6,7 @@
 
 状态：🔴 待修 · 🟡 待确认 / 产品决定 · ✅ 已处理
 
-最后更新：2026-10-28（K 节）
+最后更新：2026-10-30（M 节）
 
 ---
 
@@ -175,6 +175,23 @@ K1 补充：笔记推送也省略空字段。目前笔记里会被清空的只�
 | L10 🟡 | `MyTagsView`、`TagPickerPopup`、`TagEditRow` | "Delete Tag"、"Delete"、"Cancel"、"Edit tag"、"Choose Tags"、"By Name"、"By Create Date"、"Close"、"Add new tag..." 等没有走本地化 | 中文界面有英文 | 三种语言都有 | 不用 |
 | L11 🟡 | `NotesManager.reassignTag`（合并 / 删除标签） | 把受影响的笔记 `updatedAt` 改成现在，评论还带动所属笔记 | 合并或删除一个标签后，一批旧笔记的"最近修改"变成今天，排序和 Today / Moments 里的日期被打乱 | **按你的决定（2026-10-28）**：只设 `needsSync`，不动 `updatedAt`（`tagIds` 照常同步） | 不用 |
 | L12 🟡 | `zh-Hant.lproj/Localizable.strings` | 缺 "Trash Tag Name"、"Milestone Tag Name"，繁体中文界面推荐栏显示英文 | 未翻译 | 繁体用与简体相同的"回收站""里程碑"，两种名字都按预设标签识别 | 不用 |
+
+
+## M. 在线资源 / 教会导入（2026-10-30 起）
+
+方案见 [CHURCH_IMPORT_PLAN.md](CHURCH_IMPORT_PLAN.md)。C1（导入核心）已按"安卓做法"实现。
+
+| # | iOS 位置 | 问题 | 影响 | 安卓做法 | iOS 修后安卓要改吗 |
+| --- | --- | --- | --- | --- | --- |
+| M1 🔴 | `ChurchSermonImportService.importFiles` / `importUpdates` / `importInitial` | 单个文件下载或解码失败只打印日志、算 0 行，**随后照样把版本号推到 `latestVersion`**，之后"导入最新更新"认为已是最新，那几个文件永远不会再导 | 一次断网 / 超时就让一批讲道永久缺失，没有提示，也没法补 | 版本号只推进到最早一个没导完的文件，下次从它开始重试；全部成功才记 `latestVersion` | 不用 |
+| M2 🟡 | `filterNewFiles`（`version > localVersion`） | 同一天后来重新发布的文件（文件名不变）不会再被拿到 | 当天补发 / 修改的讲道漏掉 | 用 `>=`：最新那天的文件每次更新都重新下载（导入是幂等的，没变的行不计数） | 不用 |
+| M3 🟡 | `OnlineResourceDetailView.finishImport` | manifest 打不开（断网）也返回 (0,0)，弹窗写"没有新的讲道" | 用户以为已是最新，其实没连上 | 区分"无法连接"和"没有新内容" | 不用 |
+| M4 🟡 | `upsertSeries` / `upsertSermon` 的计数 | 数的是处理过的行，已存在且没变的也算；再点一次"导入全部"还会报"导入了 N 篇" | 数字不代表新增 | 只数新增和真正有变化的行 | 不用 |
+| M5 🟡 | `upsertSermon` | `seriesId` 找不到系列就整行跳过，加上 M1，以后也不会重试 | 系列文件没下到时，这些讲道永久丢失 | 有讲道因找不到系列被跳过时，该文件算"没导完"，下次重试 | 不用 |
+| M6 🟡 | `OnlineResourceDetailView` | 档案里有 `churchWebsite`、`youtubeHomeLink`，界面没入口 | 字段白存 | 详情页加两个链接按钮（C2 已做） | 不用 |
+| M7 🟡 | `ChurchSermonImportService.hasImported` | 只要 UserDefaults 里有版本号就算"已导入"；讲道没了而版本号还在时，按钮是"导入最新更新"，点了什么也不导 | 讲道被清后没法重新导入 | 以本机是否有该教会的讲道为准；没有就显示"导入全部讲道" | 不用 |
+| M8 🟡 | iOS 文档 `STAGE2_DEV_PLAN.md` vs `ONLINE_RESOURCE_PROFILE_FIRESTORE.md` | 一份说"profile 不同步到 `users/{uid}`"，一份定义了 `users/{uid}/onlineResources/{churchKey}`（说 iOS + Web 同步），iOS 代码两者都没实现；现在用户又定了 `settings/preferences.churches` | 三套说法并存，iOS / Web 容易各做各的 | 安卓按 `settings/preferences.churches` 做（C4） | iOS 要按同一格式写，并改这两份文档 |
+| M9 🟡 | `CloudDataWipeService.userScopedCollections` | 只清已知集合，不含 `settings` | 安卓 / Web 写过 `settings/preferences` 后，iOS 删账号会留下这份文档 | 安卓的清除（账号阶段）会包含 `settings` | iOS 需把 `settings` 加进清单 |
 
 ---
 

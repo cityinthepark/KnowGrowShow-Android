@@ -441,6 +441,20 @@
     <string name="settings_script_duration">字幕擷取時長</string>
     <plurals name="settings_script_value"><item quantity="other">%d 秒</item></plurals>
     <string name="settings_script_footer">影片與音訊的「字幕」按鈕會按此秒數擷取內容（1–30）。</string>
+    <string name="online_resources">線上資源</string>
+    <string name="online_import_all">匯入所有講道</string>
+    <string name="online_import_updates">匯入最新更新</string>
+    <string name="online_importing">正在匯入講道 …</string>
+    <string name="online_needs_internet">⚠️ 此功能需要連接網路以取得最新講道內容。</string>
+    <string name="online_import_done">匯入完成：%1$s，%2$s</string>
+    <plurals name="online_series_count"><item quantity="other">%d 個系列</item></plurals>
+    <plurals name="online_sermon_count"><item quantity="other">%d 篇講道</item></plurals>
+    <string name="online_import_nothing_new">沒有新的講道內容。</string>
+    <string name="online_import_unreachable">無法連線，請檢查網路後再試。</string>
+    <string name="online_import_unavailable">這個教會的講道暫時無法匯入。</string>
+    <string name="online_import_incomplete">有部分檔案沒有下載成功，請點「匯入最新更新」再試一次。</string>
+    <string name="online_website">網站</string>
+    <string name="online_youtube">YouTube</string>
     <string name="settings_legal">法律資訊</string>
     <string name="settings_privacy">隱私權政策</string>
     <string name="settings_terms">使用條款</string>

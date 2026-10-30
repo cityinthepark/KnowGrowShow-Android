@@ -66,6 +66,8 @@ import com.stoneofhope.stoneofhope.ui.main.MainScreen
 import com.stoneofhope.stoneofhope.ui.profile.ProfileScreen
 import com.stoneofhope.stoneofhope.ui.settings.BibleVersionCopyrightScreen
 import com.stoneofhope.stoneofhope.ui.settings.BibleVersionsScreen
+import com.stoneofhope.stoneofhope.ui.settings.OnlineResourceScreen
+import com.stoneofhope.stoneofhope.ui.settings.OnlineResourceViewModel
 import com.stoneofhope.stoneofhope.ui.tag.MyTagsScreen
 import com.stoneofhope.stoneofhope.ui.tag.TagNotesScreen
 import com.stoneofhope.stoneofhope.ui.tag.TagNotesViewModel
@@ -90,6 +92,7 @@ private object Routes {
     const val MyTags = "myTags"
     const val BibleVersions = "bibleVersions"
     const val VersionCopyright = "bibleVersion/{abbr}"
+    const val OnlineResource = "onlineResource/{${OnlineResourceViewModel.ARG_KEY}}"
     const val TagNotes = "tag/{${TagNotesViewModel.ARG_ID}}"
     const val FlashCardDetail = "flashCard/{${FlashCardsViewModel.ARG_ID}}"
     const val FlashDeck = "flashDeck/{${FlashCardsViewModel.ARG_LIMIT}}"
@@ -109,6 +112,8 @@ private object Routes {
     const val Video = "video/{${VideoViewModel.ARG_ID}}?${SermonViewModel.ARG_NOTICE}={${SermonViewModel.ARG_NOTICE}}"
 
     fun tagNotes(id: String) = "tag/$id"
+
+    fun onlineResource(churchKey: String) = "onlineResource/" + Uri.encode(churchKey)
 
     fun flashCardDetail(id: String) = "flashCard/$id"
 
@@ -219,6 +224,7 @@ fun KnowGrowShowApp(
                         sermonNav = sermonNav,
                         onOpenDestination = openDestination,
                         onOpenSeries = { id -> navController.navigate(Routes.seriesDetail(id)) },
+                        onOpenChurch = { key -> navController.navigate(Routes.onlineResource(key)) },
                     )
                 }
                 composable(
@@ -342,6 +348,9 @@ fun KnowGrowShowApp(
                 }
                 composable(Routes.VersionCopyright, arguments = listOf(navArgument("abbr") { type = NavType.StringType })) { entry ->
                     BibleVersionCopyrightScreen(abbr = entry.arguments?.getString("abbr").orEmpty(), onBack = { navController.popBackStack() })
+                }
+                composable(Routes.OnlineResource, arguments = listOf(navArgument(OnlineResourceViewModel.ARG_KEY) { type = NavType.StringType })) {
+                    OnlineResourceScreen(onBack = { navController.popBackStack() })
                 }
                 composable(Routes.MyTags) {
                     MyTagsScreen(onBack = { navController.popBackStack() }, onOpenTag = { id -> navController.navigate(Routes.tagNotes(id)) })

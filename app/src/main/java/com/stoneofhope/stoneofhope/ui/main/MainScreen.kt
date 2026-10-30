@@ -63,6 +63,7 @@ fun MainScreen(
     sermonNav: SermonNavigation,
     onOpenDestination: (SermonDestination) -> Unit,
     onOpenSeries: (seriesId: String) -> Unit,
+    onOpenChurch: (churchKey: String) -> Unit,
 ) {
     var selected by rememberSaveable { mutableStateOf(MainTab.Today) }
 
@@ -111,7 +112,7 @@ fun MainScreen(
                     onOpenNotes = onOpenNotes,
                     onOpenReview = onOpenReview,
                 )
-                MainTab.Settings -> SettingsTab(onOpenAccount)
+                MainTab.Settings -> SettingsTab(onOpenAccount, onOpenChurch)
             }
         }
     }

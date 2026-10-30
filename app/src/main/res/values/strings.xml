@@ -462,6 +462,20 @@
     <string name="settings_script_duration">Script Duration</string>
     <plurals name="settings_script_value"><item quantity="one">%d second</item><item quantity="other">%d seconds</item></plurals>
     <string name="settings_script_footer">Video and audio Script buttons capture this many seconds of transcript (1–30).</string>
+    <string name="online_resources">Online Resources</string>
+    <string name="online_import_all">Import all Sermons</string>
+    <string name="online_import_updates">Import Latest Updates</string>
+    <string name="online_importing">Importing Sermons…</string>
+    <string name="online_needs_internet">⚠️ This feature requires internet data to fetch the latest sermons.</string>
+    <string name="online_import_done">Import completed: %1$s, %2$s</string>
+    <plurals name="online_series_count"><item quantity="one">%d series</item><item quantity="other">%d series</item></plurals>
+    <plurals name="online_sermon_count"><item quantity="one">%d sermon</item><item quantity="other">%d sermons</item></plurals>
+    <string name="online_import_nothing_new">No new sermons found.</string>
+    <string name="online_import_unreachable">Couldn\'t connect. Check your internet connection and try again.</string>
+    <string name="online_import_unavailable">This church\'s sermons can\'t be imported right now.</string>
+    <string name="online_import_incomplete">Some files couldn\'t be downloaded. Tap Import Latest Updates to try again.</string>
+    <string name="online_website">Website</string>
+    <string name="online_youtube">YouTube</string>
     <string name="settings_legal">Legal</string>
     <string name="settings_privacy">Privacy Policy</string>
     <string name="settings_terms">Terms of Use</string>

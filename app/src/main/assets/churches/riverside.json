@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "684dc19ed7ca784926027a42",
+  "churchKey": "riverside",
+  "isUserData": false,
+  "enabled": true,
+  "name": "Riverside Calvary Chapel",
+  "subtitle": "Know, Grow, and Show",
+  "intro": "Riverside Calvary Chapel is a Christ-centered church focused on teaching the Word of God, building strong faith foundations, and helping people Know, Grow, and Show their love for Christ.",
+  "logoImageName": "riversideLogo",
+  "churchWebsite": "https://riversidecalvary.com",
+  "youtubeHomeLink": "https://www.youtube.com/@RiversideCalvary",
+  "churchSermonBaseURL": "https://riversidecalvary.com/sermon-archive/through-the-bible/",
+  "sermonImportRepoURL": "https://raw.githubusercontent.com/stoneofhopeapp/sermons-riverside/main/",
+  "updatedAt": "2026-06-04T00:00:00Z"
+}

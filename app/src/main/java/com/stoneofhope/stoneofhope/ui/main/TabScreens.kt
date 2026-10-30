@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stoneofhope.stoneofhope.data.sermon.ScriptCaptureDuration
 import com.stoneofhope.stoneofhope.data.settings.FontSizePreference
 import com.stoneofhope.stoneofhope.data.settings.ThemePreference
+import com.stoneofhope.stoneofhope.ui.settings.OnlineResourcesViewModel
 import com.stoneofhope.stoneofhope.ui.settings.SettingsViewModel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -84,9 +85,15 @@ fun PlaceholderTab(tab: MainTab) {
     }
 }
 
-/** iOS `SettingsView`: App Settings, Legal, then the account row (Sync conflicts and online resources come later). */
+/** iOS `SettingsView`: Online Resources, App Settings, Legal, then the account row (Sync conflicts come later). */
 @Composable
-fun SettingsTab(onOpenAccount: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsTab(
+    onOpenAccount: () -> Unit,
+    onOpenChurch: (churchKey: String) -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel(),
+    online: OnlineResourcesViewModel = hiltViewModel(),
+) {
+    val churches by online.churches.collectAsStateWithLifecycle()
     val theme by viewModel.theme.collectAsStateWithLifecycle()
     val fontSize by viewModel.fontSize.collectAsStateWithLifecycle()
     val showOnLaunch by viewModel.showOnLaunch.collectAsStateWithLifecycle()
@@ -96,6 +103,18 @@ fun SettingsTab(onOpenAccount: () -> Unit, viewModel: SettingsViewModel = hiltVi
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         TabHeader(stringResource(R.string.tab_settings))
+        // iOS shows one hard-coded Riverside row; here every enabled church in the catalog.
+        if (churches.isNotEmpty()) {
+            SectionTitle(stringResource(R.string.online_resources))
+            churches.forEach { church ->
+                ListItem(
+                    headlineContent = { Text(church.name) },
+                    supportingContent = church.subtitle?.let { { Text(it) } },
+                    trailingContent = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
+                    modifier = Modifier.testTag("church_${church.churchKey}").clickable { onOpenChurch(church.churchKey) },
+                )
+            }
+        }
         SectionTitle(stringResource(R.string.settings_app))
         ChoiceRow(
             stringResource(R.string.settings_theme), "settingsTheme",

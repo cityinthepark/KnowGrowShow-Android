@@ -20,6 +20,7 @@ production. Known example: tombstones on the wire are `{isDeleted: true, updated
 | `data.bible` | Book table (generated from iOS), name matching, `BibleReferenceValidator` (field), `BibleReferenceParser` (note-body shortcut, `vN`), `BibleFormatter`, `BibleVersions`, `BibleAnchor` |
 | `data.chapter` | Chapter page: `ChapterNotesBuilder` (chapter notes and verse groups, iOS `ChapterNoteViewModel` / `ChapterNoteDetailsView`), `ChapterSermons` |
 | `data.sermon` | Sermons, videos, series: `SermonRepository`, `VideoRepository`, `SermonReferenceParser`, `YouTubeLinkParser`, YouTube title / transcript parsing, `YouTubeWeb` (oEmbed + captions), `SermonRules`, `SeriesList` |
+| `data.church` | Online resources / church import (docs/CHURCH_IMPORT_PLAN.md): `ChurchProfile` + `ChurchProfileStore` (Firestore `onlineResourceProfiles` over REST — no SDK, no sign-in, so local-only users read it too — cached, bundled `assets/churches/` fallback), `ChurchSermonImporter` (iOS `ChurchSermonImportService`, repo `manifest.json` → `isUserData = false` series / sermons that never sync), `ChurchFeed` (HTTP GET) |
 | `data.bible.text` | `BibleTextDatabase` — read-only bundled KJV/CUV (Room `createFromAsset`), `BibleVerseReader` (iOS `BibleVerseRangeReader`), `OnDemandVerseSource` (NIV/NKJV; not implemented) |
 
 Room is the only store the UI reads. Firestore is a transport; local-only use never touches it.
