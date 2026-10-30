@@ -126,6 +126,10 @@ fun OnlineResourceScreen(onBack: () -> Unit, viewModel: OnlineResourceViewModel 
                     ) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             ChurchLogo(profile)
+                            // Followed on another device (synced list) but no sermons here yet.
+                            if (state.followed && !state.imported) {
+                                Text(stringResource(R.string.online_followed_elsewhere), style = textStyle(14), color = c.neutral90, modifier = Modifier.testTag("onlineFollowedElsewhere"))
+                            }
                             profile.intro?.let { Text(it, style = textStyle(17), color = c.neutral100) }
                             Button(
                                 onClick = viewModel::import,

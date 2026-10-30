@@ -37,4 +37,12 @@ interface RemoteStore {
 
     /** Merge-writes `users/{uid}/devices/{deviceId}`. */
     suspend fun mergeDevice(ownerUid: String, deviceId: String, data: WireData)
+
+    /**
+     * One transaction on `users/{uid}/settings/preferences` (Web's document): [patch] gets the
+     * stored fields (null when the document doesn't exist) and returns fields to merge-write, or
+     * null to write nothing. It may run more than once, so it must have no side effects. Returns
+     * what the committed attempt read.
+     */
+    suspend fun updatePreferences(ownerUid: String, patch: (WireData?) -> WireData?): WireData?
 }

@@ -3,6 +3,8 @@ package com.stoneofhope.stoneofhope.data.sync
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.stoneofhope.stoneofhope.data.church.ChurchListSync
+import com.stoneofhope.stoneofhope.data.church.OnlineChurches
 import com.stoneofhope.stoneofhope.data.crypto.CryptoSession
 import com.stoneofhope.stoneofhope.data.crypto.NoteKeyCache
 import com.stoneofhope.stoneofhope.data.crypto.NoteKeyProvider
@@ -62,6 +64,19 @@ class FakeRemoteStore(val server: FakeFirestore = FakeFirestore()) : RemoteStore
         server.apply(WireWrite(DEVICES, deviceId, data, WriteMode.Merge))
     }
 
+    /** `settings/preferences` transactions run. */
+    val preferenceReads = AtomicInteger()
+
+    override suspend fun updatePreferences(ownerUid: String, patch: (WireData?) -> WireData?): WireData? {
+        preferenceReads.incrementAndGet()
+        val current = server.get(PREFS_COLLECTION, PREFS_DOC)
+        patch(current)?.let {
+            server.serverNow = server.serverNow.plusMillis(1)
+            server.apply(WireWrite(PREFS_COLLECTION, PREFS_DOC, it, WriteMode.Merge))
+        }
+        return current
+    }
+
     /** What another device signing out of the cloud does: the whole tree is gone, epoch included. */
     fun wipe() = server.clear()
 
@@ -69,6 +84,8 @@ class FakeRemoteStore(val server: FakeFirestore = FakeFirestore()) : RemoteStore
         const val META = "meta"
         const val ACCOUNT = "account"
         const val DEVICES = "devices"
+        const val PREFS_COLLECTION = "settings"
+        const val PREFS_DOC = "preferences"
     }
 }
 
@@ -131,9 +148,10 @@ class TestDevice(
     val puller = SyncPuller(db, remote, state, session, ops, SyncConflictDetector(db), clock)
     val pusher = SyncPusher(db, remote, session, ops, clock)
     val peers = SyncPeerRegistry(remote, state)
+    val churches = OnlineChurches(db, clock)
     val cloudSync = CloudSync(
         identity, network, flags, state, session, puller, pusher, peers,
-        AccountEpoch(remote, state), ops, db, CoroutineScope(SupervisorJob() + Dispatchers.Default),
+        AccountEpoch(remote, state), ops, db, ChurchListSync(db, remote, clock), CoroutineScope(SupervisorJob() + Dispatchers.Default),
     )
 
     val uid: String get() = identity.uid!!

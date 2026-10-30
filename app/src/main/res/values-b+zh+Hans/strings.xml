@@ -456,6 +456,7 @@
     <string name="online_website">网站</string>
     <string name="online_youtube">YouTube</string>
     <string name="online_primary">主教会</string>
+    <string name="online_followed_elsewhere">你在其他设备上关注了这个教会。导入讲道后，才能在这台设备上使用。</string>
     <string name="online_set_primary">设为主教会</string>
     <string name="settings_legal">法律信息</string>
     <string name="settings_privacy">隐私政策</string>

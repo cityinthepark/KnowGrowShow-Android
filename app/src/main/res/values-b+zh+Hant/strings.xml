@@ -456,6 +456,7 @@
     <string name="online_website">網站</string>
     <string name="online_youtube">YouTube</string>
     <string name="online_primary">主教會</string>
+    <string name="online_followed_elsewhere">你在其他裝置上關注了這個教會。匯入講道後，才能在這台裝置上使用。</string>
     <string name="online_set_primary">設為主教會</string>
     <string name="settings_legal">法律資訊</string>
     <string name="settings_privacy">隱私權政策</string>

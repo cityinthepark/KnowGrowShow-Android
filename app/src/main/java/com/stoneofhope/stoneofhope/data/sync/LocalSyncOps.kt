@@ -61,6 +61,7 @@ class LocalSyncOps @Inject constructor(private val db: AppDatabase) {
         db.youTubeVideoDao().purgeAllTombstones()
         db.userVerseDao().purgeAllTombstones()
         db.indexedTextDao().purgeAllTombstones()
+        db.onlineChurchDao().purgeAllTombstones()
     }
 
     /** After the cloud copy is gone, everything local must be uploaded again on the next sign-in. */
@@ -76,6 +77,7 @@ class LocalSyncOps @Inject constructor(private val db: AppDatabase) {
         db.flashCardDao().markAllDirty()
         db.chapterLogDao().markAllDirty()
         db.bookProgressDao().markAllDirty()
+        db.onlineChurchDao().markAllDirty()
         db.pinLogDao().markAllDirty()
         db.pinLogDao().clearAllPendingDeletes()
     }

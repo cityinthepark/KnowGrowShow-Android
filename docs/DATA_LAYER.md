@@ -61,6 +61,12 @@ frozen into synced `userVerses`. `AppDatabase.downloadedVerses` stays for future
 | `CryptoSession` + `NoteKeyProvider` + `KeystoreNoteKeyCache` | `CryptoSession` + `SecureKeyService` + `CryptoSessionKeychain` (12 h TTL) |
 | `SyncTriggers`, `PushWorker` | `AppLaunchController` / `AppRootView` scene phases / `SyncNetworkMonitor` / `CryptoGateController` |
 | `SyncGuard` | `SyncRunner.isValid` |
+| `ChurchListSync` (data.church) | — (Android only for now): "My churches" ↔ `settings/preferences.churches`, one Firestore transaction per run |
+
+The church list is one field of Web's `users/{uid}/settings/preferences`, not a collection: each
+full / auto sync reads it in a transaction (Web writes there without stamping a device), merges it
+with `onlineChurches` and merge-writes only `churches`, `primaryChurchKey` and `churchesUpdatedAt`;
+a push touches it only when a church row changed (CHURCH_IMPORT_PLAN §2.6).
 
 Triggers: cold start / sign-in → full sync; foreground / network regained → auto sync (pull only
 if a peer's `devices.lastUpdatedAt` moved); background → push via WorkManager (survives process

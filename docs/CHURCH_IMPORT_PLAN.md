@@ -207,3 +207,25 @@ churchesUpdatedAt: <服务器时间戳>                 // 不动 Web 已有的 
 模拟器实测：在 C2 留下的版本 1 数据库上直接装新包，升级成功（`user_version` = 2，1560 篇讲道都在）；那批讲道是 C3 之前导入的，所以"我的教会"一开始是空的、详情页没有 chip；点"导入最新更新"后 Riverside 自动加入并成为主教会（详情页显示打勾的"主教会"，设置行出现"主教会"小标，表里 `isPrimary=1`、`lastImportedVersion=20260802`、`needsSync=1`）。"把主教会换到另一个教会"需要第二个可导入的教会，设备上没测，由单测覆盖。
 
 已知：C3 之前导入过讲道的设备要再点一次导入才会出现在"我的教会"里。安卓还没发布，所以没做开机自动补登记。
+
+**C4 云端 `churches`（已完成，未提交，2026-10-30）**：
+- 格式（`ChurchListWire`）：`users/{uid}/settings/preferences` 里 merge 写 `churches`（`{churchKey, isPrimary, importedAt(ISO，精确到毫秒), lastImportedVersion?}`，主教会排第一，其余按 `importedAt`）、`primaryChurchKey`（没有主教会时删除这个字段）、`churchesUpdatedAt`（服务器时间）。**只写这三个字段**，Web 的 `preferredVersions`、`updatedAt` 不碰。读的时候容错：缺 key、`importedAt` 读不懂的元素跳过，重复的 key 留第一个，`importedAt` 是 Timestamp 也接受。
+- 合并（`ChurchListMerge`，纯函数，可以在 Firestore 事务里重跑）：
+  - 本机有、云端没有：本机还没推过（`needsSync`）→ 加到云端；推过了 → 说明在别的设备被移除了 → 本机也删；
+  - 本机移除（墓碑待推）→ 从云端去掉，推完删墓碑；
+  - 两边都有：`importedAt` 取较早，`lastImportedVersion` 取较新；
+  - 只有云端有：本机加一行"已关注、尚未导入"（详情页提示"你在其他设备上关注了这个教会，导入讲道后才能在这台设备上使用"，主按钮是"导入所有讲道"）；
+  - 主教会：本机在上次同步后**亲手改过**主教会（`updatedAt > lastSyncedAt`）→ 用本机的；否则用云端的；那个教会已不在 → 本机的主教会 → 最早加入的。第一次登录的设备带着自己导入的教会时，不会抢走云端已有的主教会。
+- 同步时机（`ChurchListSync`，接在 `CloudSync` 里）：完整同步、自动同步每次都读一次这份文档（一次事务读，Web 改了不会给设备打戳）；单纯推送只在本机教会有改动时才读写；内容和云端一致时不写。写了就给本设备打戳（`devices.lastUpdatedAt`），其他安卓设备会来拉。
+- 云端被清空（另一台设备登出云）后：`markAllUserScopedDataForResync` 也把教会标成待推、`purgeAllTombstonesForCloudWipe` 也清教会墓碑，所以重新登录后整份列表会重新推上去，而不会被当成"别处移除"删掉。
+- 安卓的"登出云 / 删账号"清除还没做（要 Cloud Function，`DATA_LAYER.md` 的待办）；做的时候要把 `settings` 集合算进去（M9）。
+
+验证：新增 `ChurchListMergeTest` 5 个（格式、容错读取、增删合并、主教会归属、主教会兜底）、`ChurchListSyncTest` 7 个（多台模拟设备 + 共享的假 Firestore：推送时 Web 字段不动、另一台设备恢复成"已关注"、A 改主教会传到 B、别处移除本机跟着删、首次登录不抢主教会、Web 改动在自动同步时到达、没改动时不读不写、云端清空后重新上传）。变异检查 13 处全部被抓到（第一次 1 处没抓到，补了"云端主教会在本机被移除、本机也没有主教会"的情况）。全部 394 个测试通过，lint 52 个、新代码里没有。
+模拟器 + Firebase 本地模拟器实测（测试账号 interop-tester）：
+- 启动时自动同步，C3 留下的 Riverside 推到了 `settings/preferences`；
+- 装作 Web 往文档里加 `preferredVersions`、`updatedAt`，并加一个主教会 `zion` → 点"立即同步"：`preferredVersions`、`updatedAt` 原样保留，手机上主教会变成 zion、Riverside 详情页显示"设为主教会"；
+- 点"设为主教会"→ 离开 App 后约 2 秒云端 `primaryChurchKey` 变回 riverside；
+- 装作 Web 删掉 zion（同时删掉测试加的字段）→ 回到 App 约 2 秒后手机上的 zion 也删了。测试文档已恢复成只有 Riverside。
+- "其他设备已关注、本机未导入"的提示要一台没有 Riverside 讲道的设备才看得到，没在模拟器上看，由单测覆盖。
+
+已知：Web 写入的顺序和安卓的规范顺序（主教会在前）不同时，安卓会按规范顺序重写一次（内容不变）。

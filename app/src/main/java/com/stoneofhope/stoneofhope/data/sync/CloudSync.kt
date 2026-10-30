@@ -2,6 +2,7 @@ package com.stoneofhope.stoneofhope.data.sync
 
 import android.util.Log
 import androidx.room.withTransaction
+import com.stoneofhope.stoneofhope.data.church.ChurchListSync
 import com.stoneofhope.stoneofhope.data.crypto.CryptoSession
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import javax.inject.Inject
@@ -47,6 +48,7 @@ class CloudSync @Inject constructor(
     private val epoch: AccountEpoch,
     private val ops: LocalSyncOps,
     private val db: AppDatabase,
+    private val churches: ChurchListSync,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) {
     /** Ordered by strength: a queued request is upgraded, never downgraded. */
@@ -137,21 +139,26 @@ class CloudSync @Inject constructor(
             // Mark peers synced only after a complete pull, so a failed / held-back pull retries.
             if (pull(ownerUid, guard)) peers.markPeersSynced(ownerUid, peerWatermark)
         }
-        runPush(ownerUid, guard)
+        runPush(ownerUid, guard, readChurches = true)
     }
 
     private suspend fun runFullSync(ownerUid: String, guard: SyncGuard) {
         if (reconcileAccountEpoch(ownerUid, guard)) return
         prepare(ownerUid)
         if (pull(ownerUid, guard)) peers.refreshPeerWatermark(ownerUid)
-        runPush(ownerUid, guard)
+        runPush(ownerUid, guard, readChurches = true)
     }
 
-    private suspend fun runPush(ownerUid: String, guard: SyncGuard) {
-        val result = bestEffort("push") { pusher.push(ownerUid, guard) } ?: return
+    /**
+     * [readChurches]: also read the cloud church list (Web may have changed it without stamping a
+     * device); otherwise it is only written when a local church row changed.
+     */
+    private suspend fun runPush(ownerUid: String, guard: SyncGuard, readChurches: Boolean = false) {
+        val result = bestEffort("push") { pusher.push(ownerUid, guard) }
+        val churchesWritten = bestEffort("churches") { churches.sync(ownerUid, guard, readChurches) } == true
         // Stamp this device only when something was really uploaded, so peers pull for our edits
         // but a no-op push never makes anyone pull.
-        if (result.documentsUploaded > 0) peers.recordLocalUpdate(ownerUid)
+        if ((result?.documentsUploaded ?: 0) > 0 || churchesWritten) peers.recordLocalUpdate(ownerUid)
     }
 
     /** True when the pull completed (cursor advanced, nothing held back). */

@@ -22,4 +22,17 @@ interface OnlineChurchDao {
 
     @Query("SELECT * FROM onlineChurches WHERE needsSync = 1")
     suspend fun dirty(): List<OnlineChurchEntity>
+
+    /** Tombstones included: the cloud merge needs to know what was unfollowed here. */
+    @Query("SELECT * FROM onlineChurches")
+    suspend fun all(): List<OnlineChurchEntity>
+
+    @Query("DELETE FROM onlineChurches WHERE churchKey = :churchKey")
+    suspend fun hardDelete(churchKey: String)
+
+    @Query("DELETE FROM onlineChurches WHERE deletedAt IS NOT NULL")
+    suspend fun purgeAllTombstones(): Int
+
+    @Query("UPDATE onlineChurches SET needsSync = 1")
+    suspend fun markAllDirty()
 }

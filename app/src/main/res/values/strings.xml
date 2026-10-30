@@ -477,6 +477,7 @@
     <string name="online_website">Website</string>
     <string name="online_youtube">YouTube</string>
     <string name="online_primary">Primary church</string>
+    <string name="online_followed_elsewhere">You follow this church on another device. Import its sermons to use them here.</string>
     <string name="online_set_primary">Set as primary church</string>
     <string name="settings_legal">Legal</string>
     <string name="settings_privacy">Privacy Policy</string>

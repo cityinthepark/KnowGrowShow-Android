@@ -5,6 +5,7 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.Source
+import com.stoneofhope.stoneofhope.data.church.ChurchListWire
 import com.stoneofhope.stoneofhope.data.remote.RemoteDocument
 import com.stoneofhope.stoneofhope.data.remote.RemoteStore
 import com.stoneofhope.stoneofhope.data.remote.wire.FirestoreSchema
@@ -75,6 +76,16 @@ class FirestoreRemoteStore @Inject constructor(
         userDoc(ownerUid).collection(DEVICES).document(deviceId)
             .set(FirestoreWireAdapter.toFirestore(data), SetOptions.merge())
             .await()
+    }
+
+    override suspend fun updatePreferences(ownerUid: String, patch: (WireData?) -> WireData?): WireData? {
+        val ref = userDoc(ownerUid).collection(ChurchListWire.COLLECTION).document(ChurchListWire.DOCUMENT)
+        return db.runTransaction { tx ->
+            val snap = tx.get(ref)
+            val current = if (snap.exists()) FirestoreWireAdapter.fromFirestore(snap.data.orEmpty()) else null
+            patch(current)?.let { tx.set(ref, FirestoreWireAdapter.toFirestore(it), SetOptions.merge()) }
+            current
+        }.await()
     }
 
     private companion object {
