@@ -360,12 +360,12 @@ class VerseReferenceSaveTest {
         assertTrue(db.userVerseDao().getById("KJV_43_3_16")!!.content.startsWith("For God"))
     }
 
-    /** Like iOS: a range touching a verse CUV lacks still gets that row, with empty content. */
-    @Test fun verseMissingFromAVersionGetsAnEmptyRow() = runTest {
+    /** CUV used to lack John 7:53 (an empty row); CuvVersificationFix gives it the clause split out of 8:1. */
+    @Test fun cuvJohn753HasItsTextAfterTheVersificationFix() = runTest {
         versions.setSelectedVersions(listOf("KJV", "CUV"))
         val r = repo(bundled = true)
         r.saveNoteFromContent("", "John 7:52-53", zone = zone)
-        assertEquals("", db.userVerseDao().getById("CUV_43_7_53")!!.content)
+        assertEquals("於是各人都回家去了；", db.userVerseDao().getById("CUV_43_7_53")!!.content)
         assertTrue(db.userVerseDao().getById("KJV_43_7_53")!!.content.isNotEmpty())
     }
 

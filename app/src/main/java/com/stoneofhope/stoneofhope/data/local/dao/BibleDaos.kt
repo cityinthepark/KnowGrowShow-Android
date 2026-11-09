@@ -121,6 +121,10 @@ interface UserVerseDao {
     @Query("SELECT * FROM userVerses WHERE id = :id")
     suspend fun getById(id: String): UserVerseEntity?
 
+    /** iOS `versionAbbr ==[c] %@ AND content == %@`. */
+    @Query("SELECT * FROM userVerses WHERE versionAbbr = :versionAbbr COLLATE NOCASE AND content = :content")
+    suspend fun withContent(versionAbbr: String, content: String): List<UserVerseEntity>
+
     @Query(
         "SELECT * FROM userVerses WHERE versionAbbr = :versionAbbr AND bookOrd = :bookOrd " +
             "AND chapterOrd = :chapterOrd AND deletedAt IS NULL AND isDeleted = 0 ORDER BY verseOrd"

@@ -24,7 +24,8 @@ import org.gradle.api.tasks.TaskAction
  *   `distribution_abbreviation`.
  * - `CUV.xml` (`BibleXMLParser`): the characters between `<v id=N/>` and `<ve/>`, each parser chunk
  *   trimmed of whitespace. Chunk boundaries are a libxml2 detail, so the build fails if a verse has
- *   inner whitespace — then the iOS result could depend on where the chunks fall.
+ *   inner whitespace — then the iOS result could depend on where the chunks fall. Then
+ *   [CuvVersificationFix] (iOS `CUVVersificationFix` revision 2) aligns it to KJV's 31,102 verses.
  *
  * Tables, indices and the identity hash come from Room's exported schema, so Room opens the file
  * without a migration.
@@ -53,7 +54,9 @@ abstract class GenerateBibleTextDb : DefaultTask() {
         out.deleteRecursively()
         val dbFile = File(out, "bible/bible_text.db").apply { parentFile.mkdirs() }
 
-        val verses = readKjv(kjvJson.get().asFile) + readCuv(cuvXml.get().asFile)
+        val kjv = readKjv(kjvJson.get().asFile)
+        val cuv = fixedCuv(readCuv(cuvXml.get().asFile), kjv)
+        val verses = kjv + cuv
         val schema = JsonParser.parseString(roomSchema.get().asFile.readText()).asJsonObject.getAsJsonObject("database")
         val entity = schema.getAsJsonArray("entities").single().asJsonObject
         val table = entity.get("tableName").asString
@@ -83,6 +86,21 @@ abstract class GenerateBibleTextDb : DefaultTask() {
             conn.exec("VACUUM")
         }
         logger.lifecycle("bible_text.db: ${verses.groupingBy { it.versionAbbr }.eachCount()} (${dbFile.length() / 1024} KB)")
+    }
+
+    /**
+     * iOS `CUVVersificationFix` applied after parsing; the result must have exactly KJV's verses
+     * (31,102), so a changed source or a wrong fix fails the build.
+     */
+    private fun fixedCuv(parsed: List<Verse>, kjv: List<Verse>): List<Verse> {
+        val byKey = parsed.associateTo(linkedMapOf()) { VerseKey(it.bookOrd, it.chapterOrd, it.verseOrd) to it.content }
+        if (byKey.size != parsed.size) throw GradleException("CUV.xml has duplicate verse ids")
+        CuvVersificationFix.apply(byKey)
+        val kjvKeys = kjv.map { VerseKey(it.bookOrd, it.chapterOrd, it.verseOrd) }.toSet()
+        if (byKey.keys != kjvKeys) {
+            throw GradleException("CUV after CuvVersificationFix differs from the KJV table: missing ${(kjvKeys - byKey.keys).sorted().take(5)}, extra ${(byKey.keys - kjvKeys).sorted().take(5)}")
+        }
+        return byKey.entries.sortedBy { it.key }.map { (k, text) -> Verse("CUV", k.bookOrd, k.chapterOrd, k.verseOrd, text) }
     }
 
     private fun Connection.exec(sql: String) = createStatement().use { it.execute(sql) }

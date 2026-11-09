@@ -203,6 +203,10 @@ K1 补充：笔记推送也省略空字段。目前笔记里会被清空的只�
 | --- | --- | --- | --- | --- | --- |
 | O1 🟡 | `NotesManager.saveSeparatedNoteInput` → `saveVerseReferenceFromDetection` | "取不到经文"的通知（`verseTextUnavailable`）只在 `saveBibleVerseFromSeparatedInput` 里发（引用框、"v3 …"）。正文里直接写"Hebrews 4:3 …"走 `saveVerseReferenceFromDetection`，取不到经文时不发 | 讲道/视频面板去掉引用框后，写经节主要就靠正文里的"书卷 章:节"；没网时这样保存，经文是空的，却没有任何提示 | 两条路径都提示（`VerseReferenceSaveResult.textMissing`） | 不用 |
 | O2 ✅ | `FirestoreUserDataPull.mergeUserVerses`（安卓 `SyncPuller` 同样） | 两台设备登录同一账号前都给同一节经文加了标签。后同步的那台本地是"脏"的，按"本地脏优先"跳过云端，再整份推上去 | 先同步那台加的标签被覆盖丢失（两端都有这个问题） | 按 USER_VERSE_CONTRACT §3.4（iOS `2977b9f`）：本地没同步过（`lastSyncedAt` 为空）且云端不是墓碑时，拉取先把云端 `tagIds` 里本地没有的加进来，只加不减；云端被清空后重新标脏时同时清 `lastSyncedAt`（`FirstMergeVerseTags`、`markAllDirtyAsNeverSynced`） | 已与 iOS 一致 |
+| O3 🔴 | `zh-Hant.lproj/Localizable.strings` | 只有 `"Transform Tag Name"`，缺 `"Trash Tag Name"`、`"Milestone Tag Name"`（en、zh-Hans 都有） | 繁体界面「推荐」一行显示英文 Trash / Milestone；繁体用户点了建出的是英文名标签 | 安卓三语都有（`tag_preset_trash` / `tag_preset_milestone`） | 不用 |
+| O4 🔴 | `NoteDetailsView` 评论输入条（`canSubmitComment`、`submitComment`） | 打开 Answered 开关后让输入框失焦，开关被隐藏但 `commentIsAnswered` 仍是 true，发送键仍可用，空发会生成一条「已应允」标记；开关开着时用 🙌 把祷告标成已应允，再发送又多一条标记。两处都没检查 `canMarkAnswered` | 重复或意外的「已应允」标记 | 安卓发送只在 `canMarkAnswered && answered` 时才算勾选 | 不用 |
+| O5 🔴 | `NoteDetailsView.swift:846`（`NoteActionPresentations`） | `Button("Delete", role: .destructive)` 没有 `.localized`（同文件 672 行有） | 中文界面这个确认按钮显示英文 Delete | 用三语文案 | 不用 |
+| O6 🔴 | `zh-Hant.lproj/Localizable.strings` | `"Image" = "图片"`、`"Answered Prayers" = "已應允祷告"` 夹着简体字（与 E6 同类） | 繁体界面混简体 | 安卓用 圖片 / 已應允禱告 | 不用 |
 
 ---
 

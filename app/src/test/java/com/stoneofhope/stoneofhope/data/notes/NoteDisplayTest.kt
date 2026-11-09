@@ -1,5 +1,6 @@
 package com.stoneofhope.stoneofhope.data.notes
 
+import com.stoneofhope.stoneofhope.data.bible.BibleAnchor
 import com.stoneofhope.stoneofhope.data.local.entity.IndexedTextEntity
 import com.stoneofhope.stoneofhope.data.local.entity.NoteCommentEntity
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
@@ -130,6 +131,17 @@ class NoteDisplayTest {
         assertEquals(listOf(4 to 7, 24 to 25), body.marks.map { it.start to it.end })
         assertEquals("God", body.text.substring(4, 7))
         assertEquals("神", body.text.substring(24, 25))
+    }
+
+    @Test fun aMergedVerseRepeatingThePreviousOneIsShownOnce() {
+        // iOS e4bb313 `resolveUserVerses`: CUV Ps 8:6–8 carry the same text after CuvVersificationFix.
+        fun cuv(v: Int, text: String) = UserVerseEntity("CUV_19_8_$v", "CUV", 19, 8, v, text, createdAt = t, updatedAt = t)
+        val verses = pool(cuv(5, "a"), cuv(6, "b"), cuv(7, "b"), cuv(8, "b"), cuv(9, "c"))
+        val range = VerseDisplay.resolve(BibleAnchor(19, 8, 5, 9, "CUV"), verses)!!
+        assertEquals("a b c", range.combinedContent)
+        assertEquals(listOf(5, 6, 9), range.verses.map { it.first })
+        // Alone, or starting the range, the merged verse still shows its text.
+        assertEquals("b", VerseDisplay.resolve(BibleAnchor(19, 8, 7, 8, "CUV"), verses)!!.combinedContent)
     }
 
     @Test fun answeredMarkerIsAnObjectIdBody() {

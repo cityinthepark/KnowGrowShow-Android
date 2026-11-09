@@ -9,6 +9,7 @@ import com.stoneofhope.stoneofhope.data.local.entity.DownloadedVerseEntity
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -53,7 +54,8 @@ class BibleVerseReaderTest {
 
     @Test fun bundledAssetHasBothVersions() = runTest {
         assertEquals(31_102, bible.verseDao().count("KJV"))
-        assertEquals(31_100, bible.verseDao().count("CUV"))
+        // CuvVersificationFix aligns CUV to the KJV table (iOS 101ad61).
+        assertEquals(31_102, bible.verseDao().count("CUV"))
     }
 
     @Test fun kjvJohn316FromBundle() = runTest {
@@ -88,12 +90,47 @@ class BibleVerseReaderTest {
         assertTrue(reader.resolve("KJV", 67, 1, 1..1).isEmpty)
     }
 
-    @Test fun verseMissingFromCuvResolvesEmpty() = runTest {
-        // CUV has no John 7:53; the merged block skips it instead of printing "7:53 ".
-        val r = reader.resolve("CUV", 43, 7, 52..53)
+    @Test fun verseWithNoTextResolvesEmpty() = runTest {
+        // A version not bundled with only 7:52 downloaded: the merged block skips 7:53 instead of printing "7:53 ".
+        app.bibleCacheDao().upsertVerses(listOf(DownloadedVerseEntity("TST_43_7_52", "TST", 43, 7, 52, "fifty-two")))
+        val r = reader.resolve("TST", 43, 7, 52..53)
         assertEquals("", r.lines[1].content)
-        assertTrue(r.mergedText.startsWith("7:52 ") && !r.mergedText.contains("7:53"))
-        assertEquals(0, onDemand.calls)
+        assertEquals("7:52 fifty-two", r.mergedText)
+    }
+
+    @Test fun cuvIsAlignedToTheKjvTable() = runTest {
+        // iOS CUVVersificationFixTests: 1 Chr 22 renumbered, John 7:53 split out of 8:1, 3 John 1:15 merged into 1:14.
+        assertEquals("大衛說：「這就是耶和華神的殿，為以色列人獻燔祭的壇。」", reader.resolve("CUV", 13, 22, 1..1).lines.single().content)
+        assertTrue(reader.resolve("CUV", 13, 21, 31..31).isEmpty)
+        assertEquals("於是各人都回家去了；", reader.resolve("CUV", 43, 7, 53..53).lines.single().content)
+        assertEquals("耶穌卻往橄欖山去，", reader.resolve("CUV", 43, 8, 1..1).lines.single().content)
+        assertEquals("那當毀滅的物連一點都不可粘你的手。", reader.resolve("CUV", 5, 13, 17..17).lines.single().content)
+        assertTrue(reader.resolve("CUV", 64, 1, 14..14).lines.single().content.endsWith("請你替我按着姓名問眾位朋友安。"))
+    }
+
+    @Test fun cuvMergedVerseAloneShowsTheTextItWasMergedInto() = runTest {
+        // iOS e4bb313: no "併於上節"; Num 1:21 carries 1:20's text, and Ps 8:7–8 both carry 8:6's.
+        val alone = reader.resolve("CUV", 4, 1, 21..21)
+        assertEquals(reader.resolve("CUV", 4, 1, 20..20).lines.single().content, alone.lines.single().content)
+        assertFalse(alone.mergedText.contains("併於上節"))
+        val ps86 = reader.resolve("CUV", 19, 8, 6..6).lines.single().content
+        assertEquals(listOf(ps86, ps86), reader.resolve("CUV", 19, 8, 7..8).lines.map { it.content })
+    }
+
+    @Test fun cuvRangeShowsAMergedVerseOnceLabelledWithTheSpan() = runTest {
+        val r = reader.resolve("CUV", 19, 8, 5..9)
+        val text = r.lines[1].content
+        assertEquals(listOf(text, text, text), r.lines.subList(1, 4).map { it.content })
+        assertEquals("8:6-8 $text", r.lines[1].displaySegment)
+        assertEquals(listOf("", ""), r.lines.subList(2, 4).map { it.displaySegment })
+        assertEquals(1, Regex(Regex.escape(text)).findAll(r.mergedText).count())
+    }
+
+    @Test fun mergingRepeatedVersesLabelsSpanOnceKeepsPerVerseContent() {
+        fun line(v: Int, text: String) = VerseLine(v, "8:$v $text", text)
+        val merged = reader.mergingRepeatedVerses(listOf(line(5, "a"), line(6, "b"), line(7, "b"), line(8, "b"), line(9, "c"), line(10, ""), line(11, "")), 8)
+        assertEquals(listOf("8:5 a", "8:6-8 b", "", "", "8:9 c", "8:10 ", "8:11 "), merged.map { it.displaySegment })
+        assertEquals(listOf("a", "b", "b", "b", "c", "", ""), merged.map { it.content })
     }
 
     @Test fun onDemandVersionIgnoresDownloadedRowsAndUsesSource() = runTest {
@@ -110,9 +147,16 @@ class BibleVerseReaderTest {
         assertEquals("", r.lines.single().content)
     }
 
-    @Test fun downloadedRowsFillABulkVersion() = runTest {
-        // A future downloaded KJV revision would live in AppDatabase.downloadedVerses (iOS DownloadedVerse).
-        app.bibleCacheDao().upsertVerses(listOf(DownloadedVerseEntity("CUV_43_7_53", "CUV", 43, 7, 53, "DOWNLOADED")))
-        assertEquals("DOWNLOADED", reader.resolve("CUV", 43, 7, 53..53).lines.single().content)
+    @Test fun downloadedRowsFillAVersionAndBundledTextWins() = runTest {
+        // A future downloaded version would live in AppDatabase.downloadedVerses (iOS DownloadedVerse).
+        app.bibleCacheDao().upsertVerses(
+            listOf(
+                DownloadedVerseEntity("TST_43_7_53", "TST", 43, 7, 53, "DOWNLOADED"),
+                DownloadedVerseEntity("CUV_43_7_53", "CUV", 43, 7, 53, "DOWNLOADED"),
+            )
+        )
+        assertEquals("DOWNLOADED", reader.resolve("TST", 43, 7, 53..53).lines.single().content)
+        assertEquals(0, onDemand.calls)
+        assertEquals("於是各人都回家去了；", reader.resolve("CUV", 43, 7, 53..53).lines.single().content)
     }
 }

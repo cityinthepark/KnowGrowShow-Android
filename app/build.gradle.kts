@@ -128,7 +128,7 @@ room {
 val generateBibleTextDb = tasks.register<GenerateBibleTextDb>("generateBibleTextDb") {
     kjvJson.set(layout.projectDirectory.file("bible-data/KJV.json"))
     cuvXml.set(layout.projectDirectory.file("bible-data/CUV.xml"))
-    roomSchema.set(layout.projectDirectory.file("schemas/com.stoneofhope.stoneofhope.data.bible.text.BibleTextDatabase/1.json"))
+    roomSchema.set(layout.projectDirectory.file("schemas/com.stoneofhope.stoneofhope.data.bible.text.BibleTextDatabase/2.json"))
     outputDir.set(layout.buildDirectory.dir("generated/bibleText"))
 }
 

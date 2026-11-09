@@ -43,7 +43,7 @@ abstract class BibleTextDatabase : RoomDatabase() {
     abstract fun verseDao(): BundledVerseDao
 
     companion object {
-        const val VERSION = 1
+        const val VERSION = 2
         const val NAME = "bible_text.db"
         const val ASSET_PATH = "bible/bible_text.db"
     }

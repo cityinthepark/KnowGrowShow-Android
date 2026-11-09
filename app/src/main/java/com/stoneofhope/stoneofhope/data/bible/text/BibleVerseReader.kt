@@ -60,7 +60,7 @@ class BibleVerseReader @Inject constructor(
             onDemand.verses(versionAbbr, bookOrd, chapterOrd, lo..hi)
         }
 
-        val lines = (lo..hi).map { v ->
+        val read = (lo..hi).map { v ->
             val bulk = bulkByVerse[v]
             if (bulk != null) {
                 VerseLine(v, "$chapterOrd:$v $bulk", bulk)
@@ -69,10 +69,33 @@ class BibleVerseReader @Inject constructor(
                 VerseLine(v, if (text.isEmpty()) "" else "$chapterOrd:$v $text", text)
             }
         }
+        val lines = mergingRepeatedVerses(read, chapterOrd)
         // Psalms and Proverbs keep one verse per line, like iOS `mergedVerseBlock`.
         val separator = if (bookOrd == 19 || bookOrd == 20) "\n" else " "
         val merged = lines.map { it.displaySegment }.filter { SwiftText.trim(it).isNotEmpty() }.joinToString(separator)
         return VerseRangeResolution(lines, merged)
+    }
+
+    /**
+     * iOS `mergingRepeatedVerses`: a merged verse (CUV "併於上節", see buildSrc `CuvVersificationFix`)
+     * carries the same text as the verse before it. Show that text once, labelled with the whole span
+     * (`1:20-21 …`); the later lines keep their [VerseLine.content] (for `userVerses`) but get an
+     * empty display segment.
+     */
+    internal fun mergingRepeatedVerses(lines: List<VerseLine>, chapterOrd: Int): List<VerseLine> {
+        val result = lines.toMutableList()
+        var start = 0
+        while (start < result.size) {
+            val text = result[start].content
+            var end = start
+            while (text.isNotEmpty() && end + 1 < result.size && result[end + 1].content == text) end++
+            if (end > start) {
+                result[start] = result[start].copy(displaySegment = "$chapterOrd:${result[start].verseOrd}-${result[end].verseOrd} $text")
+                for (i in start + 1..end) result[i] = result[i].copy(displaySegment = "")
+            }
+            start = end + 1
+        }
+        return result
     }
 
     /** iOS `versionAbbr ==[c] %@`: bundled rows are stored upper case. */

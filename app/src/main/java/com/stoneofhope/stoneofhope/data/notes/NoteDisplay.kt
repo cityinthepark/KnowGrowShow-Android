@@ -304,7 +304,9 @@ object VerseDisplay {
     ): ResolvedVerse? {
         if (anchor.isChapterLevel) return null
         val ids = anchor.verseOrds.associateWith { UserVerseEntity.makeId(anchor.versionAbbr, anchor.bookOrd, anchor.chapterOrd, it) }
-        val verses = anchor.verseOrds.map { v -> v to versesById[ids.getValue(v)]?.content.orEmpty() }
+        val all = anchor.verseOrds.map { v -> v to versesById[ids.getValue(v)]?.content.orEmpty() }
+        // iOS `resolveUserVerses`: a merged verse (CUV "併於上節") repeats the previous verse's text — show it once.
+        val verses = all.filterIndexed { i, (v, text) -> text.isEmpty() || i == 0 || all[i - 1].first != v - 1 || all[i - 1].second != text }
         val marks = verses.associate { (v, text) -> v to VerseMarks.onText(text, marksByVerseId[ids.getValue(v)].orEmpty()) }
             .filterValues { it.isNotEmpty() }
         return ResolvedVerse(anchor.refLabel(showVersion = false).orEmpty(), verses.joinToString(" ") { it.second }, anchor.versionAbbr, verses, marks)
