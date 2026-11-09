@@ -231,8 +231,12 @@ fun dayRange(start: LocalDate, end: LocalDate, today: LocalDate = LocalDate.now(
     return DateIntervalFormat.getInstance(skeleton, Locale.getDefault()).format(DateInterval(millis(start), millis(end)))
 }
 
-/** "OCT 2026". */
-fun monthYearCaps(month: YearMonth): String = pattern("MMMy").format(month.atDay(1)).uppercase()
+/** "Nov" (iOS `.dateTime.month(.abbreviated)`). */
+fun monthShort(day: LocalDate): String = pattern("MMM").format(day)
+
+/** iOS `monthYearTitle`: "October 2026", "2026年10月". */
+fun monthYearTitle(month: YearMonth): String = pattern("yMMMM").format(month.atDay(1))
+
 
 /** "7:15 AM". */
 fun clockTime(instant: Instant, zone: ZoneId = ZoneId.systemDefault()): String =

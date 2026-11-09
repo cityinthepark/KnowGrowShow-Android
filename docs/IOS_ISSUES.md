@@ -207,6 +207,7 @@ K1 补充：笔记推送也省略空字段。目前笔记里会被清空的只�
 | O4 🔴 | `NoteDetailsView` 评论输入条（`canSubmitComment`、`submitComment`） | 打开 Answered 开关后让输入框失焦，开关被隐藏但 `commentIsAnswered` 仍是 true，发送键仍可用，空发会生成一条「已应允」标记；开关开着时用 🙌 把祷告标成已应允，再发送又多一条标记。两处都没检查 `canMarkAnswered` | 重复或意外的「已应允」标记 | 安卓发送只在 `canMarkAnswered && answered` 时才算勾选 | 不用 |
 | O5 🔴 | `NoteDetailsView.swift:846`（`NoteActionPresentations`） | `Button("Delete", role: .destructive)` 没有 `.localized`（同文件 672 行有） | 中文界面这个确认按钮显示英文 Delete | 用三语文案 | 不用 |
 | O6 🔴 | `zh-Hant.lproj/Localizable.strings` | `"Image" = "图片"`、`"Answered Prayers" = "已應允祷告"` 夹着简体字（与 E6 同类） | 繁体界面混简体 | 安卓用 圖片 / 已應允禱告 | 不用 |
+| O7 🟡 | `NotePinLogBuilder.shouldConnect` | 笔记有过任何置顶段时，只有同一段里的相邻日子才连线，两个相邻的评论日（都不在置顶段里）不连 | 置顶过的笔记，时间线断成好几截，看着像漏画 | 相邻就连；中间是隐藏的置顶日也连；隔着月份行不连 | 你确认是否有意。若 iOS 改成「相邻就连」，两边就一致 |
 
 ---
 

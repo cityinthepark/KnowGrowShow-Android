@@ -6,12 +6,13 @@ import androidx.lifecycle.viewModelScope
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.model.NoteType
 import com.stoneofhope.stoneofhope.data.notes.NoteRelations
+import com.stoneofhope.stoneofhope.data.notes.NoteThread
 import com.stoneofhope.stoneofhope.data.notes.NoteReview
 import com.stoneofhope.stoneofhope.data.notes.ResolvedVerse
 import com.stoneofhope.stoneofhope.data.notes.ThreadItem
 import com.stoneofhope.stoneofhope.data.notes.VerseDisplay
 import com.stoneofhope.stoneofhope.data.notes.VerseMarks
-import com.stoneofhope.stoneofhope.data.notes.isAnsweredMarker
+import com.stoneofhope.stoneofhope.data.notes.threadItem
 import com.stoneofhope.stoneofhope.data.repository.NoteRepository
 import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -69,18 +70,19 @@ class NotesReviewViewModel @Inject constructor(
         val pages = NoteReview.notes(day, LocalDate.now(zone), allNotes, comments, zone).map { note ->
             val own = commentsByNote[note.id].orEmpty()
             val reflections = if (note.noteType == NoteType.BibleVerse) NoteRelations.reflections(note, allNotes, zone) else emptyList()
-            val items = reflections.map {
+            val reflectionItems = reflections.map {
                 ThreadItem(it.id, it.content, false, it.createdAt, it.starLevel, it.tagIds, it.tagIds.mapNotNull(tagNames::get), isReflection = true)
-            } + own.sortedBy { it.createdAt }.map {
-                ThreadItem(it.id, it.content, it.isAnsweredMarker, it.createdAt, it.starLevel, it.tagIds, it.tagIds.mapNotNull(tagNames::get))
             }
+            val commentItems = own.sortedBy { it.createdAt }.map { it.threadItem(tagNames) }
+            // Same day folding as the details thread: a paired "Answered" marker shows on its comment.
+            val items = reflectionItems + commentItems.groupBy { it.createdAt.atZone(zone).toLocalDate() }.values.flatMap(NoteThread::foldAnswered)
             ReviewPage(
                 card = NoteCards.card(note, allNotes, comments, tagNames, sermonIds.toSet(), versesById, zone, marks, selectedVersions),
                 // An anchor's body is the card's (every selected version); a prayer shows its linked verse.
                 verse = VerseDisplay.resolve(note, versesById, marks)
                     ?.takeIf { note.noteType == NoteType.Prayer && it.combinedContent.isNotBlank() },
                 items = items,
-                count = items.count { !it.isAnsweredMarker },
+                count = NoteThread.count(reflectionItems + commentItems),
             )
         }
         NotesReviewState(pages, loaded = true)

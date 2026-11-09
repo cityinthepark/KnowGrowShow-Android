@@ -144,6 +144,9 @@
     <string name="comment_to">Add a Comment to:</string>
     <string name="answered_today">Answered Today</string>
     <string name="answered">Answered</string>
+    <!-- Thread date column (iOS timelineWeekdayLabel). -->
+    <string name="day_today">Today</string>
+    <string name="day_yesterday">Yesterday</string>
     <!-- Details thread: a pinned run (PinLog), "📌 Pinned · Oct 20 – 26" -->
     <string name="thread_pinned">Pinned</string>
     <string name="thread_pinned_range">Pinned · %1$s</string>

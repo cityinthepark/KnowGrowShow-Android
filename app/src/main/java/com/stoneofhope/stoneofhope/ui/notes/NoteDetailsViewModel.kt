@@ -16,7 +16,7 @@ import com.stoneofhope.stoneofhope.data.notes.ThreadDay
 import com.stoneofhope.stoneofhope.data.notes.ThreadItem
 import com.stoneofhope.stoneofhope.data.notes.VerseDisplay
 import com.stoneofhope.stoneofhope.data.notes.VerseMarks
-import com.stoneofhope.stoneofhope.data.notes.isAnsweredMarker
+import com.stoneofhope.stoneofhope.data.notes.threadItem
 import com.stoneofhope.stoneofhope.data.repository.NoteActionRepository
 import com.stoneofhope.stoneofhope.data.repository.NoteRepository
 import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
@@ -37,7 +37,7 @@ data class NoteDetailsState(
     val moreVersions: List<ResolvedVerse> = emptyList(),
     /** Comments by day with pinned runs and the answered day; under a verse anchor, its reflections. */
     val thread: List<ThreadDay> = emptyList(),
-    /** Comments without "Answered" markers, or reflections. */
+    /** Comments and reflections, iOS `threadItemCount` ([NoteThread.count]). */
     val threadCount: Int = 0,
     val allTags: List<TagEntity> = emptyList(),
     val loaded: Boolean = false,
@@ -96,12 +96,12 @@ class NoteDetailsViewModel @Inject constructor(
                 ThreadItem(it.id, it.content, false, it.createdAt, it.starLevel, it.tagIds, it.tagIds.mapNotNull(tagNames::get), isReflection = true)
             }
         } else {
-            comments.map { ThreadItem(it.id, it.content, it.isAnsweredMarker, it.createdAt, it.starLevel, it.tagIds, it.tagIds.mapNotNull(tagNames::get)) }
+            comments.map { it.threadItem(tagNames) }
         }
         // iOS `noteTimelineRows`: the answered day is `answeredAt ?? updatedAt` while answered.
         val answeredAt = if (note.isAnswered == true) note.answeredAt ?: note.updatedAt else null
         val days = NoteThread.build(items, pinLog?.pinnedDays.orEmpty(), answeredAt, zone)
-        NoteDetailsState(card, verse, blocks.drop(1).map { it.resolved }, days, items.count { !it.isAnsweredMarker }, ctx.tags, loaded = true)
+        NoteDetailsState(card, verse, blocks.drop(1).map { it.resolved }, days, NoteThread.count(items), ctx.tags, loaded = true)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NoteDetailsState())
 
     init {

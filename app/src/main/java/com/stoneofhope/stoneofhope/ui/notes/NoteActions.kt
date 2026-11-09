@@ -116,6 +116,8 @@ class NoteActionsState {
     fun open(id: String) { noteId = id; sub = null }
     fun close() { noteId = null; sub = null }
     internal fun show(next: Sub) { sub = next }
+    /** Straight to a follow-up (Tags, Edit, Delete…) from an icon on the page (iOS `NoteDetailActionBar`). */
+    internal fun openSub(id: String, next: Sub) { noteId = id; sub = next }
     internal val current get() = sub
 }
 

@@ -85,7 +85,7 @@ fun ChapterVerseScreen(onBack: () -> Unit, onOpenNote: (noteId: String) -> Unit,
                 item(key = "verse") { VerseCard(state) }
                 if (state.reflectionCount > 0) {
                     item(key = "reflections") {
-                        Thread(isAnchor = true, days = state.thread, count = state.reflectionCount, onItemActions = commentActions::open)
+                        Thread(isAnchor = true, days = state.thread, count = state.reflectionCount, actions = commentActions, onAction = viewModel::onThreadAction)
                     }
                 }
                 if (state.prayers.isNotEmpty()) {

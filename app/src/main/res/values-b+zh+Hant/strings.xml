@@ -134,8 +134,11 @@
     <string name="action_save">儲存</string>
     <string name="edit_note_title">編輯筆記</string>
     <string name="comment_to">新增註釋至：</string>
-    <string name="answered_today">今天已應允</string>
+    <string name="answered_today">今日已應允</string>
     <string name="answered">已應允</string>
+    <!-- Thread date column (iOS timelineWeekdayLabel). -->
+    <string name="day_today">今天</string>
+    <string name="day_yesterday">昨天</string>
     <!-- Details thread: a pinned run (PinLog), "📌 Pinned · Oct 20 – 26" -->
     <string name="thread_pinned">已置頂</string>
     <string name="thread_pinned_range">已置頂 · %1$s</string>

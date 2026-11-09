@@ -74,6 +74,8 @@ class CommentActionsState {
     fun open(id: String, bounds: Rect) { itemId = id; cardBounds = bounds; sub = null }
     fun close() { itemId = null; sub = null }
     internal fun show(next: Sub) { sub = next }
+    /** Straight to a follow-up from an icon on the comment line (iOS `CommentActionButtonsRow`). */
+    internal fun openSub(id: String, next: Sub) { itemId = id; sub = next }
     internal val current get() = sub
     /** The lifted card is showing (the screen behind it blurs). */
     val isLifted get() = itemId != null && sub == null
@@ -183,8 +185,9 @@ private fun LiftedCard(item: ThreadItem) {
     Surface(shape = RoundedCornerShape(16.dp), color = c.surface0, shadowElevation = 12.dp, modifier = Modifier.testTag("liftedComment")) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 12.dp)) {
             if (item.isAnsweredMarker) {
-                Text("🙌 " + stringResource(R.string.answered), style = textStyle(15, 1.6f, FontWeight.SemiBold), color = c.answeredInk)
+                Text("🙌 " + stringResource(R.string.answered_today), style = textStyle(15, 1.6f, FontWeight.SemiBold), color = c.answeredInk)
             } else {
+                if (item.isAnswered) Text("🙌", style = textStyle(15))
                 Text(item.text, style = textStyle(15, 1.6f), color = c.neutral100)
             }
             FlowRow(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {

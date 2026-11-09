@@ -1,10 +1,10 @@
 package com.stoneofhope.stoneofhope.ui.notes
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,16 +27,27 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.Sell
+import androidx.compose.material3.Badge
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,19 +55,25 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -67,15 +84,21 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stoneofhope.stoneofhope.R
@@ -86,13 +109,18 @@ import com.stoneofhope.stoneofhope.data.notes.PinSegment
 import com.stoneofhope.stoneofhope.data.notes.ResolvedVerse
 import com.stoneofhope.stoneofhope.data.notes.ThreadDay
 import com.stoneofhope.stoneofhope.data.notes.ThreadItem
+import com.stoneofhope.stoneofhope.data.notes.VerseDisplay
+import com.stoneofhope.stoneofhope.data.notes.isTextEditable
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
+import java.time.Instant
+import java.time.LocalDate
 import java.time.YearMonth
-
+import java.time.ZoneId
 /**
- * Redesigned note details (docs/design/note-details): one card holding the verse (folded when long)
- * and the note, with tags / star / "⋯" at its foot; comments (or an anchor's reflections) by day;
- * and a composer at the bottom instead of the "+" button.
+ * Note details, following iOS `NoteDetailsView` (373d3a5) in Material: a prayer's or verse note's linked
+ * verse as its own card; the note card with its date block, tags, body and a row of action icons;
+ * comments (or an anchor's reflections) as one card per day beside a date column; and the composer.
+ * The "⋯" sheet stays as a second way to every action.
  */
 @Composable
 fun NoteDetailsScreen(onBack: () -> Unit, viewModel: NoteDetailsViewModel = hiltViewModel()) {
@@ -100,7 +128,6 @@ fun NoteDetailsScreen(onBack: () -> Unit, viewModel: NoteDetailsViewModel = hilt
     val actions = rememberNoteActionsState()
     val commentActions = rememberCommentActionsState()
     val composerFocus = remember { FocusRequester() }
-    var starDialog by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(state.gone) { if (state.gone) onBack() }
     val c = AppTheme.colors
     val card = state.card
@@ -111,22 +138,33 @@ fun NoteDetailsScreen(onBack: () -> Unit, viewModel: NoteDetailsViewModel = hilt
             TopBar(card, onBack, onMenu = { card?.let { actions.open(it.note.id) } })
             if (card == null) return@Column
             val note = card.note
+            val linkedVerse = state.verse?.takeIf { !card.isAnchor }
             LazyColumn(
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(26.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.weight(1f).testTag("noteDetails"),
             ) {
+                if (linkedVerse != null) {
+                    item(key = "linkedVerse") {
+                        Surface(shape = RoundedCornerShape(16.dp), color = c.surface0, border = BorderStroke(1.dp, c.neutral20), modifier = Modifier.fillMaxWidth().testTag("linkedVerse")) {
+                            Column { VerseArea(linkedVerse, foldable = true, divider = false, moreVersions = state.moreVersions) }
+                        }
+                    }
+                }
                 item(key = "card") {
-                    MainCard(
+                    NoteCard(
                         card = card,
-                        verse = state.verse,
+                        anchorVerse = state.verse?.takeIf { card.isAnchor },
                         moreVersions = state.moreVersions,
-                        onStar = { viewModel.onAction(note, NoteAction.Star(if (note.starLevel > 0) 0 else 1)) },
-                        onStarLevels = { starDialog = true },
-                        onMenu = { actions.open(note.id) },
+                        onAction = { viewModel.onAction(note, it) },
+                        onSub = { actions.openSub(note.id, it) },
+                        onComment = { composerFocus.requestFocus() },
+                        modifier = Modifier.padding(bottom = 12.dp),
                     )
                 }
-                item(key = "thread") { Thread(card.isAnchor, state.thread, state.threadCount, onItemActions = commentActions::open) }
+                item(key = "thread") {
+                    Thread(card.isAnchor, state.thread, state.threadCount, commentActions, onAction = viewModel::onThreadAction)
+                }
             }
             Composer(
                 hint = stringResource(if (card.isAnchor) R.string.add_reflection_hint else R.string.add_comment_hint),
@@ -150,81 +188,176 @@ fun NoteDetailsScreen(onBack: () -> Unit, viewModel: NoteDetailsViewModel = hilt
         onAction = viewModel::onAction,
         onAddComment = { composerFocus.requestFocus() },
     )
-    if (starDialog && card != null) {
-        StarDialog(onDismiss = { starDialog = false }) { starDialog = false; viewModel.onAction(card.note, NoteAction.Star(it)) }
-    }
 }
 
-/** Back, the type chip (+ a star when starred) over "Mon, Oct 12, 2026 · 7:15 AM", and "⋯" (§3.1). */
+/** Back, the type chip (iOS: the badge as the title), and "⋯" for the full actions sheet. */
 @Composable
 private fun TopBar(card: NoteCardUi?, onBack: () -> Unit, onMenu: () -> Unit) {
-    val c = AppTheme.colors
-    Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        RoundButton(onClick = onBack, description = stringResource(R.string.back)) {
+    Box(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 6.dp)) {
+        RoundButton(onClick = onBack, description = stringResource(R.string.back), modifier = Modifier.align(Alignment.CenterStart)) {
             Icon(Icons.AutoMirrored.Outlined.ArrowBack, null, modifier = Modifier.size(20.dp))
         }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            if (card != null) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    TypeChip(card.badge, size = 13)
-                    if (card.note.starLevel > 0) Icon(Icons.Filled.Star, null, tint = c.starredTile.foreground, modifier = Modifier.size(14.dp))
-                }
-                Text(fullDateTime(card.note.createdAt), style = textStyle(12), color = c.neutral90, modifier = Modifier.padding(top = 2.dp))
-            }
-        }
         if (card != null) {
-            RoundButton(onClick = onMenu, description = stringResource(R.string.action_more), modifier = Modifier.testTag("detailsMenu")) {
+            TypeChip(card.badge, size = 13, modifier = Modifier.align(Alignment.Center))
+            RoundButton(onClick = onMenu, description = stringResource(R.string.action_more), modifier = Modifier.align(Alignment.CenterEnd).testTag("detailsMenu")) {
                 Icon(Icons.Filled.MoreHoriz, null, modifier = Modifier.size(20.dp))
             }
         }
     }
 }
 
-/** The single card: verse area, note body, and the tags / star / "⋯" row (§3.2). */
-@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
+/**
+ * iOS `noteCard`: the date block with the tags to its right, the body (an anchor's verse text in every
+ * selected version), then the action icons.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MainCard(card: NoteCardUi, verse: ResolvedVerse?, moreVersions: List<ResolvedVerse>, onStar: () -> Unit, onStarLevels: () -> Unit, onMenu: () -> Unit) {
+private fun NoteCard(
+    card: NoteCardUi,
+    anchorVerse: ResolvedVerse?,
+    moreVersions: List<ResolvedVerse>,
+    onAction: (NoteAction) -> Unit,
+    onSub: (Sub) -> Unit,
+    onComment: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val c = AppTheme.colors
     val note = card.note
-    Surface(shape = RoundedCornerShape(24.dp), color = c.surface0, border = BorderStroke(1.dp, c.neutral20), modifier = Modifier.fillMaxWidth()) {
+    Surface(shape = RoundedCornerShape(16.dp), color = c.surface0, border = BorderStroke(1.dp, c.neutral20), modifier = modifier.fillMaxWidth()) {
         Column {
-            if (verse != null) VerseArea(verse, foldable = !card.isAnchor, moreVersions = moreVersions)
-            if (!card.isAnchor) {
-                Column(Modifier.padding(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    DateBlock(note.createdAt)
+                    if (card.tagNames.isNotEmpty()) {
+                        FlowRow(
+                            Modifier.weight(1f).padding(top = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) { card.tagNames.forEach { TagPill(it) } }
+                    }
+                }
+                if (!card.isAnchor) {
                     if (note.noteType == NoteType.Image) {
                         Surface(shape = RoundedCornerShape(14.dp), color = c.pageBackground, modifier = Modifier.fillMaxWidth()) {
                             Text("🖼️  " + stringResource(R.string.image_placeholder), style = textStyle(14), color = c.neutral90, modifier = Modifier.padding(16.dp))
                         }
                     }
                     paragraphs(card.displayContent).forEach {
-                        Text(it, style = textStyle(18, 1.7f, FontWeight.Medium), color = c.neutral100, modifier = Modifier.testTag("noteBody"))
+                        Text(it, style = textStyle(17, 1.6f), color = c.neutral100, modifier = Modifier.testTag("noteBody"))
                     }
                 }
             }
-            HorizontalDivider(color = c.neutral20.copy(alpha = 0.6f))
-            Row(Modifier.padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    if (note.noteType == NoteType.Prayer && note.isAnswered == true) Text("🙌", style = textStyle(14), modifier = Modifier.align(Alignment.CenterVertically))
-                    if (note.isPinned == true) {
-                        Icon(Icons.Filled.PushPin, stringResource(R.string.tile_pinned), tint = c.pinnedTile.foreground, modifier = Modifier.size(14.dp).align(Alignment.CenterVertically))
-                    }
-                    card.tagNames.forEach { TagPill(it) }
+            if (anchorVerse != null) VerseArea(anchorVerse, foldable = false, divider = false, moreVersions = moreVersions)
+            HorizontalDivider(color = c.neutral20)
+            NoteDetailActionBar(card, onAction, onSub, onComment)
+        }
+    }
+}
+
+/** iOS `NoteDateBlock`: the day in large digits, then "Nov · Mon" over "2026 · 7:15 AM". */
+@Composable
+private fun DateBlock(createdAt: Instant) {
+    val c = AppTheme.colors
+    val at = createdAt.atZone(ZoneId.systemDefault())
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.testTag("dateBlock")) {
+        Text("${at.dayOfMonth}", style = textStyle(40, 1.1f, FontWeight.SemiBold), color = c.yellow100)
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text("${monthShort(at.toLocalDate())} · ${weekdayShort(at.toLocalDate())}", style = textStyle(15, weight = FontWeight.SemiBold), color = c.neutral100)
+            Text("${at.year} · ${clockTime(createdAt)}", style = textStyle(12), color = c.neutral90)
+        }
+    }
+}
+
+/**
+ * iOS `NoteDetailActionBar` / `NoteActionButtonsRow`, spread across the card: 🙌/🙏 on prayers, copy,
+ * pin, delete, comment, star (an inline 1–3 picker), tags (with a count), and edit on editable notes.
+ */
+@Composable
+private fun NoteDetailActionBar(card: NoteCardUi, onAction: (NoteAction) -> Unit, onSub: (Sub) -> Unit, onComment: () -> Unit) {
+    val c = AppTheme.colors
+    val note = card.note
+    val context = LocalContext.current
+    val copied = stringResource(R.string.action_copied)
+    var picking by rememberSaveable { mutableStateOf(false) }
+    // Up to eight buttons plus three stars: 44dp targets so a prayer's row fits a phone (iOS: 36pt wide).
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 44.dp) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp), horizontalAlignment = Alignment.End) {
+        Row(Modifier.fillMaxWidth().testTag("noteActionBar"), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            if (note.noteType == NoteType.Prayer) {
+                val answered = note.isAnswered == true
+                val description = stringResource(R.string.answered)
+                IconButton(onClick = { onAction(NoteAction.ToggleAnswered) }, modifier = Modifier.testTag("barAnswered")) {
+                    Text(if (answered) "🙌" else "🙏", style = textStyle(19), modifier = Modifier.semantics { contentDescription = description })
                 }
-                val starred = note.starLevel > 0
-                Box(
-                    Modifier.size(44.dp).combinedClickable(onClick = onStar, onLongClick = onStarLevels).testTag("cardStar"),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        if (starred) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                        stringResource(R.string.action_star),
-                        tint = if (starred) c.starredTile.foreground else c.neutral90,
-                    )
+            }
+            if (note.noteType != NoteType.Image) {
+                IconButton(onClick = {
+                    copyToClipboard(context, VerseDisplay.copyText(note, card.displayContent))
+                    Toast.makeText(context, copied, Toast.LENGTH_SHORT).show()
+                }) { Icon(Icons.Outlined.ContentCopy, stringResource(R.string.action_copy), tint = c.neutral90, modifier = Modifier.size(20.dp)) }
+            }
+            val pinned = note.isPinned == true
+            IconButton(onClick = { onAction(NoteAction.TogglePinned) }, modifier = Modifier.testTag("barPin")) {
+                Icon(
+                    if (pinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                    stringResource(if (pinned) R.string.action_unpin else R.string.action_pin),
+                    tint = if (pinned) c.pinnedTile.foreground else c.neutral90, modifier = Modifier.size(20.dp),
+                )
+            }
+            IconButton(onClick = { onSub(Sub.Delete) }, modifier = Modifier.testTag("barDelete")) {
+                Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete), tint = c.red80, modifier = Modifier.size(20.dp))
+            }
+            IconButton(onClick = onComment, modifier = Modifier.testTag("barComment")) {
+                Icon(Icons.Outlined.ChatBubbleOutline, stringResource(R.string.action_add_comment), tint = c.neutral90, modifier = Modifier.size(20.dp))
+            }
+            StarsButton(note.starLevel, minSize = 44.dp, starSize = 14.dp, onClick = { picking = !picking }, modifier = Modifier.testTag("barStar"))
+            TagsButton(note.tagIds.size, onClick = { onSub(Sub.Tags) }, modifier = Modifier.testTag("barTags"))
+            if (note.isTextEditable) {
+                IconButton(onClick = { onSub(Sub.Edit) }, modifier = Modifier.testTag("barEdit")) {
+                    Icon(Icons.Outlined.Edit, stringResource(R.string.action_edit), tint = c.neutral90, modifier = Modifier.size(20.dp))
                 }
-                IconButton(onClick = onMenu, modifier = Modifier.size(44.dp).testTag("cardMenu")) {
-                    Icon(Icons.Filled.MoreHoriz, stringResource(R.string.action_more), tint = c.neutral90)
+            }
+        }
+        if (picking) InlineStarPicker(Modifier.padding(end = 6.dp, bottom = 8.dp)) { picking = false; onAction(NoteAction.Star(it)) }
+    }
+    }
+}
+
+/** iOS `StarIconView` as a button: up to three stars (an outline when none), as wide as they need. */
+@Composable
+private fun StarsButton(level: Int, minSize: Dp, starSize: Dp, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val description = stringResource(R.string.action_star)
+    Box(
+        modifier.sizeIn(minWidth = minSize, minHeight = minSize).clip(CircleShape)
+            .clickable(role = Role.Button, onClick = onClick).semantics { contentDescription = description }.padding(horizontal = 4.dp),
+        contentAlignment = Alignment.Center,
+    ) { StarIcons(level, size = starSize) }
+}
+
+/** The tag icon, with the number of tags on it when there is more than one (iOS badge). */
+@Composable
+private fun TagsButton(count: Int, onClick: () -> Unit, modifier: Modifier = Modifier, iconSize: Dp = 20.dp) {
+    val c = AppTheme.colors
+    IconButton(onClick = onClick, modifier = modifier) {
+        BadgedBox(badge = { if (count > 1) Badge { Text("$count") } }) {
+            Icon(if (count > 0) Icons.Filled.Sell else Icons.Outlined.Sell, stringResource(R.string.action_tags), tint = if (count > 0) c.yellow100 else c.neutral90, modifier = Modifier.size(iconSize))
+        }
+    }
+}
+
+/** iOS `InlineStarPicker`: one to three stars, or none. */
+@Composable
+private fun InlineStarPicker(modifier: Modifier = Modifier, onSelect: (Int) -> Unit) {
+    val c = AppTheme.colors
+    Surface(shape = RoundedCornerShape(14.dp), color = c.pageBackground, shadowElevation = 3.dp, modifier = modifier.testTag("starPicker")) {
+        Row(Modifier.padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            (1..3).forEach { level ->
+                TextButton(onClick = { onSelect(level) }, modifier = Modifier.testTag("star$level")) {
+                    StarIcons(level, size = 18.dp)
                 }
+            }
+            IconButton(onClick = { onSelect(0) }, modifier = Modifier.testTag("star0")) {
+                Icon(Icons.Filled.Cancel, stringResource(R.string.action_remove_star), tint = c.neutral90)
             }
         }
     }
@@ -321,112 +454,177 @@ private fun FoldBox(collapsed: Boolean, maxHeight: Dp, onOverflow: (Boolean) -> 
     }
 }
 
-/** "Comments" / "Reflections" with count and month, then day groups with a date column (§3.3). */
+private val RailWidth = 40.dp
+
+/**
+ * iOS `NoteDetailTimelineContent`: "Comments" (or "Reflections") with its count, a month line per month,
+ * and each day as one card beside its date — a line in the date column joins consecutive days. A pinned
+ * run with nothing else that day is a compact line (one per run, the user's choice).
+ */
 @Composable
-internal fun Thread(isAnchor: Boolean, days: List<ThreadDay>, count: Int, onItemActions: (id: String, cardBounds: Rect) -> Unit) {
+internal fun Thread(
+    isAnchor: Boolean,
+    days: List<ThreadDay>,
+    count: Int,
+    actions: CommentActionsState,
+    onAction: (ThreadItem, NoteAction) -> Unit,
+) {
     val c = AppTheme.colors
-    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Row(Modifier.padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(if (isAnchor) R.string.reflections_title else R.string.comments_title), style = textStyle(17, weight = FontWeight.Bold), color = c.neutral100)
-            Box(Modifier.heightIn(min = 22.dp).background(c.neutral20.copy(alpha = 0.6f), RoundedCornerShape(11.dp)).padding(horizontal = 7.dp), contentAlignment = Alignment.Center) {
-                Text("$count", style = textStyle(12, weight = FontWeight.SemiBold), color = c.neutral90)
-            }
-            Spacer(Modifier.weight(1f))
-            days.firstOrNull()?.let { Text(monthYearCaps(YearMonth.from(it.day)), style = capsStyle(0.06f).copy(fontWeight = FontWeight.SemiBold), color = c.neutral90) }
-        }
-        if (days.isEmpty()) {
-            Text(stringResource(if (isAnchor) R.string.no_reflections else R.string.no_comments), style = textStyle(14), color = c.neutral90, modifier = Modifier.padding(horizontal = 4.dp))
+    if (days.isEmpty()) {
+        Text(stringResource(if (isAnchor) R.string.no_reflections else R.string.no_comments), style = textStyle(14), color = c.neutral90, modifier = Modifier.padding(bottom = 12.dp))
+        return
+    }
+    Column {
+        Row(Modifier.padding(bottom = 12.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(stringResource(if (isAnchor) R.string.reflections_title else R.string.comments_title), style = textStyle(17, weight = FontWeight.SemiBold), color = c.neutral100)
+            if (count > 0) Text("$count", style = textStyle(13), color = c.neutral90, modifier = Modifier.padding(bottom = 1.dp).testTag("threadCount"))
         }
         days.forEachIndexed { i, day ->
             val month = YearMonth.from(day.day)
-            if (i > 0 && month != YearMonth.from(days[i - 1].day)) {
-                Text(monthYearCaps(month), style = capsStyle(0.06f).copy(fontWeight = FontWeight.SemiBold), color = c.neutral90, modifier = Modifier.padding(horizontal = 4.dp))
+            if (i == 0 || month != YearMonth.from(days[i - 1].day)) {
+                Text(monthYearTitle(month), style = textStyle(13, weight = FontWeight.SemiBold), color = c.neutral90, modifier = Modifier.padding(top = if (i == 0) 0.dp else 8.dp, bottom = 10.dp).testTag("monthTitle"))
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(Modifier.width(36.dp).padding(top = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("${day.day.dayOfMonth}", style = textStyle(20, 1f, FontWeight.Bold), color = c.neutral100)
-                    Text(weekdayShort(day.day), style = textStyle(11), color = c.neutral90, modifier = Modifier.padding(top = 3.dp))
-                }
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val compact = day.items.isEmpty() && !day.answered
+            val lineColor = c.neutral20
+            Row(
+                Modifier.fillMaxWidth().padding(bottom = if (compact) 8.dp else 12.dp).drawBehind {
+                    if (day.connectsBelow) {
+                        val x = RailWidth.toPx() / 2
+                        drawLine(lineColor, Offset(x, (if (compact) 22.dp else 46.dp).toPx()), Offset(x, size.height - 4.dp.toPx()), strokeWidth = 2.dp.toPx())
+                    }
+                }.testTag(if (day.connectsBelow) "dayConnected" else "day"),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = if (compact) Alignment.CenterVertically else Alignment.Top,
+            ) {
+                if (compact) {
+                    Text("${day.day.dayOfMonth}", style = textStyle(13, weight = FontWeight.SemiBold), color = c.yellow100, textAlign = TextAlign.Center, modifier = Modifier.width(RailWidth))
                     day.pinned?.let { PinnedLine(it) }
-                    if (day.answered) AnsweredLine()
-                    day.items.forEach { item -> CommentCard(item, onActions = { onItemActions(item.id, it) }) }
+                } else {
+                    Column(Modifier.width(RailWidth), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("${day.day.dayOfMonth}", style = textStyle(20, 1.15f, FontWeight.SemiBold), color = c.yellow100)
+                        // iOS `.minimumScaleFactor(0.7)`: "Yesterday" shrinks to fit the column.
+                        BasicText(
+                            dayLabel(day.day), style = textStyle(11).copy(color = c.neutral90, textAlign = TextAlign.Center), maxLines = 1,
+                            autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 11.sp), modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    Surface(shape = RoundedCornerShape(14.dp), color = c.surface0, border = BorderStroke(1.dp, c.neutral20), modifier = Modifier.weight(1f).testTag("dayCard")) {
+                        Column {
+                            day.pinned?.let { Box(Modifier.padding(start = 14.dp, top = 12.dp)) { PinnedLine(it) } }
+                            if (day.answered) AnsweredLine(bottom = if (day.items.isEmpty()) 12.dp else 0.dp)
+                            day.items.forEachIndexed { j, item ->
+                                if (j > 0) HorizontalDivider(color = c.neutral20)
+                                CommentLine(item, actions, onAction)
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-/**
- * A pinned run as one gray line on its last day (§3.3; `PinLog` keeps days, not times):
- * "📌 Pinned" or "📌 Pinned · Oct 20 – 26".
- */
+/** iOS `timelineWeekdayLabel`: "Today", "Yesterday", else the short weekday. */
+@Composable
+private fun dayLabel(day: LocalDate): String {
+    val today = LocalDate.now()
+    return when (day) {
+        today -> stringResource(R.string.day_today)
+        today.minusDays(1) -> stringResource(R.string.day_yesterday)
+        else -> weekdayShort(day)
+    }
+}
+
+/** "📌 Pinned" or "📌 Pinned · Oct 20 – 26" (`PinLog` keeps days, not times). */
 @Composable
 private fun PinnedLine(run: PinSegment) {
     val label = if (run.start == run.end) stringResource(R.string.thread_pinned)
     else stringResource(R.string.thread_pinned_range, dayRange(run.start, run.end))
-    Text("📌 $label", style = textStyle(13, weight = FontWeight.Medium), color = AppTheme.colors.neutral90, modifier = Modifier.padding(start = 4.dp, top = 12.dp).testTag("pinnedLine"))
+    Text("📌 $label", style = textStyle(13, weight = FontWeight.Medium), color = AppTheme.colors.neutral90, modifier = Modifier.testTag("pinnedLine"))
 }
 
 /** iOS `showsAnsweredBadge`: the day a prayer was marked answered without an "Answered" comment. */
 @Composable
-private fun AnsweredLine() {
+private fun AnsweredLine(bottom: Dp) {
     Text(
         "🙌 " + stringResource(R.string.answered),
-        style = textStyle(13, weight = FontWeight.SemiBold),
+        style = textStyle(12, weight = FontWeight.SemiBold),
         color = AppTheme.colors.answeredInk,
-        modifier = Modifier.padding(start = 4.dp, top = 12.dp).testTag("answeredLine"),
+        modifier = Modifier.padding(start = 14.dp, top = 12.dp, bottom = bottom).testTag("answeredLine"),
     )
 }
 
 /**
- * A comment (or reflection) card; an "Answered" marker reads as a green label (§3.3). Long press or
- * its "⋯" opens the actions (C4) with the card's place on screen.
+ * iOS `TimelineCommentLine`: 🙌 (a folded "Answered" marker), tags and stars on the first line; the text
+ * (or "🙌 Answered Today" for a marker standing alone); then the time and the action icons. Long press
+ * lifts the line with its actions (design C4), as before.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun CommentCard(item: ThreadItem, onActions: (cardBounds: Rect) -> Unit) {
+private fun CommentLine(item: ThreadItem, actions: CommentActionsState, onAction: (ThreadItem, NoteAction) -> Unit) {
     val c = AppTheme.colors
+    val context = LocalContext.current
+    val copied = stringResource(R.string.action_copied)
     val haptics = LocalHapticFeedback.current
     var bounds by remember { mutableStateOf(Rect.Zero) }
-    val open by rememberUpdatedState { onActions(bounds) }
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = c.surface0,
-        border = BorderStroke(1.dp, c.neutral20),
-        modifier = Modifier.fillMaxWidth()
+    var picking by rememberSaveable(item.id) { mutableStateOf(false) }
+    val showsAnswered = item.isAnswered && !item.isAnsweredMarker
+    Column(
+        Modifier.fillMaxWidth()
             .onGloballyPositioned { bounds = it.boundsInRoot() }
-            .pointerInput(Unit) {
+            .pointerInput(item.id) {
                 detectTapGestures(onLongPress = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    open()
+                    actions.open(item.id, bounds)
                 })
             }
+            .padding(start = 14.dp, end = 4.dp, top = 12.dp, bottom = 2.dp)
             .testTag("comment"),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Row {
-            Column(Modifier.weight(1f).padding(start = 14.dp, top = 12.dp, bottom = 12.dp)) {
-                if (item.isAnsweredMarker) {
-                    Text("🙌 " + stringResource(R.string.answered), style = textStyle(15, 1.6f, FontWeight.SemiBold), color = c.answeredInk)
-                } else {
-                    Text(item.text, style = textStyle(15, 1.6f), color = c.neutral100)
-                }
-                FlowRow(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(clockTime(item.createdAt), style = textStyle(12), color = c.neutral90, modifier = Modifier.align(Alignment.CenterVertically))
-                    if (item.starLevel > 0) StarIcons(item.starLevel, Modifier.align(Alignment.CenterVertically), size = 12.dp)
-                    item.tagNames.forEach { TagPill(it, compact = true) }
+        if (showsAnswered || item.starLevel > 0 || item.tagNames.isNotEmpty()) {
+            FlowRow(Modifier.padding(end = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (showsAnswered) Text("🙌", style = textStyle(15), modifier = Modifier.align(Alignment.CenterVertically).testTag("commentAnswered"))
+                item.tagNames.forEach { TagPill(it, compact = true) }
+                if (item.starLevel > 0) StarIcons(item.starLevel, Modifier.align(Alignment.CenterVertically), size = 13.dp)
+            }
+        }
+        if (item.isAnsweredMarker) {
+            Text("🙌 " + stringResource(R.string.answered_today), style = textStyle(15, 1.5f, FontWeight.SemiBold), color = c.answeredInk, modifier = Modifier.testTag("answeredMarker"))
+        } else {
+            Text(item.text, style = textStyle(15, 1.6f), color = c.neutral100, modifier = Modifier.padding(end = 10.dp))
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(clockTime(item.createdAt), style = textStyle(12), color = c.neutral90, maxLines = 1)
+            Spacer(Modifier.weight(1f))
+            val small = Modifier.size(36.dp)
+            if (!item.isAnsweredMarker) {
+                IconButton(onClick = {
+                    copyToClipboard(context, item.text)
+                    Toast.makeText(context, copied, Toast.LENGTH_SHORT).show()
+                }, modifier = small) { Icon(Icons.Outlined.ContentCopy, stringResource(R.string.action_copy), tint = c.neutral90, modifier = Modifier.size(16.dp)) }
+            }
+            IconButton(onClick = { actions.openSub(item.id, Sub.Delete) }, modifier = small.testTag("commentDelete")) {
+                Icon(Icons.Outlined.Delete, stringResource(R.string.action_delete), tint = c.red80, modifier = Modifier.size(16.dp))
+            }
+            StarsButton(item.starLevel, minSize = 36.dp, starSize = 13.dp, onClick = { picking = !picking }, modifier = Modifier.testTag("commentStar"))
+            TagsButton(item.tagIds.size, onClick = { actions.openSub(item.id, Sub.Tags) }, modifier = small.testTag("commentTags"), iconSize = 16.dp)
+            if (!item.isAnsweredMarker) {
+                IconButton(onClick = { actions.openSub(item.id, Sub.Edit) }, modifier = small.testTag("commentEdit")) {
+                    Icon(Icons.Outlined.Edit, stringResource(R.string.action_edit), tint = c.neutral90, modifier = Modifier.size(16.dp))
                 }
             }
-            IconButton(onClick = { open() }, modifier = Modifier.padding(top = 4.dp, end = 4.dp).size(36.dp).testTag("commentMenu")) {
-                Icon(Icons.Filled.MoreHoriz, stringResource(R.string.action_more), tint = c.neutral90, modifier = Modifier.size(18.dp))
-            }
+        }
+        if (picking) {
+            InlineStarPicker(Modifier.align(Alignment.End).padding(end = 6.dp, bottom = 8.dp)) { picking = false; onAction(item, NoteAction.Star(it)) }
         }
     }
 }
 
 /**
  * The bottom composer (§3.4): a pill field ([hint]: "Add a comment…" / "Add a reflection…") growing to
- * 5 lines, a round send button, and for unanswered prayers an "Answered today" toggle above it.
+ * 5 lines, a round send button, and for unanswered prayers an "Answered Today" toggle above it while
+ * typing (iOS `commentComposer`).
  * [top] sits above the field (the chapter verse page's Reflection / Prayer switch).
  */
 @Composable
@@ -440,17 +638,25 @@ internal fun Composer(
     val c = AppTheme.colors
     var text by rememberSaveable { mutableStateOf("") }
     var answered by rememberSaveable { mutableStateOf(false) }
-    val canSend = text.isNotBlank() || (canMarkAnswered && answered)
+    var focused by remember { mutableStateOf(false) }
+    // iOS: the toggle shows while the field is focused or has text. Unlike iOS (IOS_ISSUES O4), a hidden
+    // toggle is also off, so an empty send can't log a stray "Answered" marker.
+    val showToggle = canMarkAnswered && (focused || text.isNotEmpty())
+    LaunchedEffect(showToggle) { if (!showToggle) answered = false }
+    val markAnswered = showToggle && answered
+    val canSend = text.isNotBlank() || markAnswered
     Column(Modifier.fillMaxWidth().background(c.surface0).imePadding().navigationBarsPadding()) {
         HorizontalDivider(color = c.neutral20)
         top?.invoke()
-        if (canMarkAnswered) {
+        if (showToggle) {
+            val description = stringResource(R.string.action_mark_answered)
             Surface(
                 onClick = { answered = !answered },
                 shape = RoundedCornerShape(50),
                 color = if (answered) c.answeredPrayerTile.background else c.pageBackground,
                 border = BorderStroke(1.dp, if (answered) c.answeredInk.copy(alpha = 0.4f) else c.neutral20),
-                modifier = Modifier.padding(start = 16.dp, top = 10.dp).height(32.dp).testTag("answeredToday"),
+                modifier = Modifier.padding(start = 16.dp, top = 10.dp).height(32.dp).testTag("answeredToday")
+                    .semantics { contentDescription = description; selected = answered },
             ) {
                 Box(Modifier.padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
                     Text("🙌 " + stringResource(R.string.answered_today), style = textStyle(13, weight = FontWeight.SemiBold), color = if (answered) c.answeredInk else c.neutral90)
@@ -464,7 +670,7 @@ internal fun Composer(
                 maxLines = 5,
                 textStyle = textStyle(15, 1.4f).copy(color = c.neutral100),
                 cursorBrush = SolidColor(c.blue80),
-                modifier = Modifier.weight(1f).focusRequester(focusRequester).testTag("composerField"),
+                modifier = Modifier.weight(1f).focusRequester(focusRequester).onFocusChanged { focused = it.isFocused }.testTag("composerField"),
                 decorationBox = { inner ->
                     Box(
                         Modifier.heightIn(min = 44.dp).background(c.pageBackground, RoundedCornerShape(22.dp))
@@ -481,7 +687,7 @@ internal fun Composer(
             Spacer(Modifier.width(10.dp))
             Surface(
                 onClick = {
-                    onSend(text.trim(), canMarkAnswered && answered)
+                    onSend(text.trim(), markAnswered)
                     text = ""
                     answered = false
                 },
