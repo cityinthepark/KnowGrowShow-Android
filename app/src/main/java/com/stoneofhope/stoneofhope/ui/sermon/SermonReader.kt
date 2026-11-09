@@ -58,6 +58,7 @@ import com.stoneofhope.stoneofhope.data.notes.anchoredVerseRef
 import com.stoneofhope.stoneofhope.data.notes.bibleVerseRef
 import com.stoneofhope.stoneofhope.data.notes.isAnsweredMarker
 import com.stoneofhope.stoneofhope.data.sermon.SermonRules
+import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
 import com.stoneofhope.stoneofhope.ui.notes.StarIcons
 import com.stoneofhope.stoneofhope.ui.notes.textStyle
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
@@ -90,8 +91,10 @@ class SermonReaderViewModel @Inject constructor(
     savedState: SavedStateHandle,
     db: AppDatabase,
     private val audio: SermonAudioPlayer,
+    bibleVersions: BibleVersionPreferences,
 ) : ViewModel() {
     val sermonId: String = checkNotNull(savedState[SermonViewModel.ARG_ID])
+    private val selectedVersions = bibleVersions.selectedVersions()
     private val zone: ZoneId get() = ZoneId.systemDefault()
 
     private val notes = db.noteDao().observeForSermons(listOf(sermonId))
@@ -109,7 +112,7 @@ class SermonReaderViewModel @Inject constructor(
             ReaderBlock(
                 note = note,
                 reference = if (isAnchor) (note.bibleVerseRef ?: note.anchoredVerseRef) else null,
-                body = VerseDisplay.displayContent(note, versesById),
+                body = VerseDisplay.displayContent(note, selectedVersions, versesById),
                 lines = (reflections + noteComments).sortedBy { it.first }.map { it.second },
             )
         }

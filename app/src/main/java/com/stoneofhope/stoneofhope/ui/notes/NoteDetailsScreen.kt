@@ -6,14 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,19 +48,27 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -79,6 +79,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stoneofhope.stoneofhope.R
+import com.stoneofhope.stoneofhope.data.bible.BibleVersions
 import com.stoneofhope.stoneofhope.data.model.NoteType
 import com.stoneofhope.stoneofhope.data.notes.NoteBadges
 import com.stoneofhope.stoneofhope.data.notes.PinSegment
@@ -119,6 +120,7 @@ fun NoteDetailsScreen(onBack: () -> Unit, viewModel: NoteDetailsViewModel = hilt
                     MainCard(
                         card = card,
                         verse = state.verse,
+                        moreVersions = state.moreVersions,
                         onStar = { viewModel.onAction(note, NoteAction.Star(if (note.starLevel > 0) 0 else 1)) },
                         onStarLevels = { starDialog = true },
                         onMenu = { actions.open(note.id) },
@@ -182,12 +184,12 @@ private fun TopBar(card: NoteCardUi?, onBack: () -> Unit, onMenu: () -> Unit) {
 /** The single card: verse area, note body, and the tags / star / "⋯" row (§3.2). */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-private fun MainCard(card: NoteCardUi, verse: ResolvedVerse?, onStar: () -> Unit, onStarLevels: () -> Unit, onMenu: () -> Unit) {
+private fun MainCard(card: NoteCardUi, verse: ResolvedVerse?, moreVersions: List<ResolvedVerse>, onStar: () -> Unit, onStarLevels: () -> Unit, onMenu: () -> Unit) {
     val c = AppTheme.colors
     val note = card.note
     Surface(shape = RoundedCornerShape(24.dp), color = c.surface0, border = BorderStroke(1.dp, c.neutral20), modifier = Modifier.fillMaxWidth()) {
         Column {
-            if (verse != null) VerseArea(verse, foldable = !card.isAnchor)
+            if (verse != null) VerseArea(verse, foldable = !card.isAnchor, moreVersions = moreVersions)
             if (!card.isAnchor) {
                 Column(Modifier.padding(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     if (note.noteType == NoteType.Image) {
@@ -236,10 +238,11 @@ private val FoldedHeight = 136.dp
 /**
  * The verse area (§3.2a): reference + version tag, one paragraph per verse with superscript numbers.
  * Over 3 verses or 5 lines it folds to ~136dp with a fade and "Show all N verses"; an anchor's verse
- * is its note, so it never folds.
+ * is its note, so it never folds. [moreVersions] (an anchor's other selected versions, iOS `456b7e6`)
+ * follow, each under its own version tag.
  */
 @Composable
-internal fun VerseArea(verse: ResolvedVerse, foldable: Boolean, divider: Boolean = true) {
+internal fun VerseArea(verse: ResolvedVerse, foldable: Boolean, divider: Boolean = true, moreVersions: List<ResolvedVerse> = emptyList()) {
     val c = AppTheme.colors
     val fill = c.noteTypeBibleVerse.copy(alpha = 0.06f)
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -248,18 +251,17 @@ internal fun VerseArea(verse: ResolvedVerse, foldable: Boolean, divider: Boolean
     Column(Modifier.fillMaxWidth().background(fill).padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = if (needsFold) 4.dp else 16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("${NoteBadges.BIBLE_ICON} " + verse.refLabel.uppercase(), style = capsStyle(0.08f), color = c.scriptureInk)
-            if (verse.versionAbbr.isNotEmpty()) {
-                Text(
-                    verse.versionAbbr,
-                    style = textStyle(11, weight = FontWeight.SemiBold),
-                    color = c.scriptureInk,
-                    modifier = Modifier.background(c.noteTypeBibleVerse.copy(alpha = 0.12f), RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 2.dp),
-                )
-            }
+            VersionTag(verse.versionAbbr)
         }
         Box(Modifier.padding(top = 8.dp)) {
             FoldBox(collapsed = foldable && !expanded, maxHeight = FoldedHeight, onOverflow = { overflows = it }) {
-                VerseParagraphs(verse)
+                Column {
+                    VerseParagraphs(verse)
+                    moreVersions.forEach { other ->
+                        Box(Modifier.padding(top = 14.dp, bottom = 8.dp)) { VersionTag(other.versionAbbr) }
+                        VerseParagraphs(other)
+                    }
+                }
             }
             if (needsFold && !expanded) {
                 val base = fill.compositeOver(c.surface0)
@@ -276,6 +278,18 @@ internal fun VerseArea(verse: ResolvedVerse, foldable: Boolean, divider: Boolean
         }
     }
     if (divider) HorizontalDivider(color = c.noteTypeBibleVerse.copy(alpha = 0.12f))
+}
+
+@Composable
+private fun VersionTag(versionAbbr: String) {
+    if (versionAbbr.isEmpty()) return
+    val c = AppTheme.colors
+    Text(
+        BibleVersions.toDisplay(versionAbbr),
+        style = textStyle(11, weight = FontWeight.SemiBold),
+        color = c.scriptureInk,
+        modifier = Modifier.background(c.noteTypeBibleVerse.copy(alpha = 0.12f), RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 2.dp).testTag("versionTag"),
+    )
 }
 
 @Composable

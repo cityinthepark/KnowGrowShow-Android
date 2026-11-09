@@ -299,10 +299,10 @@ class SermonRepositoryTest {
     @Test fun sermonPageNotesCarryTheSermon() = runTest {
         val s = sermons.createManual("Grace", "Genesis 1", "", null, zone)
         val genesis1 = BookChapter(1, 1)
-        sermons.saveNote(s.id, "plain thought", "Genesis 1", genesis1, zone)
-        sermons.saveNote(s.id, "v3 let there be light", "Genesis 1", genesis1, zone)
+        sermons.saveNote(s.id, "chapter thought", genesis1, chapterNote = true, zone = zone)
+        sermons.saveNote(s.id, "v3 let there be light", genesis1, chapterNote = true, zone = zone)
         val list = allNotes()
-        val plain = list.single { it.content == "plain thought" }
+        val plain = list.single { it.content == "chapter thought" }
         assertEquals(s.id, plain.sermonId)
         assertEquals(listOf(1, 1, null), listOf(plain.bookOrd, plain.chapterOrd, plain.verseStart))
         val anchor = list.single { it.noteType == NoteType.BibleVerse }
@@ -315,6 +315,23 @@ class SermonRepositoryTest {
         val script = allNotes().single { it.content == "[0:05] some words" }
         assertEquals(s.id, script.sermonId)
         assertNull(script.bookOrd)
+    }
+
+    /** iOS `456b7e6`: the "Chapter Note" switch is off by default; "v3" and "Hebrews 4:3" save verses either way. */
+    @Test fun withChapterNoteOffPlainTextStaysOffTheChapter() = runTest {
+        val s = sermons.createManual("Grace", "Genesis 1", "", null, zone)
+        val genesis1 = BookChapter(1, 1)
+        sermons.saveNote(s.id, "plain thought", genesis1, chapterNote = false, zone = zone)
+        sermons.saveNote(s.id, "v3 light", genesis1, chapterNote = false, zone = zone)
+        sermons.saveNote(s.id, "Hebrews 4:3 rest", genesis1, chapterNote = false, zone = zone)
+        val list = allNotes()
+        val plain = list.single { it.content == "plain thought" }
+        assertEquals(s.id, plain.sermonId)
+        assertEquals(listOf(null, null, null), listOf(plain.bookOrd, plain.chapterOrd, plain.refKey))
+        val anchors = list.filter { it.noteType == NoteType.BibleVerse }.associateBy { it.bookOrd }
+        assertEquals(listOf(1, 3), anchors.getValue(1).let { listOf(it.chapterOrd, it.verseStart) })
+        assertEquals(listOf(4, 3), anchors.getValue(58).let { listOf(it.chapterOrd, it.verseStart) })
+        assertTrue(anchors.values.all { it.sermonId == s.id })
     }
 
     // MARK: - Series (S2)
@@ -389,7 +406,7 @@ class SermonRepositoryTest {
     @Test fun deletingAVideoTombstonesItsNotes() = runTest {
         web.info = OEmbedInfo("T", null, null, null)
         videos.create(link, null, zone)
-        videos.saveNote(vid, "watching", null, null, zone)
+        videos.saveNote(vid, "watching", null, chapterNote = false, zone = zone)
         val note = allNotes().single()
         assertEquals(vid, note.youtubeID)
         videos.delete(vid)

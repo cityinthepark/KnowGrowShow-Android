@@ -85,6 +85,7 @@ class VerseReferenceSaveTest {
     @Test fun versePlusReflectionCreatesAnchorAndIndependentNote() = runTest {
         val result = repo().saveGenesis11("first thought")
         assertTrue(result.didCreateAnchor)
+        assertFalse(result.textMissing)
         with(result.anchor) {
             assertEquals(NoteType.BibleVerse, noteType)
             assertEquals(NoteVerseAnchor.PLACEHOLDER, content)
@@ -371,7 +372,9 @@ class VerseReferenceSaveTest {
     @Test fun unavailableVersionStillSavesTheAnchorWithoutUserVerses() = runTest {
         versions.setSelectedVersions(listOf("NIV"))
         val r = repo(bundled = true)
-        r.saveNoteFromContent("John 3:16 love", null, zone = zone)
+        val saved = r.saveNoteFromContent("John 3:16 love", null, zone = zone) as NoteInputSaveResult.Verse
+        // iOS `642cb8f`: saved anyway, and the result says the text is missing so the page can say why.
+        assertTrue(saved.result.textMissing)
         assertEquals("NIV", anchors().single().versionAbbr)
         assertEquals("love", reflections().single().content)
         assertTrue(db.userVerseDao().dirty().isEmpty())

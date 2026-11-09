@@ -58,6 +58,8 @@
 | E2 🔴 | `zh-Hant.lproj/Localizable.strings` | 繁体里混了简体字：Starred = 加星标、Answered Prayers = 已應允祷告、Image = 图片、Quick Note = 快速笔记 | 繁体用户看到简体字 | 已改为 加星標、已應允禱告、圖片（快速筆記暂未用到） | 不用 |
 | E3 🟡 | `en.lproj` / 各语言 | 缺少的键：英文 "Study Note"；三种语言都缺 "Review"；另有 "Book"、"Sermon Already Exists"、"Using YouTube link" 等 | 界面直接显示键名 | 安卓已补 Review（回顾/回顧）、Study Note | 不用（iOS 补齐即可） |
 | E4 🟡 | `en.lproj`："%d chapters today" 等 | 没有单复数 | 英文显示 "1 chapters today" | 安卓用 plurals："1 chapter today" | 不用 |
+| E5 ✅ | `Models/Note.swift` `NoteType`（还原 `cca76ed` 的 `3175662` / `577ab14`） | 撤销"按经文分组"时把 `.studyNote` 一起删了：Web 写的 `noteType: "studyNote"` 拉到 iOS 后 `NoteType(rawValue:)` 失败，当成普通快速笔记，iOS 再推送时把类型改写成 `"note"` | Web 的学习笔记被 iOS 悄悄改成快速笔记 | 一直保留 `studyNote`（Today 格子、过滤、日历色条、每日回顾），数据原样保存 | 不用；iOS 已恢复（2026-11-09，iOS 提交 `27f0fee`，不含经文分组） |
+| E6 🔴 | `zh-Hant.lproj/Localizable.strings` 66 行 | "Quick Note" = "快速笔记"（简体）。E2 时没用到，还原后 Today 格子又用回 "Quick Note" | 繁体用户在 Today 看到简体字 | "快速筆記" | 不用 |
 
 ## F. 经文引用（Today T2）
 
@@ -192,6 +194,14 @@ K1 补充：笔记推送也省略空字段。目前笔记里会被清空的只�
 | M7 🟡 | `ChurchSermonImportService.hasImported` | 只要 UserDefaults 里有版本号就算"已导入"；讲道没了而版本号还在时，按钮是"导入最新更新"，点了什么也不导 | 讲道被清后没法重新导入 | 以本机是否有该教会的讲道为准；没有就显示"导入全部讲道" | 不用 |
 | M8 🟡 | iOS 文档 `STAGE2_DEV_PLAN.md` vs `ONLINE_RESOURCE_PROFILE_FIRESTORE.md` | 一份说"profile 不同步到 `users/{uid}`"，一份定义了 `users/{uid}/onlineResources/{churchKey}`（说 iOS + Web 同步），iOS 代码两者都没实现；现在用户又定了 `settings/preferences.churches` | 三套说法并存，iOS / Web 容易各做各的 | 安卓按 `settings/preferences.churches` 做（C4） | iOS 要按同一格式写，并改这两份文档 |
 | M9 🟡 | `CloudDataWipeService.userScopedCollections` | 只清已知集合，不含 `settings` | 安卓 / Web 写过 `settings/preferences` 后，iOS 删账号会留下这份文档 | 安卓的清除（账号阶段）会包含 `settings` | iOS 需把 `settings` 加进清单 |
+
+## O. iOS 11-08 更新的跟进（2026-11-09）
+
+安卓按 iOS `642cb8f`、`456b7e6` 跟进时发现的问题（N 节留给 Web 发现的问题，见总账 §3）。计划见 [IOS_SYNC_1108_PLAN.md](IOS_SYNC_1108_PLAN.md)。
+
+| # | iOS 位置 | 问题 | 影响 | 安卓做法 | iOS 修后安卓要改吗 |
+| --- | --- | --- | --- | --- | --- |
+| O1 🟡 | `NotesManager.saveSeparatedNoteInput` → `saveVerseReferenceFromDetection` | "取不到经文"的通知（`verseTextUnavailable`）只在 `saveBibleVerseFromSeparatedInput` 里发（引用框、"v3 …"）。正文里直接写"Hebrews 4:3 …"走 `saveVerseReferenceFromDetection`，取不到经文时不发 | 讲道/视频面板去掉引用框后，写经节主要就靠正文里的"书卷 章:节"；没网时这样保存，经文是空的，却没有任何提示 | 两条路径都提示（`VerseReferenceSaveResult.textMissing`） | 不用 |
 
 ---
 

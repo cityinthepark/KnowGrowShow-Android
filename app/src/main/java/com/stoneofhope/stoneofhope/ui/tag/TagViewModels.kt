@@ -10,6 +10,7 @@ import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
 import com.stoneofhope.stoneofhope.data.local.entity.YouTubeVideoEntity
 import com.stoneofhope.stoneofhope.data.notes.VerseDisplay
 import com.stoneofhope.stoneofhope.data.repository.TagRepository
+import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
 import com.stoneofhope.stoneofhope.data.tag.TagCounts
 import com.stoneofhope.stoneofhope.data.tag.TagRenameResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -59,7 +60,12 @@ data class TagNotesState(
 
 /** iOS `TagNotesViewModel`. Argument: [ARG_ID]. */
 @HiltViewModel
-class TagNotesViewModel @Inject constructor(savedState: SavedStateHandle, db: AppDatabase) : ViewModel() {
+class TagNotesViewModel @Inject constructor(
+    savedState: SavedStateHandle,
+    db: AppDatabase,
+    bibleVersions: BibleVersionPreferences,
+) : ViewModel() {
+    private val selectedVersions = bibleVersions.selectedVersions()
     private val tagId: String = checkNotNull(savedState.get<String>(ARG_ID))
 
     val state: StateFlow<TagNotesState> = combine(
@@ -81,7 +87,7 @@ class TagNotesViewModel @Inject constructor(savedState: SavedStateHandle, db: Ap
             name = tag.name,
             sermons = sermons.filter { tagId in it.tagIds }.sortedByDescending { it.createdAt },
             videos = videos.filter { tagId in it.tagIds },
-            notes = notes.map { TagNoteRow(it, VerseDisplay.displayContent(it, verses).trim().let { t -> if (t.length > 120) t.take(120) + "…" else t }) },
+            notes = notes.map { TagNoteRow(it, VerseDisplay.displayContent(it, selectedVersions, verses).trim().let { t -> if (t.length > 120) t.take(120) + "…" else t }) },
             loaded = true,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TagNotesState())

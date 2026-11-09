@@ -43,7 +43,7 @@ class NoteListBuilderTest {
         sermons: Set<String> = emptySet(), videos: Set<String> = emptySet(),
     ) = NoteListBuilder.build(NoteListData(notes, comments, tags, sermons, videos), filter, tag, day, today, zone)
 
-    private fun List<NoteListSection>.ids() = flatMap { s -> s.rows.flatMap { r -> r.notes.map { it.id } } }
+    private fun List<NoteListSection>.ids() = flatMap { s -> s.notes.map { it.id } }
 
     @Test fun dayFilterTakesNotesCreatedOrCommentedThatDay() {
         val todays = note(NoteType.Note, at(today, 9))
@@ -99,16 +99,14 @@ class NoteListBuilderTest {
         assertEquals(listOf(r.id), NoteRelations.reflections(a, listOf(a, r), zone).map { it.id })
     }
 
-    @Test fun looseNotesOnTheSameVerseMergeIntoOneGroupInBibleOrder() {
+    /** iOS `3175662` reverted the verse grouping: loose notes on one verse are separate rows, newest first. */
+    @Test fun looseNotesOnTheSameVerseAreSeparateRowsNewestFirst() {
         val v20a = reflection(at(today, 9), 20, "a")
         val plain = note(NoteType.Note, at(today, 10))
         val v18 = reflection(at(today, 11), 18, "b")
         val v20b = reflection(at(today, 12), 20, "c")
-        val rows = build(listOf(v20a, plain, v18, v20b), NoteFilter.All).single().rows
-        // Newest first is [v20b, v18, plain, v20a]; verse 20 clusters at its first spot, then the verse
-        // groups swap into Bible order (each oldest first) while the plain note keeps its place.
-        assertEquals(listOf(listOf(v18.id), listOf(v20a.id, v20b.id), listOf(plain.id)), rows.map { r -> r.notes.map { it.id } })
-        assertEquals(listOf(true, true, false), rows.map { it.isVerseGroup })
+        val notes = build(listOf(v20a, plain, v18, v20b), NoteFilter.All).single().notes
+        assertEquals(listOf(v20b.id, v18.id, plain.id, v20a.id), notes.map { it.id })
     }
 
     @Test fun starredMatchesNoteOrCommentStars() {

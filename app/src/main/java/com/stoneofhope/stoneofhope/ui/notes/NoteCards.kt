@@ -26,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -243,28 +244,11 @@ fun VerseAnchorCard(card: NoteCardUi, sectionDay: LocalDate?, onOpen: () -> Unit
 }
 
 /**
- * Loose notes on one verse (design §2.5, iOS `VerseNoteGroupCell`): the verse once, then each note
- * with a 52-wide time column; a hairline starting at the text separates them.
+ * iOS `NoteCellView.backfillMissingVerseText`: a row whose anchor lacks text in some selected version
+ * asks for it when it appears and again whenever the network comes or goes.
  */
 @Composable
-fun ReflectionGroupCard(group: NoteRowUi.VerseGroup, sectionDay: LocalDate?, onOpen: (String) -> Unit) {
-    val c = AppTheme.colors
-    CardSurface(Modifier.testTag("verseGroup_${group.notes.first().id}")) {
-        Column {
-            Column(
-                Modifier.fillMaxWidth().clickable { onOpen(group.notes.first().id) }.background(scriptureFill(c)).padding(horizontal = 16.dp, vertical = 12.dp),
-            ) {
-                ScriptureHeader(group.header.verseRef.orEmpty(), sermonMark = false, time = null, note = null)
-                group.verse?.let { MarkedText(it.annotated(), style = textStyle(16, 1.6f, serif = true), color = c.neutral100, modifier = Modifier.padding(top = 6.dp)) }
-            }
-            HorizontalDivider(color = c.noteTypeBibleVerse.copy(alpha = 0.12f))
-            group.notes.forEachIndexed { i, note ->
-                if (i > 0) HorizontalDivider(Modifier.padding(start = 16.dp + 52.dp), color = c.neutral20.copy(alpha = 0.6f))
-                Row(Modifier.fillMaxWidth().clickable { onOpen(note.id) }.padding(horizontal = 16.dp, vertical = 10.dp)) {
-                    Text(cardTime(note.createdAt, sectionDay), style = textStyle(12, 1.55f), color = c.neutral90, modifier = Modifier.width(52.dp).padding(top = 2.dp))
-                    Text(note.content, style = textStyle(15, 1.55f), color = c.neutral100, modifier = Modifier.weight(1f))
-                }
-            }
-        }
-    }
+fun VerseBackfillEffect(card: NoteCardUi, isOnline: Boolean, backfill: (noteId: String) -> Unit) {
+    if (!card.missingVerseText) return
+    LaunchedEffect(card.note.id, isOnline) { backfill(card.note.id) }
 }

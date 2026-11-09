@@ -250,7 +250,7 @@ private fun bookLabel(book: BibleBook, language: BibleLanguage, withAbbreviation
 /** iOS `BookSelectionSheet`: 66 books, primary language label, secondary language on the right. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BookPickerSheet(
+internal fun BookPickerSheet(
     selectedOrd: Int?,
     languages: BibleRefLanguages,
     showAbbreviations: Boolean,

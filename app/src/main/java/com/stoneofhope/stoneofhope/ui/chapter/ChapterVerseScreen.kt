@@ -152,7 +152,7 @@ private fun VerseCard(state: ChapterVerseState) {
     Surface(shape = RoundedCornerShape(24.dp), color = c.surface0, border = BorderStroke(1.dp, c.neutral20), modifier = Modifier.fillMaxWidth()) {
         val verse = state.verse
         if (verse != null) {
-            Column { VerseArea(verse, foldable = false, divider = false) }
+            Column { VerseArea(verse, foldable = false, divider = false, moreVersions = state.moreVersions) }
         } else {
             Column(Modifier.fillMaxWidth().background(c.noteTypeBibleVerse.copy(alpha = 0.06f)).padding(horizontal = 20.dp, vertical = 16.dp)) {
                 Text("${NoteBadges.BIBLE_ICON} " + state.refLabel.uppercase(), style = capsStyle(0.08f), color = c.scriptureInk)

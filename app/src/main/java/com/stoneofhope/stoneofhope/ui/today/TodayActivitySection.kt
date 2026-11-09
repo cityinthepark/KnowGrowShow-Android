@@ -127,7 +127,7 @@ private fun tileStyle(kind: TileKind): TileStyle {
     return when (kind) {
         TileKind.Pinned -> TileStyle(R.string.tile_pinned, c.pinnedTile, icon = Icons.Filled.PushPin)
         TileKind.Starred -> TileStyle(R.string.tile_starred, c.starredTile, icon = Icons.Filled.Star)
-        TileKind.QuickNote -> TileStyle(R.string.note_type_note, c.notesChip, emoji = "📝")
+        TileKind.QuickNote -> TileStyle(R.string.label_quick_note, c.notesChip, emoji = "📝")
         TileKind.StudyNote -> TileStyle(R.string.tile_study_note, c.notesChip, emoji = "📚")
         TileKind.Bible -> TileStyle(R.string.tile_bible, c.bibleVerseChip, emoji = "✝️")
         TileKind.Prayer -> TileStyle(R.string.note_type_prayer, c.prayerChip, emoji = "🌿")

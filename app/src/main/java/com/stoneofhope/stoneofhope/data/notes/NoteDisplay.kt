@@ -3,6 +3,7 @@ package com.stoneofhope.stoneofhope.data.notes
 import com.stoneofhope.stoneofhope.data.bible.BibleAnchor
 import com.stoneofhope.stoneofhope.data.bible.BibleAnchorKey
 import com.stoneofhope.stoneofhope.data.bible.BibleFormatter
+import com.stoneofhope.stoneofhope.data.bible.BibleVersions
 import com.stoneofhope.stoneofhope.data.bible.SwiftText
 import com.stoneofhope.stoneofhope.data.local.entity.IndexedTextEntity
 import com.stoneofhope.stoneofhope.data.local.entity.NoteCommentEntity
@@ -205,12 +206,82 @@ data class ResolvedVerse(
         }
 }
 
+/** One version's text of a verse anchor (an element of iOS `verseVersionBlocks`). */
+data class VerseVersionBlock(val versionAbbr: String, val resolved: ResolvedVerse)
+
 object VerseDisplay {
 
-    /** The `userVerses` ids a verse-level note needs, in its own version. */
-    fun userVerseIds(note: NoteEntity): List<String> {
+    /**
+     * The `userVerses` ids a verse-level note needs: its own version, plus every [selected] version for a
+     * `.bibleVerse` anchor (which shows them all, see [versionBlocks]).
+     */
+    fun userVerseIds(note: NoteEntity, selected: List<String> = emptyList()): List<String> {
         val anchor = BibleAnchor.from(note) ?: return emptyList()
-        return anchor.verseOrds.map { UserVerseEntity.makeId(anchor.versionAbbr, anchor.bookOrd, anchor.chapterOrd, it) }
+        val versions = if (note.noteType == NoteType.BibleVerse) blockVersions(anchor.versionAbbr, selected) else listOf(anchor.versionAbbr)
+        return versions.flatMap { v -> anchor.verseOrds.map { UserVerseEntity.makeId(v, anchor.bookOrd, anchor.chapterOrd, it) } }
+    }
+
+    private fun normalized(version: String) = SwiftText.trim(version).uppercase()
+
+    /** iOS `verseVersionBlocks` order: the selected versions, the anchor's own one first when it is not selected. */
+    private fun blockVersions(own: String, selected: List<String>): List<String> =
+        if (selected.any { normalized(it) == normalized(own) }) selected else listOf(own) + selected
+
+    /**
+     * iOS `verseVersionBlocks(for:)`: a `.bibleVerse` anchor's text in each of those versions that has
+     * it. The anchor keeps only its primary `versionAbbr`; the other versions' `userVerses` sit beside it.
+     */
+    fun versionBlocks(
+        note: NoteEntity,
+        selected: List<String>,
+        versesById: Map<String, UserVerseEntity>,
+        marksByVerseId: Map<String, List<IndexedTextEntity>> = emptyMap(),
+    ): List<VerseVersionBlock> {
+        if (note.noteType != NoteType.BibleVerse) return emptyList()
+        val own = BibleAnchor.from(note)?.takeIf { !it.isChapterLevel } ?: return emptyList()
+        return blockVersions(own.versionAbbr, selected).mapNotNull { v ->
+            resolve(own.copy(versionAbbr = v), versesById, marksByVerseId)
+                ?.takeIf { SwiftText.trim(it.combinedContent).isNotEmpty() }
+                ?.let { VerseVersionBlock(v, it) }
+        }
+    }
+
+    /**
+     * iOS `isMissingVerseText(for:)`: an anchor missing its text in its own version or any selected one,
+     * so the list should fetch again.
+     */
+    fun isMissingVerseText(note: NoteEntity, selected: List<String>, versesById: Map<String, UserVerseEntity>): Boolean {
+        if (note.noteType != NoteType.BibleVerse) return false
+        val anchor = BibleAnchor.from(note)?.takeIf { !it.isChapterLevel } ?: return false
+        val shown = versionBlocks(note, selected, versesById).map { normalized(it.versionAbbr) }.toSet()
+        return (selected + anchor.versionAbbr).any { normalized(it) !in shown }
+    }
+
+    /**
+     * iOS `highlightedVerseText(for:)`: an anchor's text with its marks. One version is the text alone;
+     * several read "text [NKJV]", a blank line, "text [和合本]". Null when no version has text yet.
+     */
+    fun markedBody(
+        note: NoteEntity,
+        selected: List<String>,
+        versesById: Map<String, UserVerseEntity>,
+        marksByVerseId: Map<String, List<IndexedTextEntity>> = emptyMap(),
+    ): MarkedVerse? = joined(versionBlocks(note, selected, versesById, marksByVerseId))
+
+    /** [markedBody] for blocks already read (one block: its text alone; several: labelled, a blank line apart). */
+    fun joined(blocks: List<VerseVersionBlock>): MarkedVerse? {
+        if (blocks.isEmpty()) return null
+        if (blocks.size == 1) return blocks[0].resolved.combined
+        val text = StringBuilder()
+        val marks = mutableListOf<VerseMark>()
+        blocks.forEachIndexed { i, b ->
+            if (i > 0) text.append("\n\n")
+            val base = text.length
+            val combined = b.resolved.combined
+            text.append(combined.text).append(" [").append(BibleVersions.toDisplay(b.versionAbbr)).append("]")
+            combined.marks.mapTo(marks) { it.copy(start = it.start + base, end = it.end + base) }
+        }
+        return MarkedVerse(text.toString(), marks)
     }
 
     /**
@@ -240,14 +311,11 @@ object VerseDisplay {
     }
 
     /**
-     * iOS `displayContent(for:)`: a `.bibleVerse` anchor shows its verse text; anything else (and an
-     * anchor whose verses are not in the pool yet) shows `content`.
+     * iOS `displayContent(for:)`: a `.bibleVerse` anchor shows its verse text in every version that has
+     * it ([markedBody] without marks); anything else (and an anchor with no text yet) shows `content`.
      */
-    fun displayContent(note: NoteEntity, versesById: Map<String, UserVerseEntity>): String {
-        if (note.noteType != NoteType.BibleVerse) return note.content
-        val combined = resolve(note, versesById)?.combinedContent
-        return if (combined != null && SwiftText.trim(combined).isNotEmpty()) combined else note.content
-    }
+    fun displayContent(note: NoteEntity, selected: List<String>, versesById: Map<String, UserVerseEntity>): String =
+        markedBody(note, selected, versesById)?.text ?: note.content
 
     /** iOS hides the anchor body while it would only be the "·" placeholder. */
     fun showsBody(note: NoteEntity, displayContent: String): Boolean =

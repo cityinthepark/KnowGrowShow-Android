@@ -12,7 +12,6 @@ import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
 import com.stoneofhope.stoneofhope.data.local.entity.UserVerseEntity
 import com.stoneofhope.stoneofhope.data.model.NoteType
 import com.stoneofhope.stoneofhope.data.notes.CompactSummary
-import com.stoneofhope.stoneofhope.data.notes.MarkedVerse
 import com.stoneofhope.stoneofhope.data.notes.NoteBadge
 import com.stoneofhope.stoneofhope.data.notes.NoteBadges
 import com.stoneofhope.stoneofhope.data.notes.NoteFilter
@@ -31,6 +30,7 @@ import com.stoneofhope.stoneofhope.data.notes.showsBibleRefInHeaderBadge
 import com.stoneofhope.stoneofhope.data.repository.NoteActionRepository
 import com.stoneofhope.stoneofhope.data.repository.NoteRepository
 import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
+import com.stoneofhope.stoneofhope.data.sync.NetworkMonitor
 import com.stoneofhope.stoneofhope.ui.bible.BibleRefLanguages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
@@ -61,6 +61,8 @@ data class NoteCardUi(
     val verseRef: String?,
     /** Highlights / underlines over [displayContent] when it is an anchor's verse text. */
     val bodyMarks: List<VerseMark> = emptyList(),
+    /** An anchor still without its text in some selected version: the row fetches it (iOS `456b7e6`). */
+    val missingVerseText: Boolean = false,
 ) {
     val isAnchor: Boolean get() = note.noteType == NoteType.BibleVerse
     val threadCount: Int get() = when (val t = thread) { is CompactSummary.Notes -> t.count; is CompactSummary.Comments -> t.count }
@@ -73,11 +75,6 @@ sealed interface NoteRowUi {
 
     data class Single(val card: NoteCardUi) : NoteRowUi {
         override val key get() = card.note.id
-    }
-
-    /** iOS `VerseNoteGroupCell`: loose notes on one verse, verse text once. */
-    data class VerseGroup(val header: NoteCardUi, val verse: MarkedVerse?, val notes: List<NoteEntity>) : NoteRowUi {
-        override val key get() = "group_" + notes.first().id
     }
 }
 
@@ -113,12 +110,12 @@ internal object NoteCards {
         verses: Map<String, UserVerseEntity>,
         zone: ZoneId,
         marksByVerseId: Map<String, List<IndexedTextEntity>> = emptyMap(),
+        selectedVersions: List<String>,
     ): NoteCardUi {
-        val content = VerseDisplay.displayContent(note, verses)
-        // An anchor's body is its verse text: carry the Web's marks along with it.
-        val bodyMarks = if (note.noteType == NoteType.BibleVerse && content != note.content) {
-            VerseDisplay.resolve(note, verses, marksByVerseId)?.combined?.marks.orEmpty()
-        } else emptyList()
+        // An anchor's body is its verse text in every selected version, with the Web's marks.
+        val body = VerseDisplay.markedBody(note, selectedVersions, verses, marksByVerseId)
+        val content = body?.text ?: note.content
+        val bodyMarks = body?.marks.orEmpty()
         val prayerRef = if (note.noteType == NoteType.Prayer && !note.showsBibleRefInHeaderBadge) {
             (note.bibleVerseRef ?: note.chapterRef)?.takeIf { it.isNotEmpty() }
         } else null
@@ -127,6 +124,7 @@ internal object NoteCards {
             badge = NoteBadges.badge(note, hasLinkedSermon = note.sermonId != null && note.sermonId in activeSermonIds),
             displayContent = content,
             showsBody = VerseDisplay.showsBody(note, content),
+            missingVerseText = VerseDisplay.isMissingVerseText(note, selectedVersions, verses),
             thread = NoteRelations.thread(note, notes, comments, zone),
             tagNames = note.tagIds.mapNotNull(tagNamesById::get),
             prayerRef = prayerRef,
@@ -148,9 +146,13 @@ class NoteListViewModel @Inject constructor(
     private val actions: NoteActionRepository,
     bibleVersions: BibleVersionPreferences,
     private val clock: Clock,
+    network: NetworkMonitor,
 ) : ViewModel() {
 
     private val zone: ZoneId get() = ZoneId.systemDefault()
+
+    /** Rows missing verse text fetch it again when this turns true (iOS `NoteCellView.task(id: isOnline)`). */
+    val isOnline: StateFlow<Boolean> = network.isOnline
 
     val day: LocalDate? = savedState.get<Long>(ARG_DAY)?.takeIf { it != NO_DAY }?.let(LocalDate::ofEpochDay)
 
@@ -188,17 +190,9 @@ class NoteListViewModel @Inject constructor(
         val versesById = verses.associateBy { it.id }
         val marks = VerseMarks.byVerseId(markRows)
         val d = src.data
-        fun card(n: NoteEntity) = NoteCards.card(n, d.notes, d.comments, d.tagNamesById, d.activeSermonIds, versesById, zone, marks)
+        fun card(n: NoteEntity) = NoteCards.card(n, d.notes, d.comments, d.tagNamesById, d.activeSermonIds, versesById, zone, marks, selectedVersions)
         var sections = NoteListBuilder.build(d, f, tg, day, today, zone).map { section ->
-            NoteSectionUi(section.day, section.rows.map { row ->
-                if (row.isVerseGroup) {
-                    val first = row.notes.first()
-                    val verse = VerseDisplay.resolve(first, versesById, marks)?.combined?.trimmed()?.takeIf { it.text.isNotEmpty() }
-                    NoteRowUi.VerseGroup(card(first), verse, row.notes)
-                } else {
-                    NoteRowUi.Single(card(row.note))
-                }
-            })
+            NoteSectionUi(section.day, section.notes.map { NoteRowUi.Single(card(it)) })
         }
         // "All" on today: pinned notes get their own block on top (the rules already put them first in today).
         if (f == NoteFilter.All && day == today) {
@@ -208,7 +202,7 @@ class NoteListViewModel @Inject constructor(
                     sections.map { s -> s.copy(rows = s.rows - pinnedRows.toSet()) }.filter { it.rows.isNotEmpty() }
             }
         }
-        val total = sections.sumOf { s -> s.rows.sumOf { r -> if (r is NoteRowUi.VerseGroup) r.notes.size else 1 } }
+        val total = sections.sumOf { it.rows.size }
         NoteListState(f, tg, src.tagsByCreation.map { it.name }, src.tagsByCreation, sections, total, loaded = true)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NoteListState(filter.value, null))
 
@@ -235,14 +229,14 @@ class NoteListViewModel @Inject constructor(
         }
     }
 
+    /** iOS `backfillMissingVerseText`: fill an anchor's missing versions (no-op when nothing can be fetched). */
+    fun backfillVerse(noteId: String) {
+        viewModelScope.launch { notes.ensureUserVerses(noteId) }
+    }
+
     /** "New prayer" while the Prayer filter is on. */
     fun savePrayer(content: String, tagName: String?, bibleRefText: String?) {
         viewModelScope.launch { notes.savePrayerNote(content, tagName, bibleRefText) }
-    }
-
-    /** iOS `VerseNoteGroupCell.task`: fill the pool so the group's verse text can show. */
-    fun ensureVerses(noteId: String) {
-        viewModelScope.launch { notes.ensureUserVerses(noteId) }
     }
 
     /** Unfold / fold a prayer's verse (iOS `PrayerVerseRevealButton`, shown in place here). */

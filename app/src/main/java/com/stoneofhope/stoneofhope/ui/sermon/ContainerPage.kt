@@ -43,6 +43,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -77,7 +78,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.stoneofhope.stoneofhope.R
-import com.stoneofhope.stoneofhope.data.bible.BibleRefConfig
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
@@ -92,19 +92,22 @@ import com.stoneofhope.stoneofhope.ui.notes.NoteCardUi
 import com.stoneofhope.stoneofhope.ui.notes.NoteCards
 import com.stoneofhope.stoneofhope.ui.notes.NoteListCard
 import com.stoneofhope.stoneofhope.ui.notes.VerseAnchorCard
+import com.stoneofhope.stoneofhope.ui.notes.VerseBackfillEffect
 import com.stoneofhope.stoneofhope.ui.notes.rememberNoteActionsState
 import com.stoneofhope.stoneofhope.ui.notes.textStyle
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
-import com.stoneofhope.stoneofhope.ui.today.NoteSheet
+import com.stoneofhope.stoneofhope.ui.today.ContainerNoteSheet
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.math.roundToInt
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** The notes of one sermon or video, as cards, oldest first (iOS `NoteListViewModel(filter: .forSermon)`). */
 data class ContainerNotesState(
@@ -117,7 +120,7 @@ data class ContainerNotesState(
 
 /** Cards for [notes] (the container's active notes); reflections stay under their anchor. */
 @OptIn(ExperimentalCoroutinesApi::class)
-internal fun containerNotes(db: AppDatabase, notes: Flow<List<NoteEntity>>, zone: ZoneId): Flow<ContainerNotesState> {
+internal fun containerNotes(db: AppDatabase, notes: Flow<List<NoteEntity>>, zone: ZoneId, selectedVersions: List<String>): Flow<ContainerNotesState> {
     val comments = notes.flatMapLatest { list ->
         if (list.isEmpty()) flowOf(emptyList()) else db.noteCommentDao().observeActiveForNotes(list.map { it.id })
     }
@@ -130,13 +133,19 @@ internal fun containerNotes(db: AppDatabase, notes: Flow<List<NoteEntity>>, zone
         val marks = VerseMarks.byVerseId(markRows)
         val cards = list.filter { !NoteRelations.isHiddenFromTopLevel(it, list, zone) }
             .sortedBy { it.createdAt }
-            .map { NoteCards.card(it, list, c, tagNames, sermonIds.toSet(), versesById, zone, marks) }
+            .map { NoteCards.card(it, list, c, tagNames, sermonIds.toSet(), versesById, zone, marks, selectedVersions) }
         ContainerNotesState(cards, tags, loaded = true)
     }
 }
 
 /** What the Script button reports. */
 enum class ScriptResult { Saved, NoTranscript }
+
+/** iOS `verseTextUnavailable` (userInfo "offline"): why a just-saved verse has no text yet. */
+enum class VerseTextNotice { Offline, Unavailable }
+
+/** iOS shows the verse-text notice for 6 seconds. */
+private const val VERSE_NOTICE_MILLIS = 6_000L
 
 /**
  * iOS `ContainerNoteListView`, shared by the sermon and video pages: the inline video (full screen when
@@ -153,14 +162,16 @@ fun ContainerPage(
     autoplay: Boolean,
     sectionDay: LocalDate?,
     bibleRefLanguages: BibleRefLanguages,
-    defaultReference: String,
     scriptSeconds: Int,
     onScriptSeconds: (Int) -> Unit,
     onScript: suspend (time: Double?) -> ScriptResult,
     onBack: () -> Unit,
     onOpenNote: (String) -> Unit,
     onAction: (NoteEntity, NoteAction) -> Unit,
-    onSaveNote: (content: String, ref: String?) -> Unit,
+    onSaveNote: (content: String, chapterNote: Boolean) -> Unit,
+    isOnline: Boolean,
+    onBackfillVerse: (noteId: String) -> Unit,
+    verseNotices: Flow<VerseTextNotice>,
     snackbar: SnackbarHostState,
     actions: @Composable () -> Unit,
     infoBar: @Composable () -> Unit,
@@ -178,6 +189,16 @@ fun ContainerPage(
     var lastCount by remember { mutableIntStateOf(-1) }
     val scriptSaved = stringResource(R.string.script_saved)
     val scriptNone = stringResource(R.string.script_none)
+    val verseOffline = stringResource(R.string.verse_text_offline)
+    val verseUnavailable = stringResource(R.string.verse_text_unavailable)
+
+    LaunchedEffect(verseNotices) {
+        verseNotices.collectLatest { notice ->
+            val message = if (notice == VerseTextNotice.Offline) verseOffline else verseUnavailable
+            // Leaving the timeout dismisses it.
+            withTimeoutOrNull(VERSE_NOTICE_MILLIS) { snackbar.showSnackbar(message, duration = SnackbarDuration.Indefinite) }
+        }
+    }
 
     // iOS scrolls to the newest note after adding one.
     LaunchedEffect(notes.cards.size) {
@@ -233,6 +254,7 @@ fun ContainerPage(
                 modifier = Modifier.weight(1f).fillMaxWidth().testTag("containerNotes"),
             ) {
                 items(notes.cards, key = { it.note.id }) { card ->
+                    VerseBackfillEffect(card, isOnline, onBackfillVerse)
                     if (card.isAnchor) {
                         VerseAnchorCard(card, sectionDay, onOpen = { onOpenNote(card.note.id) }, onMenu = { noteActions.open(card.note.id) })
                     } else {
@@ -261,12 +283,10 @@ fun ContainerPage(
     }
 
     if (sheetOpen) {
-        NoteSheet(
+        ContainerNoteSheet(
             bibleRefLanguages = bibleRefLanguages,
             onDismiss = { sheetOpen = false },
-            onSave = { content, ref -> sheetOpen = false; onSaveNote(content, ref) },
-            initialReference = defaultReference,
-            config = BibleRefConfig.ChapterAnchored,
+            onSave = { content, chapterNote -> sheetOpen = false; onSaveNote(content, chapterNote) },
         )
     }
     if (durationOpen) ScriptDurationDialog(scriptSeconds, onScriptSeconds) { durationOpen = false }

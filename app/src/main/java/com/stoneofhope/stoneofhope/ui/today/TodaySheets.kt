@@ -6,34 +6,45 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.stoneofhope.stoneofhope.R
@@ -41,7 +52,9 @@ import com.stoneofhope.stoneofhope.data.bible.BibleRefConfig
 import com.stoneofhope.stoneofhope.ui.bible.BibleRefHelp
 import com.stoneofhope.stoneofhope.ui.bible.BibleRefLanguages
 import com.stoneofhope.stoneofhope.ui.bible.BibleReferenceField
+import com.stoneofhope.stoneofhope.ui.bible.BookPickerSheet
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
+import kotlinx.coroutines.delay
 
 /**
  * iOS `PrayerCreateView`: header with a tag menu, Bible reference (verse level; anything less is
@@ -160,6 +173,84 @@ fun NoteSheet(
                 saveTag = "noteSave",
             )
         }
+    }
+}
+
+/**
+ * iOS `NoteInputSheetView(anchorLabelOnly:)` on the sermon / video pages: no reference field. The book
+ * button writes the book's name at the start of the text ("John " + text), so "John 3:16 …" and "v3 …"
+ * (the sermon's chapter) are typed in one box. The "Chapter Note" switch (off by default) decides
+ * whether text with no verse is also a note on the sermon's chapter. Save needs text.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ContainerNoteSheet(
+    bibleRefLanguages: BibleRefLanguages,
+    onDismiss: () -> Unit,
+    onSave: (content: String, chapterNote: Boolean) -> Unit,
+) {
+    var text by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue("")) }
+    var chapterNote by rememberSaveable { mutableStateOf(false) }
+    var pickerOpen by rememberSaveable { mutableStateOf(false) }
+    var focusAfterPick by remember { mutableIntStateOf(0) }
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(focusAfterPick) {
+        if (focusAfterPick > 0) {
+            delay(250) // let the book list finish closing before raising the keyboard
+            focusRequester.requestFocus()
+        }
+    }
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        Column(
+            Modifier.padding(horizontal = 20.dp).padding(bottom = 16.dp).imePadding(),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    onClick = { pickerOpen = true },
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.height(40.dp).testTag("bookPicker"),
+                ) {
+                    Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("✝️")
+                        Icon(Icons.Filled.ArrowDropDown, contentDescription = stringResource(R.string.bible_ref_book), tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                Text(stringResource(R.string.note_sheet_chapter_note), style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.width(10.dp))
+                Switch(checked = chapterNote, onCheckedChange = { chapterNote = it }, modifier = Modifier.testTag("chapterNoteSwitch"))
+            }
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                placeholder = { Text(stringResource(R.string.note_placeholder)) },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 140.dp).focusRequester(focusRequester).testTag("noteText"),
+            )
+            SheetButtons(
+                saveLabel = stringResource(R.string.note_save),
+                saveEnabled = text.text.isNotBlank(),
+                onCancel = onDismiss,
+                onSave = { onSave(text.text.trim(), chapterNote) },
+                saveTag = "noteSave",
+            )
+        }
+    }
+    if (pickerOpen) {
+        BookPickerSheet(
+            selectedOrd = null,
+            languages = bibleRefLanguages,
+            showAbbreviations = true,
+            onDismiss = { pickerOpen = false },
+            onSelect = { book ->
+                val name = book.fullName(bibleRefLanguages.display)
+                // Cursor right after the name, ready for "3:16".
+                text = TextFieldValue("$name ${text.text}", selection = TextRange(name.length + 1))
+                pickerOpen = false
+                focusAfterPick++
+            },
+        )
     }
 }
 

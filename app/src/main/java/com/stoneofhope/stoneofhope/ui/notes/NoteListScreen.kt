@@ -83,6 +83,7 @@ fun NoteListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, viewModel: 
     val state by viewModel.state.collectAsStateWithLifecycle()
     val expanded by viewModel.expanded.collectAsStateWithLifecycle()
     val prayerVerses by viewModel.prayerVerses.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
     val actions = rememberNoteActionsState()
     var composer by rememberSaveable { mutableStateOf<Composer?>(null) }
     val listState = rememberLazyListState()
@@ -117,6 +118,7 @@ fun NoteListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, viewModel: 
                             when (val row = item.row) {
                                 is NoteRowUi.Single -> {
                                     val card = row.card
+                                    VerseBackfillEffect(card, isOnline, viewModel::backfillVerse)
                                     if (card.isAnchor) {
                                         VerseAnchorCard(card, day, onOpen = { onOpenNote(card.note.id) }, onMenu = { actions.open(card.note.id) })
                                     } else {
@@ -131,10 +133,6 @@ fun NoteListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, viewModel: 
                                             onToggleVerse = { viewModel.togglePrayerVerse(card.note) },
                                         )
                                     }
-                                }
-                                is NoteRowUi.VerseGroup -> {
-                                    LaunchedEffect(row.key) { viewModel.ensureVerses(row.notes.first().id) }
-                                    ReflectionGroupCard(row, day, onOpenNote)
                                 }
                             }
                         }

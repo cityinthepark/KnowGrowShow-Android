@@ -32,7 +32,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /** iOS `VerseReferenceSaveResult`. */
-data class VerseReferenceSaveResult(val anchor: NoteEntity, val reflection: NoteEntity?, val didCreateAnchor: Boolean)
+/**
+ * [textMissing]: no version had the verse text when it was saved (iOS posts `verseTextUnavailable`).
+ * The note is saved anyway; list rows fetch the text later (`VerseDisplay.isMissingVerseText`).
+ */
+data class VerseReferenceSaveResult(
+    val anchor: NoteEntity,
+    val reflection: NoteEntity?,
+    val didCreateAnchor: Boolean,
+    val textMissing: Boolean = false,
+)
 
 /** What a note sheet save produced. */
 sealed interface NoteInputSaveResult {
@@ -356,7 +365,8 @@ class NoteRepository @Inject constructor(
                 ).withVerseFields().withVerseLink(sermonId, resolvedYoutubeID)
                 withAnchorMetadata(note).also { noteDao.upsert(it) }
             }
-            VerseReferenceSaveResult(anchor, reflection, didCreate)
+            val textMissing = userVerseContents.values.none { m -> m.values.any { SwiftText.trim(it).isNotEmpty() } }
+            VerseReferenceSaveResult(anchor, reflection, didCreate, textMissing)
         }
     }
 

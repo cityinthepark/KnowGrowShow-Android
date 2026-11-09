@@ -151,9 +151,15 @@ class VideoRepository @Inject constructor(
         videoDao.upsert(live.copy(tagIds = live.tagIds - tagId, needsSync = true))
     }
 
-    /** iOS `addNote(_:to: video, separatedReference: true)`. */
-    suspend fun saveNote(youtubeID: String, content: String, refText: String?, anchorChapter: BookChapter?, zone: ZoneId = ZoneId.systemDefault()): NoteInputSaveResult? =
-        notes.saveNoteFromContent(content, refText, anchorChapter = anchorChapter, zone = zone, youtubeID = youtubeID)
+    /** iOS `addNote(_:to: video, chapterNote:)`; same rules as `SermonRepository.saveNote`. */
+    suspend fun saveNote(
+        youtubeID: String,
+        content: String,
+        anchorChapter: BookChapter?,
+        chapterNote: Boolean,
+        zone: ZoneId = ZoneId.systemDefault(),
+    ): NoteInputSaveResult? =
+        notes.saveNoteFromContent(content, null, anchorChapter = anchorChapter, zone = zone, youtubeID = youtubeID, anchorPlainNote = chapterNote)
 
     /** iOS `addOCRNoteIfNeeded(_:youtubeVideo:)`. */
     suspend fun saveScriptText(youtubeID: String, text: String, seed: BookChapter?, zone: ZoneId = ZoneId.systemDefault()) {

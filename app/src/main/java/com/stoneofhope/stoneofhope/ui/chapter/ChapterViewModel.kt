@@ -19,10 +19,12 @@ import com.stoneofhope.stoneofhope.data.local.entity.NoteCommentEntity
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
 import com.stoneofhope.stoneofhope.data.local.entity.UserVerseEntity
+import com.stoneofhope.stoneofhope.data.model.NoteType
 import com.stoneofhope.stoneofhope.data.notes.MarkedVerse
 import com.stoneofhope.stoneofhope.data.notes.ResolvedVerse
 import com.stoneofhope.stoneofhope.data.notes.VerseDisplay
 import com.stoneofhope.stoneofhope.data.notes.VerseMarks
+import com.stoneofhope.stoneofhope.data.notes.VerseVersionBlock
 import com.stoneofhope.stoneofhope.data.repository.NoteActionRepository
 import com.stoneofhope.stoneofhope.data.repository.NoteRepository
 import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
@@ -83,26 +85,34 @@ internal class ChapterSource(
     val marks: Map<String, List<IndexedTextEntity>>,
     val tags: List<TagEntity>,
     val sermonIds: Set<String>,
+    val selectedVersions: List<String>,
 ) {
     private val tagNames = tags.associate { it.id to it.name }
 
     fun card(note: NoteEntity, zone: ZoneId): NoteCardUi =
-        NoteCards.card(note, notes, comments, tagNames, sermonIds, versesById, zone, marks)
+        NoteCards.card(note, notes, comments, tagNames, sermonIds, versesById, zone, marks, selectedVersions)
 
     fun tagNames(ids: List<String>): List<String> = ids.mapNotNull(tagNames::get)
 
-    /** The first note of [group] whose verses are in `userVerses`, and that text; else the best note to fill them from. */
-    fun verseText(group: ChapterVerseGroup): Pair<NoteEntity?, ResolvedVerse?> {
+    /**
+     * The first note of [group] whose verses are in `userVerses`, and that text (an anchor's in every
+     * selected version, iOS `highlightedVerseText`); else the best note to fill them from and no text.
+     */
+    fun verseText(group: ChapterVerseGroup): Pair<NoteEntity?, List<VerseVersionBlock>> {
         for (note in group.textSources) {
-            val resolved = VerseDisplay.resolve(note, versesById, marks) ?: continue
-            if (resolved.combinedContent.isNotBlank()) return note to resolved
+            val blocks = if (note.noteType == NoteType.BibleVerse) {
+                VerseDisplay.versionBlocks(note, selectedVersions, versesById, marks)
+            } else {
+                listOfNotNull(VerseDisplay.resolve(note, versesById, marks)?.takeIf { it.combinedContent.isNotBlank() }?.let { VerseVersionBlock(it.versionAbbr, it) })
+            }
+            if (blocks.isNotEmpty()) return note to blocks
         }
-        return group.textSources.firstOrNull() to null
+        return group.textSources.firstOrNull() to emptyList()
     }
 
     companion object {
         @OptIn(ExperimentalCoroutinesApi::class)
-        fun observe(db: AppDatabase, chapter: BookChapter): Flow<ChapterSource> {
+        fun observe(db: AppDatabase, chapter: BookChapter, selectedVersions: List<String>): Flow<ChapterSource> {
             val notes = db.noteDao().observeActiveInChapter(chapter.bookOrd, chapter.chapterOrd)
             val comments = notes.map { list -> list.map { it.id } }.distinctUntilChanged().flatMapLatest { ids ->
                 if (ids.isEmpty()) flowOf(emptyList()) else db.noteCommentDao().observeActiveForNotes(ids)
@@ -113,7 +123,7 @@ internal class ChapterSource(
                 db.userVerseDao().observeInChapter(chapter.bookOrd, chapter.chapterOrd),
                 db.indexedTextDao().observeActiveVerseMarks(),
                 labels,
-            ) { n, c, v, m, (t, s) -> ChapterSource(n, c, v.associateBy { it.id }, VerseMarks.byVerseId(m), t, s) }
+            ) { n, c, v, m, (t, s) -> ChapterSource(n, c, v.associateBy { it.id }, VerseMarks.byVerseId(m), t, s, selectedVersions) }
         }
     }
 }
@@ -155,17 +165,17 @@ class ChapterViewModel @Inject constructor(
     private val sermons = db.sermonDao().observeActiveForBook(chapter.bookOrd)
         .map { ChapterSermons.byYear(ChapterSermons.forChapter(it, chapter.chapterOrd)) }
 
-    val state: StateFlow<ChapterState> = combine(ChapterSource.observe(db, chapter), sermons) { src, sermonYears ->
+    val state: StateFlow<ChapterState> = combine(ChapterSource.observe(db, chapter, selectedVersions), sermons) { src, sermonYears ->
         val built = ChapterNotesBuilder.build(src.notes, src.comments, chapter)
         val verses = built.verses.map { group ->
-            val (source, resolved) = src.verseText(group)
+            val (source, blocks) = src.verseText(group)
             ChapterVerseUi(
                 verse = group.verse,
                 refLabel = group.verse.refLabel(source?.versionAbbr ?: primaryVersion),
-                text = resolved?.combined?.trimmed(),
+                text = VerseDisplay.joined(blocks)?.trimmed(),
                 reflectionCount = group.reflectionCount,
                 prayerCount = group.prayers.size,
-                textSourceId = if (resolved == null) source?.id else null,
+                textSourceId = if (blocks.isEmpty()) source?.id else null,
             )
         }
         ChapterState(sermonYears, built.chapterNotes.map { src.card(it, zone) }, verses, src.tags, loaded = true)

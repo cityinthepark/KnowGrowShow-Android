@@ -73,13 +73,11 @@ sealed interface CompactSummary {
 /** iOS `NoteFilterUI`, in the type menu's order. */
 enum class NoteFilter { All, QuickNote, StudyNote, Prayer, AnsweredPrayer, Pinned, Image, Bible, Sermon, YouTubeVideo, Starred }
 
-/** One list row: a single note, or (`isVerseGroup`) loose notes on the same verse shown together. */
-data class NoteListRow(val notes: List<NoteEntity>, val isVerseGroup: Boolean) {
-    val note: NoteEntity get() = notes.first()
-}
-
-/** A day header and its rows (iOS `DatedNoteListRow` grouped by day). */
-data class NoteListSection(val day: LocalDate, val rows: List<NoteListRow>)
+/**
+ * A day header and its notes, one row each (iOS `DatedNoteListRow` grouped by day). Loose verse notes
+ * are not merged by verse: iOS reverted that grouping (`3175662`).
+ */
+data class NoteListSection(val day: LocalDate, val notes: List<NoteEntity>)
 
 /** Everything the list rules read; active rows only. */
 data class NoteListData(
@@ -161,47 +159,7 @@ object NoteListBuilder {
             if (includesPinnedToday && n.isPinned == true && localDay(n) != day) day!! else localDay(n)
 
         return filtered.groupBy(::groupingDay).toSortedMap(compareByDescending { it }).map { (d, notes) ->
-            NoteListSection(d, rowsForDay(notes))
+            NoteListSection(d, notes)
         }
-    }
-
-    /** Identity of a loose verse-anchored quick note's verse; null for every other note. */
-    private fun verseKey(n: NoteEntity): String? =
-        if (n.isVerseAnchoredQuickNote) "${n.bookOrd}:${n.chapterOrd}:${n.verseStart}:${n.verseEnd ?: n.verseStart}" else null
-
-    /**
-     * Same-verse notes are pulled next to the first of their verse and merged into one row; verse groups
-     * then read in Bible order (each oldest first) while other rows keep their place.
-     */
-    private fun rowsForDay(notes: List<NoteEntity>): List<NoteListRow> {
-        val clustered = mutableListOf<NoteEntity>()
-        val placed = mutableSetOf<String>()
-        for (n in notes) {
-            val key = verseKey(n)
-            if (key == null) {
-                clustered += n
-            } else if (placed.add(key)) {
-                clustered += notes.filter { verseKey(it) == key }
-            }
-        }
-
-        val rowNotes = mutableListOf<MutableList<NoteEntity>>()
-        val rowKeys = mutableListOf<String?>()
-        for (n in clustered) {
-            val key = verseKey(n)
-            if (key != null && rowKeys.lastOrNull() == key) {
-                rowNotes.last() += n
-            } else {
-                rowNotes += mutableListOf(n)
-                rowKeys += key
-            }
-        }
-
-        val slots = rowNotes.indices.filter { rowKeys[it] != null }
-        val sortedGroups = slots.map { slot -> rowNotes[slot].sortedBy { it.createdAt } }
-            .sortedWith(compareBy({ it[0].bookOrd ?: 0 }, { it[0].chapterOrd ?: 0 }, { it[0].verseStart ?: 0 }, { it[0].verseEnd ?: it[0].verseStart ?: 0 }))
-        for ((slot, group) in slots.zip(sortedGroups)) rowNotes[slot] = group.toMutableList()
-
-        return rowNotes.mapIndexed { i, ns -> NoteListRow(ns, isVerseGroup = rowKeys[i] != null) }
     }
 }

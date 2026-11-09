@@ -56,6 +56,8 @@ import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.SermonEntity
 import com.stoneofhope.stoneofhope.data.local.entity.YouTubeVideoEntity
 import com.stoneofhope.stoneofhope.data.repository.NoteActionRepository
+import com.stoneofhope.stoneofhope.data.repository.NoteInputSaveResult
+import com.stoneofhope.stoneofhope.data.repository.NoteRepository
 import com.stoneofhope.stoneofhope.data.sermon.ScriptCapturePreferences
 import com.stoneofhope.stoneofhope.data.sermon.SermonRepository
 import com.stoneofhope.stoneofhope.data.sermon.SermonRules
@@ -65,6 +67,7 @@ import com.stoneofhope.stoneofhope.data.sermon.VideoRepository
 import com.stoneofhope.stoneofhope.data.sermon.YouTubeVideoTitleParser
 import com.stoneofhope.stoneofhope.data.sermon.YouTubeWeb
 import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
+import com.stoneofhope.stoneofhope.data.sync.NetworkMonitor
 import com.stoneofhope.stoneofhope.ui.bible.BibleRefLanguages
 import com.stoneofhope.stoneofhope.ui.notes.NoteAction
 import com.stoneofhope.stoneofhope.ui.notes.NoteActionDispatcher
@@ -76,9 +79,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.ZoneId
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -95,9 +101,11 @@ abstract class ContainerViewModel(
     private val web: YouTubeWeb,
     private val scriptPrefs: ScriptCapturePreferences,
     bibleVersions: BibleVersionPreferences,
+    private val network: NetworkMonitor,
+    private val noteRepository: NoteRepository,
 ) : ViewModel() {
     protected val zone: ZoneId get() = ZoneId.systemDefault()
-    private val selected = bibleVersions.selectedVersions()
+    protected val selected = bibleVersions.selectedVersions()
 
     val bibleRefLanguages = BibleRefLanguages(
         matching = BibleVersions.bookMatchingLanguages(selected),
@@ -119,9 +127,23 @@ abstract class ContainerViewModel(
     private var transcript: List<TranscriptSegment>? = null
     private var transcriptFetched = false
 
-    /** "Book c" for the note sheet's reference field. */
-    fun referenceText(chapter: BookChapter?): String =
-        chapter?.let { "${BibleBooks.name(it.bookOrd, bibleRefLanguages.display)} ${it.chapterOrd}" }.orEmpty()
+    /** Rows missing verse text fetch it again when this turns true (iOS `NoteCellView.task(id: isOnline)`). */
+    val isOnline: StateFlow<Boolean> = network.isOnline
+
+    private val _verseNotices = MutableSharedFlow<VerseTextNotice>(extraBufferCapacity = 1)
+
+    /** iOS `verseTextUnavailable`: a verse was saved without its text; the page shows why. */
+    val verseNotices: SharedFlow<VerseTextNotice> = _verseNotices.asSharedFlow()
+
+    protected fun noticeIfTextMissing(result: NoteInputSaveResult?) {
+        if ((result as? NoteInputSaveResult.Verse)?.result?.textMissing != true) return
+        _verseNotices.tryEmit(if (network.isOnline.value) VerseTextNotice.Unavailable else VerseTextNotice.Offline)
+    }
+
+    /** iOS `backfillMissingVerseText`: fill an anchor's missing versions (no-op when nothing can be fetched). */
+    fun backfillVerse(noteId: String) {
+        viewModelScope.launch { noteRepository.ensureUserVerses(noteId) }
+    }
 
     /** iOS Script button: the captions before the playhead, saved as a note, or nothing when there are none. */
     protected suspend fun scriptText(videoID: String, time: Double?): String? {
@@ -146,7 +168,9 @@ class SermonViewModel @Inject constructor(
     scriptPrefs: ScriptCapturePreferences,
     bibleVersions: BibleVersionPreferences,
     private val clock: Clock,
-) : ContainerViewModel(web, scriptPrefs, bibleVersions) {
+    network: NetworkMonitor,
+    noteRepository: NoteRepository,
+) : ContainerViewModel(web, scriptPrefs, bibleVersions, network, noteRepository) {
 
     val sermonId: String = checkNotNull(savedState[ARG_ID])
     val entry: VideoEntry = VideoEntry.entries[savedState.get<Int>(ARG_ENTRY) ?: 0]
@@ -166,16 +190,16 @@ class SermonViewModel @Inject constructor(
 
     private val sermon get() = sermonState.value
 
-    val notes: StateFlow<ContainerNotesState> = containerNotes(db, db.noteDao().observeForSermons(listOf(sermonId)), zone)
+    val notes: StateFlow<ContainerNotesState> = containerNotes(db, db.noteDao().observeForSermons(listOf(sermonId)), zone, selected)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ContainerNotesState())
 
     /** iOS `anchorChapter`: the chapter the page came from, else the sermon's first. */
     fun anchorChapter(s: SermonEntity): BookChapter? =
         fromChapter ?: s.bookOrd?.let { b -> s.chapters.firstOrNull()?.let { BookChapter(b, it) } }
 
-    fun saveNote(content: String, ref: String?) {
+    fun saveNote(content: String, chapterNote: Boolean) {
         val s = sermon.value ?: return
-        viewModelScope.launch { sermons.saveNote(sermonId, content, ref, anchorChapter(s), zone) }
+        viewModelScope.launch { noticeIfTextMissing(sermons.saveNote(sermonId, content, anchorChapter(s), chapterNote, zone)) }
     }
 
     fun onAction(note: NoteEntity, action: NoteAction) {
@@ -217,6 +241,7 @@ fun SermonScreen(
 ) {
     val sermonState by viewModel.sermonState.collectAsStateWithLifecycle()
     val notes by viewModel.notes.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
     val scriptSeconds by viewModel.scriptSeconds.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -236,7 +261,6 @@ fun SermonScreen(
         autoplay = viewModel.entry == VideoEntry.Autoplay,
         sectionDay = SermonRules.day(s.preachedOn) ?: viewModel.today(),
         bibleRefLanguages = viewModel.bibleRefLanguages,
-        defaultReference = viewModel.referenceText(viewModel.anchorChapter(s)),
         scriptSeconds = scriptSeconds,
         onScriptSeconds = viewModel::setScriptSeconds,
         onScript = viewModel::captureScript,
@@ -244,6 +268,9 @@ fun SermonScreen(
         onOpenNote = onOpenNote,
         onAction = viewModel::onAction,
         onSaveNote = viewModel::saveNote,
+        isOnline = isOnline,
+        onBackfillVerse = viewModel::backfillVerse,
+        verseNotices = viewModel.verseNotices,
         snackbar = snackbar,
         actions = {
             if (s.isUserData) TextButton(onClick = { onEdit(s.id) }, modifier = Modifier.testTag("sermonEdit")) { Text(stringResource(R.string.action_edit)) }
@@ -322,7 +349,9 @@ class VideoViewModel @Inject constructor(
     scriptPrefs: ScriptCapturePreferences,
     bibleVersions: BibleVersionPreferences,
     private val clock: Clock,
-) : ContainerViewModel(web, scriptPrefs, bibleVersions) {
+    network: NetworkMonitor,
+    noteRepository: NoteRepository,
+) : ContainerViewModel(web, scriptPrefs, bibleVersions, network, noteRepository) {
 
     val youtubeID: String = checkNotNull(savedState[ARG_ID])
     val notice: SermonNotice = SermonNotice.entries[savedState.get<Int>(SermonViewModel.ARG_NOTICE) ?: 0]
@@ -334,7 +363,7 @@ class VideoViewModel @Inject constructor(
 
     private val video get() = videoState.value
 
-    val notes: StateFlow<ContainerNotesState> = containerNotes(db, db.noteDao().observeForVideos(listOf(youtubeID)), zone)
+    val notes: StateFlow<ContainerNotesState> = containerNotes(db, db.noteDao().observeForVideos(listOf(youtubeID)), zone, selected)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ContainerNotesState())
 
     fun anchorChapter(v: YouTubeVideoEntity): BookChapter? =
@@ -354,9 +383,9 @@ class VideoViewModel @Inject constructor(
         return if (end != null && end != start) "$name ${chapter.chapterOrd}:$start-$end" else "$name ${chapter.chapterOrd}:$start"
     }
 
-    fun saveNote(content: String, ref: String?) {
+    fun saveNote(content: String, chapterNote: Boolean) {
         val v = video.value ?: return
-        viewModelScope.launch { videos.saveNote(youtubeID, content, ref, anchorChapter(v), zone) }
+        viewModelScope.launch { noticeIfTextMissing(videos.saveNote(youtubeID, content, anchorChapter(v), chapterNote, zone)) }
     }
 
     fun onAction(note: NoteEntity, action: NoteAction) {
@@ -390,6 +419,7 @@ class VideoViewModel @Inject constructor(
 fun VideoScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, viewModel: VideoViewModel = hiltViewModel()) {
     val videoState by viewModel.videoState.collectAsStateWithLifecycle()
     val notes by viewModel.notes.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
     val scriptSeconds by viewModel.scriptSeconds.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
@@ -411,7 +441,6 @@ fun VideoScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, viewModel: Vid
         autoplay = false,
         sectionDay = v.createdAt.atZone(ZoneId.systemDefault()).toLocalDate(),
         bibleRefLanguages = viewModel.bibleRefLanguages,
-        defaultReference = viewModel.referenceText(viewModel.anchorChapter(v)),
         scriptSeconds = scriptSeconds,
         onScriptSeconds = viewModel::setScriptSeconds,
         onScript = viewModel::captureScript,
@@ -419,6 +448,9 @@ fun VideoScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, viewModel: Vid
         onOpenNote = onOpenNote,
         onAction = viewModel::onAction,
         onSaveNote = viewModel::saveNote,
+        isOnline = isOnline,
+        onBackfillVerse = viewModel::backfillVerse,
+        verseNotices = viewModel.verseNotices,
         snackbar = snackbar,
         actions = {
             IconButton(onClick = { confirmDelete = true }, modifier = Modifier.testTag("videoDelete")) {

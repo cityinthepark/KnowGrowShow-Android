@@ -283,6 +283,9 @@
     <string name="sermon_open_pdf">開啟 PDF</string>
     <string name="script_capture">字幕</string>
     <string name="script_saved">已存到筆記。</string>
+    <string name="note_sheet_chapter_note">章節筆記</string>
+    <string name="verse_text_offline">現在沒有行動網路或 Wi-Fi，拿不到經文。請開啟其中一個，經文會自動補上。</string>
+    <string name="verse_text_unavailable">暫時拿不到經文，等可以取得時會自動補上。</string>
     <string name="script_none">這個影片沒有字幕。</string>
     <string name="script_duration_title">字幕摘錄時長</string>
     <string name="script_duration_footer">「字幕」會儲存目前時間之前這麼多秒的字幕。</string>

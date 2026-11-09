@@ -173,9 +173,8 @@ private fun ReviewPageContent(page: ReviewPage) {
             ) {
                 Spacer(Modifier.height(ReviewDesign.controlSize))
                 Header(page)
-                // An anchor reads its verse text with the Web's highlights (iOS `highlightedVerseText`).
-                val body = page.verse?.combined?.takeIf { note.noteType == NoteType.BibleVerse && it.text.isNotBlank() }
-                    ?: MarkedVerse(page.card.displayContent)
+                // An anchor reads its verse text in every selected version with the Web's highlights (iOS `highlightedVerseText`).
+                val body = MarkedVerse(page.card.displayContent, page.card.bodyMarks)
                 MarkedText(body.annotated(), style = textStyle(26, 1.4f, FontWeight.SemiBold), color = Color.White, modifier = Modifier.testTag("reviewBody"))
                 if (note.noteType == NoteType.Prayer) page.verse?.let { LinkedVerseCard(it) }
                 Text(relativeTime(note.createdAt), style = textStyle(12, weight = FontWeight.SemiBold), color = Color.White.copy(alpha = 0.55f))

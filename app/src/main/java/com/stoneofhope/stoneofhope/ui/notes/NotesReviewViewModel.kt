@@ -13,6 +13,7 @@ import com.stoneofhope.stoneofhope.data.notes.VerseDisplay
 import com.stoneofhope.stoneofhope.data.notes.VerseMarks
 import com.stoneofhope.stoneofhope.data.notes.isAnsweredMarker
 import com.stoneofhope.stoneofhope.data.repository.NoteRepository
+import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import java.time.ZoneId
@@ -27,7 +28,7 @@ import kotlinx.coroutines.launch
 /** One page of the review. */
 data class ReviewPage(
     val card: NoteCardUi,
-    /** An anchor's verses, or the verse a prayer is linked to (shown as its own card). */
+    /** The verse a prayer is linked to (shown as its own card); an anchor's text is the card's body. */
     val verse: ResolvedVerse?,
     /** Reflections (newest first), then comments (oldest first), as iOS lists them. */
     val items: List<ThreadItem>,
@@ -43,7 +44,10 @@ class NotesReviewViewModel @Inject constructor(
     savedState: SavedStateHandle,
     db: AppDatabase,
     private val notes: NoteRepository,
+    bibleVersions: BibleVersionPreferences,
 ) : ViewModel() {
+
+    private val selectedVersions = bibleVersions.selectedVersions()
 
     private val day: LocalDate = LocalDate.ofEpochDay(checkNotNull(savedState.get<Long>(ARG_DAY)))
     private val zone: ZoneId get() = ZoneId.systemDefault()
@@ -71,9 +75,10 @@ class NotesReviewViewModel @Inject constructor(
                 ThreadItem(it.id, it.content, it.isAnsweredMarker, it.createdAt, it.starLevel, it.tagIds, it.tagIds.mapNotNull(tagNames::get))
             }
             ReviewPage(
-                card = NoteCards.card(note, allNotes, comments, tagNames, sermonIds.toSet(), versesById, zone, marks),
+                card = NoteCards.card(note, allNotes, comments, tagNames, sermonIds.toSet(), versesById, zone, marks, selectedVersions),
+                // An anchor's body is the card's (every selected version); a prayer shows its linked verse.
                 verse = VerseDisplay.resolve(note, versesById, marks)
-                    ?.takeIf { note.noteType == NoteType.BibleVerse || (note.noteType == NoteType.Prayer && it.combinedContent.isNotBlank()) },
+                    ?.takeIf { note.noteType == NoteType.Prayer && it.combinedContent.isNotBlank() },
                 items = items,
                 count = items.count { !it.isAnsweredMarker },
             )

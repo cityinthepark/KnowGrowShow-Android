@@ -302,6 +302,9 @@
     <string name="sermon_open_pdf">Open PDF</string>
     <string name="script_capture">Script</string>
     <string name="script_saved">Saved to notes.</string>
+    <string name="note_sheet_chapter_note">Chapter Note</string>
+    <string name="verse_text_offline">There is no cellular or Wi-Fi connection, so the verse text can\'t be fetched. Please turn one on; the text will be added automatically.</string>
+    <string name="verse_text_unavailable">The verse text could not be fetched. It will be added automatically when it is available.</string>
     <string name="script_none">No transcript available for this video.</string>
     <string name="script_duration_title">Script Capture Duration</string>
     <string name="script_duration_footer">Script saves the captions of this many seconds before the current moment.</string>

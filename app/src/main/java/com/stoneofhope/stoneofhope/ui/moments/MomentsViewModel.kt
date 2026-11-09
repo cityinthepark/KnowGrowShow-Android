@@ -12,6 +12,7 @@ import com.stoneofhope.stoneofhope.data.notes.NoteBadges
 import com.stoneofhope.stoneofhope.data.notes.NoteFilter
 import com.stoneofhope.stoneofhope.data.notes.NoteListData
 import com.stoneofhope.stoneofhope.data.notes.VerseDisplay
+import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
 import com.stoneofhope.stoneofhope.data.sync.CloudSync
 import com.stoneofhope.stoneofhope.data.sync.SyncIdentity
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,7 +50,10 @@ class MomentsViewModel @Inject constructor(
     private val clock: Clock,
     private val identity: SyncIdentity,
     private val cloudSync: CloudSync,
+    bibleVersions: BibleVersionPreferences,
 ) : ViewModel() {
+
+    private val selectedVersions = bibleVersions.selectedVersions()
 
     private val zone: ZoneId get() = ZoneId.systemDefault()
     private val today = MutableStateFlow(currentDay())
@@ -85,7 +89,7 @@ class MomentsViewModel @Inject constructor(
                     noteId = note.id,
                     icon = NoteBadges.badge(note, linkedSermon).icon,
                     lines = MomentsBuilder.lines(
-                        note, VerseDisplay.displayContent(note, versesById),
+                        note, VerseDisplay.displayContent(note, selectedVersions, versesById),
                         sermonMark = linkedSermon && note.noteType == NoteType.BibleVerse,
                     ),
                 )

@@ -41,6 +41,8 @@ data class ChapterVerseState(
     val refLabel: String = "",
     /** The verse text in its version, with marks; null while unknown. */
     val verse: ResolvedVerse? = null,
+    /** An anchor's text in the other selected versions (iOS shows every selected version). */
+    val moreVersions: List<ResolvedVerse> = emptyList(),
     /** The newest anchor here: the target of the top "⋯". */
     val anchor: NoteCardUi? = null,
     /** Reflections and the anchors' own comments, by day. */
@@ -80,11 +82,12 @@ class ChapterVerseViewModel @Inject constructor(
     )
 
     private val zone: ZoneId get() = ZoneId.systemDefault()
-    private val primaryVersion = BibleVersions.primary(bibleVersions.selectedVersions())
+    private val selectedVersions = bibleVersions.selectedVersions()
+    private val primaryVersion = BibleVersions.primary(selectedVersions)
 
-    val state: StateFlow<ChapterVerseState> = ChapterSource.observe(db, verse.chapter).map { src ->
+    val state: StateFlow<ChapterVerseState> = ChapterSource.observe(db, verse.chapter, selectedVersions).map { src ->
         val group = ChapterNotesBuilder.verse(src.notes, src.comments, verse)
-        val (source, resolved) = src.verseText(group)
+        val (source, blocks) = src.verseText(group)
         val items = group.reflections.map {
             ThreadItem(it.id, it.content, false, it.createdAt, it.starLevel, it.tagIds, src.tagNames(it.tagIds), isReflection = true)
         } + group.anchorComments.map {
@@ -92,14 +95,15 @@ class ChapterVerseViewModel @Inject constructor(
         }
         ChapterVerseState(
             refLabel = verse.refLabel(source?.versionAbbr ?: primaryVersion),
-            verse = resolved,
+            verse = blocks.firstOrNull()?.resolved,
+            moreVersions = blocks.drop(1).map { it.resolved },
             anchor = group.anchors.firstOrNull()?.let { src.card(it, zone) },
             thread = NoteThread.build(items, pinDayKeys = emptyList(), answeredAt = null, zone = zone),
             reflectionCount = items.size,
             // The page is the verse, so the prayers' own verse chip would only repeat it.
             prayers = group.prayers.map { src.card(it, zone).copy(prayerRef = null) },
             allTags = src.tags,
-            textSourceId = if (resolved == null) source?.id else null,
+            textSourceId = if (blocks.isEmpty()) source?.id else null,
             loaded = true,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChapterVerseState())

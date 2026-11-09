@@ -19,6 +19,7 @@ import com.stoneofhope.stoneofhope.data.notes.VerseMarks
 import com.stoneofhope.stoneofhope.data.notes.isAnsweredMarker
 import com.stoneofhope.stoneofhope.data.repository.NoteActionRepository
 import com.stoneofhope.stoneofhope.data.repository.NoteRepository
+import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.ZoneId
 import javax.inject.Inject
@@ -32,6 +33,8 @@ data class NoteDetailsState(
     val card: NoteCardUi? = null,
     /** The verse area: an anchor's own verses, or the verse a prayer / note is linked to. */
     val verse: ResolvedVerse? = null,
+    /** An anchor's verses in the other selected versions (iOS shows every selected version). */
+    val moreVersions: List<ResolvedVerse> = emptyList(),
     /** Comments by day with pinned runs and the answered day; under a verse anchor, its reflections. */
     val thread: List<ThreadDay> = emptyList(),
     /** Comments without "Answered" markers, or reflections. */
@@ -53,9 +56,11 @@ class NoteDetailsViewModel @Inject constructor(
     private val db: AppDatabase,
     private val notes: NoteRepository,
     private val actions: NoteActionRepository,
+    bibleVersions: BibleVersionPreferences,
 ) : ViewModel() {
 
     private val noteId: String = checkNotNull(savedState[ARG_NOTE_ID])
+    private val selectedVersions = bibleVersions.selectedVersions()
     private val zone: ZoneId get() = ZoneId.systemDefault()
 
     private class Context(
@@ -82,8 +87,10 @@ class NoteDetailsViewModel @Inject constructor(
     ) { note, comments, pinLog, ctx ->
         if (note == null || note.deletedAt != null || note.isDeleted) return@combine NoteDetailsState(loaded = true, gone = true)
         val tagNames = ctx.tags.associate { it.id to it.name }
-        val card = NoteCards.card(note, ctx.allNotes, comments, tagNames, ctx.sermonIds, ctx.verses, zone, ctx.marks)
-        val verse = VerseDisplay.resolve(note, ctx.verses, ctx.marks)?.takeIf { note.noteType == NoteType.BibleVerse || it.combinedContent.isNotBlank() }
+        val card = NoteCards.card(note, ctx.allNotes, comments, tagNames, ctx.sermonIds, ctx.verses, zone, ctx.marks, selectedVersions)
+        val blocks = VerseDisplay.versionBlocks(note, selectedVersions, ctx.verses, ctx.marks)
+        val verse = blocks.firstOrNull()?.resolved
+            ?: VerseDisplay.resolve(note, ctx.verses, ctx.marks)?.takeIf { note.noteType == NoteType.BibleVerse || it.combinedContent.isNotBlank() }
         val items = if (note.noteType == NoteType.BibleVerse) {
             NoteRelations.reflections(note, ctx.allNotes, zone).map {
                 ThreadItem(it.id, it.content, false, it.createdAt, it.starLevel, it.tagIds, it.tagIds.mapNotNull(tagNames::get), isReflection = true)
@@ -94,7 +101,7 @@ class NoteDetailsViewModel @Inject constructor(
         // iOS `noteTimelineRows`: the answered day is `answeredAt ?? updatedAt` while answered.
         val answeredAt = if (note.isAnswered == true) note.answeredAt ?: note.updatedAt else null
         val days = NoteThread.build(items, pinLog?.pinnedDays.orEmpty(), answeredAt, zone)
-        NoteDetailsState(card, verse, days, items.count { !it.isAnsweredMarker }, ctx.tags, loaded = true)
+        NoteDetailsState(card, verse, blocks.drop(1).map { it.resolved }, days, items.count { !it.isAnsweredMarker }, ctx.tags, loaded = true)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NoteDetailsState())
 
     init {

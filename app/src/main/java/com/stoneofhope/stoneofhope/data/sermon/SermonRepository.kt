@@ -401,11 +401,18 @@ class SermonRepository @Inject constructor(
     // MARK: - Notes on the sermon page
 
     /**
-     * iOS `addNote(_:to: sermon, separatedReference: true)`: the note sheet's save, linked to the sermon
-     * and anchored to [anchorChapter] (the chapter the page was opened from, else the sermon's first).
+     * iOS `addNote(_:to: sermon, chapterNote:)`: the note sheet's save, linked to the sermon. "v3 …" uses
+     * [anchorChapter] (the chapter the page was opened from, else the sermon's first); text with no verse
+     * is put on that chapter only when [chapterNote] (the sheet's "Chapter Note" switch) is on.
      */
-    suspend fun saveNote(sermonId: String, content: String, refText: String?, anchorChapter: BookChapter?, zone: ZoneId = ZoneId.systemDefault()): NoteInputSaveResult? =
-        notes.saveNoteFromContent(content, refText, anchorChapter = anchorChapter, zone = zone, sermonId = sermonId)
+    suspend fun saveNote(
+        sermonId: String,
+        content: String,
+        anchorChapter: BookChapter?,
+        chapterNote: Boolean,
+        zone: ZoneId = ZoneId.systemDefault(),
+    ): NoteInputSaveResult? =
+        notes.saveNoteFromContent(content, null, anchorChapter = anchorChapter, zone = zone, sermonId = sermonId, anchorPlainNote = chapterNote)
 
     /** iOS `addOCRNoteIfNeeded(_:to: sermon)`: Script text, "vN" resolved against the sermon's chapter. */
     suspend fun saveScriptText(sermonId: String, text: String, seed: BookChapter?, zone: ZoneId = ZoneId.systemDefault()) {
