@@ -71,7 +71,7 @@ class LocalSyncOps @Inject constructor(private val db: AppDatabase) {
         db.sermonSeriesDao().markAllDirty()
         db.sermonDao().markAllDirty()
         db.youTubeVideoDao().markAllDirty()
-        db.userVerseDao().markAllDirty()
+        db.userVerseDao().markAllDirtyAsNeverSynced()
         db.indexedTextDao().markAllDirty()
         db.noteDao().markAllDirty()
         db.noteCommentDao().markAllDirty()

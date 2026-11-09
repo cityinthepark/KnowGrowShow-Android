@@ -422,7 +422,7 @@ object WireDecoder {
     }
 
     /** Valid ObjectIds only; malformed entries are dropped like iOS `try? ObjectId(string:)`. */
-    private fun tagIds(data: WireData): List<String> =
+    internal fun tagIds(data: WireData): List<String> =
         data.stringList("tagIds")?.mapNotNull(ObjectIds::parse).orEmpty()
 
     private fun skip(reason: SkipReason) = Decoded.Skip(reason)

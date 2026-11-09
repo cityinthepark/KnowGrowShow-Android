@@ -150,8 +150,12 @@ interface UserVerseDao {
     @Query("DELETE FROM userVerses WHERE deletedAt IS NOT NULL")
     suspend fun purgeAllTombstones(): Int
 
-    @Query("UPDATE userVerses SET needsSync = 1")
-    suspend fun markAllDirty()
+    /**
+     * After a cloud wipe: re-upload every verse, and forget when each was last synced, so the next
+     * sign-in counts as a first merge and takes the cloud's tags too (USER_VERSE_CONTRACT §3.4).
+     */
+    @Query("UPDATE userVerses SET needsSync = 1, lastSyncedAt = NULL")
+    suspend fun markAllDirtyAsNeverSynced()
 }
 
 @Dao

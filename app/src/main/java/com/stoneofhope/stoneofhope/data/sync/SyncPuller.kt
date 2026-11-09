@@ -20,7 +20,8 @@ import javax.inject.Singleton
  * Port of iOS `FirestoreUserDataPull`: downloads `users/{uid}/…` and merges into Room.
  *
  * - Rows with `needsSync == true` are never overwritten (local unpushed edits win, contract §2.2);
- *   clean rows are replaced wholesale, no `updatedAt` comparison, no field-level merge.
+ *   clean rows are replaced wholesale, no `updatedAt` comparison, no field-level merge. The one
+ *   exception: a never-synced verse takes the cloud's tags too ([FirstMergeVerseTags]).
  * - Incremental (`updatedAt >= cursor`) once a cursor exists; the cursor advances to the largest
  *   server `updatedAt` seen, and is held back if any encrypted body was unreadable (iOS "K2").
  */
@@ -191,6 +192,7 @@ class SyncPuller @Inject constructor(
                 mergeEach(
                     docs, run, { id -> id.takeIf { it.isNotEmpty() } }, dao::getById, { it.needsSync },
                     decode = { doc, existing -> WireDecoder.userVerse(doc.id, doc.data, existing, now) },
+                    onDirty = { existing, data -> FirstMergeVerseTags.union(existing, data)?.let { dao.upsert(it) } },
                     hardDelete = dao::hardDelete,
                     write = { dao.upsert(it) },
                 )

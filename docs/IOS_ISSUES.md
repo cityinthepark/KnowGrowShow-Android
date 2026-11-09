@@ -202,6 +202,7 @@ K1 补充：笔记推送也省略空字段。目前笔记里会被清空的只�
 | # | iOS 位置 | 问题 | 影响 | 安卓做法 | iOS 修后安卓要改吗 |
 | --- | --- | --- | --- | --- | --- |
 | O1 🟡 | `NotesManager.saveSeparatedNoteInput` → `saveVerseReferenceFromDetection` | "取不到经文"的通知（`verseTextUnavailable`）只在 `saveBibleVerseFromSeparatedInput` 里发（引用框、"v3 …"）。正文里直接写"Hebrews 4:3 …"走 `saveVerseReferenceFromDetection`，取不到经文时不发 | 讲道/视频面板去掉引用框后，写经节主要就靠正文里的"书卷 章:节"；没网时这样保存，经文是空的，却没有任何提示 | 两条路径都提示（`VerseReferenceSaveResult.textMissing`） | 不用 |
+| O2 ✅ | `FirestoreUserDataPull.mergeUserVerses`（安卓 `SyncPuller` 同样） | 两台设备登录同一账号前都给同一节经文加了标签。后同步的那台本地是"脏"的，按"本地脏优先"跳过云端，再整份推上去 | 先同步那台加的标签被覆盖丢失（两端都有这个问题） | 按 USER_VERSE_CONTRACT §3.4（iOS `2977b9f`）：本地没同步过（`lastSyncedAt` 为空）且云端不是墓碑时，拉取先把云端 `tagIds` 里本地没有的加进来，只加不减；云端被清空后重新标脏时同时清 `lastSyncedAt`（`FirstMergeVerseTags`、`markAllDirtyAsNeverSynced`） | 已与 iOS 一致 |
 
 ---
 
