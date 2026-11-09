@@ -172,7 +172,7 @@ class ChapterViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChapterState())
 
     fun onAction(note: NoteEntity, action: NoteAction) {
-        viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, unmarkReferenceDay = null, zone = zone) }
+        viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, zone = zone) }
     }
 
     /** iOS `ChapterNoteView` "+": `addNote(_:to:bibleRefText:separatedReference: true)`. */

@@ -42,16 +42,16 @@ class NoteActionRepository @Inject constructor(
     }
 
     /**
-     * iOS `setPinnedStatus`: pinning logs today in `PinLog`; unpinning drops the whole log only when
-     * the note was created on [unmarkReferenceDay] (default today) — older pin history stays.
+     * iOS `setPinnedStatus`: pinning logs today in `PinLog`; unpinning applies
+     * [LocalSyncOps.daysToRemoveOnUnpin], which only depends on the real today and the logged days.
      */
-    suspend fun setPinned(noteId: String, pinned: Boolean, unmarkReferenceDay: LocalDate? = null, zone: ZoneId = ZoneId.systemDefault()) {
+    suspend fun setPinned(noteId: String, pinned: Boolean, zone: ZoneId = ZoneId.systemDefault()) {
         val now = clock.instant()
         update(noteId) { note ->
             if (pinned) {
                 ops.appendPinnedDay(noteId, LocalSyncOps.dayKey(now, zone))
-            } else if (note.createdAt.atZone(zone).toLocalDate() == (unmarkReferenceDay ?: now.atZone(zone).toLocalDate())) {
-                ops.removePinLog(noteId)
+            } else {
+                ops.applyUnpin(noteId, now.atZone(zone).toLocalDate())
             }
             note.copy(isPinned = pinned, needsSync = true, updatedAt = now)
         }

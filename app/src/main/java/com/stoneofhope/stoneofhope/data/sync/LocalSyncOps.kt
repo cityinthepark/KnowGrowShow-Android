@@ -5,6 +5,7 @@ import com.stoneofhope.stoneofhope.data.local.entity.PinLogEntity
 import com.stoneofhope.stoneofhope.data.local.entity.PinLogPendingDeleteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.UserVerseEntity
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -91,6 +92,19 @@ class LocalSyncOps @Inject constructor(private val db: AppDatabase) {
         dao.upsert(row.copy(pinnedDays = row.pinnedDays + dayKey, needsSync = true))
     }
 
+    /**
+     * iOS `PinLog.applyUnpin`: applies [daysToRemoveOnUnpin] to the note's log; the row is removed
+     * (queuing its Firestore delete) once no days are left, and marked dirty only when it changed.
+     */
+    suspend fun applyUnpin(noteId: String, today: LocalDate) {
+        val dao = db.pinLogDao()
+        val row = dao.getByNoteId(noteId) ?: return
+        val removed = daysToRemoveOnUnpin(row.pinnedDays, today).toSet()
+        val kept = row.pinnedDays.filter { it !in removed }
+        if (kept.isEmpty()) removePinLog(noteId)
+        else if (removed.isNotEmpty()) dao.upsert(row.copy(pinnedDays = kept, needsSync = true))
+    }
+
     /** iOS `refreshTodayLedgerForOpenPinnedNotes`: while a note is pinned, each local day is logged. */
     suspend fun refreshTodayLedgerForPinnedNotes(now: Instant, zone: ZoneId) {
         val today = dayKey(now, zone)
@@ -132,5 +146,24 @@ class LocalSyncOps @Inject constructor(private val db: AppDatabase) {
 
         /** iOS `PinLog.dayKey`: local calendar day, `yyyy-MM-dd`. */
         fun dayKey(instant: Instant, zone: ZoneId): String = instant.atZone(zone).format(DAY_KEY)
+
+        /**
+         * iOS `PinLog.daysToRemoveOnUnpin` (same rule as the web's `pinDaysToRemoveOnUnpin`): the
+         * stored entries to drop when a note is unpinned on [today]. Earlier days always stay as
+         * history. Today stays when yesterday is logged (already pinned before today), otherwise the
+         * pin started today and unpinning undoes it. Later days (clock skew) always go. Entries that
+         * aren't valid days are left alone.
+         */
+        fun daysToRemoveOnUnpin(days: List<String>, today: LocalDate): List<String> {
+            val keyed = days.map { it to comparableDay(it) }
+            val pinnedBeforeToday = keyed.any { it.second == today.minusDays(1) }
+            return keyed.filter { (_, day) ->
+                day != null && (day > today || (day == today && !pinnedBeforeToday))
+            }.map { it.first }
+        }
+
+        /** `yyyy-MM-dd` or `yyyyMMdd`, like iOS's `CalendarDayKey.normalize`; null if not a real day. */
+        private fun comparableDay(entry: String): LocalDate? =
+            runCatching { LocalDate.parse(entry.replace("-", ""), DateTimeFormatter.BASIC_ISO_DATE) }.getOrNull()
     }
 }

@@ -179,7 +179,7 @@ class SermonViewModel @Inject constructor(
     }
 
     fun onAction(note: NoteEntity, action: NoteAction) {
-        viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, unmarkReferenceDay = null, zone = zone) }
+        viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, zone = zone) }
     }
 
     fun playAudio() {
@@ -360,7 +360,7 @@ class VideoViewModel @Inject constructor(
     }
 
     fun onAction(note: NoteEntity, action: NoteAction) {
-        viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, unmarkReferenceDay = null, zone = zone) }
+        viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, zone = zone) }
     }
 
     fun addTag(name: String) { viewModelScope.launch { videos.addTag(youtubeID, name) } }

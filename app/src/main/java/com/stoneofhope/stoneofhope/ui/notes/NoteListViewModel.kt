@@ -224,7 +224,7 @@ class NoteListViewModel @Inject constructor(
     fun setTag(value: String?) { tag.value = value }
 
     fun onAction(note: NoteEntity, action: NoteAction) {
-        viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, unmarkReferenceDay = day, zone = zone) }
+        viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, zone = zone) }
     }
 
     /** The list's "New note" (today only), then back to "All" like iOS. */
@@ -272,9 +272,9 @@ class NoteListViewModel @Inject constructor(
 
 /** Shared by list and details: one [NoteAction] → [NoteActionRepository]. */
 internal object NoteActionDispatcher {
-    suspend fun dispatch(actions: NoteActionRepository, note: NoteEntity, action: NoteAction, unmarkReferenceDay: LocalDate?, zone: ZoneId) {
+    suspend fun dispatch(actions: NoteActionRepository, note: NoteEntity, action: NoteAction, zone: ZoneId) {
         when (action) {
-            NoteAction.TogglePinned -> actions.setPinned(note.id, note.isPinned != true, unmarkReferenceDay, zone)
+            NoteAction.TogglePinned -> actions.setPinned(note.id, note.isPinned != true, zone)
             NoteAction.ToggleAnswered -> actions.setAnswered(note.id, note.isAnswered != true, zone = zone)
             is NoteAction.Star -> actions.setStarLevel(note.id, action.level)
             is NoteAction.AddTag -> actions.addTag(note.id, action.name)
@@ -293,7 +293,7 @@ internal object NoteActionDispatcher {
      */
     suspend fun dispatchThread(actions: NoteActionRepository, db: AppDatabase, item: ThreadItem, action: NoteAction, zone: ZoneId) {
         if (item.isReflection) {
-            db.noteDao().getById(item.id)?.let { dispatch(actions, it, action, unmarkReferenceDay = null, zone = zone) }
+            db.noteDao().getById(item.id)?.let { dispatch(actions, it, action, zone = zone) }
             return
         }
         when (action) {

@@ -106,7 +106,7 @@ class NoteDetailsViewModel @Inject constructor(
     }
 
     fun onAction(note: NoteEntity, action: NoteAction) {
-        viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, unmarkReferenceDay = null, zone = zone) }
+        viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, zone = zone) }
     }
 
     /** Comment / reflection actions (design C4). */

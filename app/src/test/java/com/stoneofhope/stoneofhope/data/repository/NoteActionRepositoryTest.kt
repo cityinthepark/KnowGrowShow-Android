@@ -10,6 +10,7 @@ import com.stoneofhope.stoneofhope.data.bible.text.BibleVerseReader
 import com.stoneofhope.stoneofhope.data.bible.text.UnavailableOnDemandVerseSource
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
+import com.stoneofhope.stoneofhope.data.local.entity.PinLogEntity
 import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
 import com.stoneofhope.stoneofhope.data.model.NoteType
 import com.stoneofhope.stoneofhope.data.model.NoteVerseAnchor
@@ -63,7 +64,9 @@ class NoteActionRepositoryTest {
     private suspend fun get(id: String) = db.noteDao().getById(id)!!
     private suspend fun comments(noteId: String) = db.noteCommentDao().activeForNote(noteId)
 
-    @Test fun pinLogsTodayAndUnpinOnTheCreationDayDropsTheLog() = runTest {
+    private suspend fun pinDays(noteId: String) = db.pinLogDao().getByNoteId(noteId)?.pinnedDays
+
+    @Test fun pinLogsTodayAndUnpinningWhenOnlyTodayIsLoggedDropsTheLog() = runTest {
         val note = insert(NoteType.Note)
         clock.now = clock.now.plusSeconds(60)
         actions.setPinned(note.id, true, zone = zone)
@@ -72,21 +75,54 @@ class NoteActionRepositoryTest {
             assertTrue(needsSync)
             assertEquals(clock.now, updatedAt)
         }
-        assertEquals(listOf("2026-10-26"), db.pinLogDao().getByNoteId(note.id)!!.pinnedDays)
+        assertEquals(listOf("2026-10-26"), pinDays(note.id))
         actions.setPinned(note.id, false, zone = zone)
         assertEquals(false, get(note.id).isPinned)
         assertNull(db.pinLogDao().getByNoteId(note.id))
         assertEquals(listOf(note.id), db.pinLogDao().pendingDeletes())
     }
 
-    @Test fun unpinningAnOlderNoteKeepsItsPinHistory() = runTest {
-        val note = insert(NoteType.Note, created = clock.now.minus(Duration.ofDays(3)))
+    // The flaw the shared rule fixes: an old note pinned by mistake used to keep today in its log.
+    @Test fun unpinningAnOldNotePinnedByMistakeTodayRemovesTodayAndKeepsHistory() = runTest {
+        val note = insert(NoteType.Note, created = clock.now.minus(Duration.ofDays(30)))
+        db.pinLogDao().upsert(PinLogEntity(note.id, listOf("2026-10-10", "2026-10-11")))
         actions.setPinned(note.id, true, zone = zone)
+        assertEquals(listOf("2026-10-10", "2026-10-11", "2026-10-26"), pinDays(note.id))
         actions.setPinned(note.id, false, zone = zone)
-        assertEquals(listOf("2026-10-26"), db.pinLogDao().getByNoteId(note.id)!!.pinnedDays)
-        // The list passes its own day: unpinning from the note's creation-day list drops the log.
-        actions.setPinned(note.id, true, zone = zone)
-        actions.setPinned(note.id, false, unmarkReferenceDay = today.minusDays(3), zone = zone)
+        assertEquals(listOf("2026-10-10", "2026-10-11"), pinDays(note.id))
+        assertTrue(db.pinLogDao().getByNoteId(note.id)!!.needsSync)
+        assertEquals(false, get(note.id).isPinned)
+    }
+
+    @Test fun unpinningANotePinnedSinceYesterdayKeepsTodayAndStaysClean() = runTest {
+        val note = insert(NoteType.Note, created = clock.now.minus(Duration.ofDays(3)))
+        val days = listOf("2026-10-24", "2026-10-25", "2026-10-26")
+        db.pinLogDao().upsert(PinLogEntity(note.id, days, needsSync = false))
+        actions.setPinned(note.id, false, zone = zone)
+        assertEquals(days, pinDays(note.id))
+        assertEquals(false, db.pinLogDao().getByNoteId(note.id)!!.needsSync)
+        assertTrue(db.pinLogDao().pendingDeletes().isEmpty())
+    }
+
+    @Test fun unpinningDropsLaterDaysEvenWhenTodayStays() = runTest {
+        val note = insert(NoteType.Note)
+        db.pinLogDao().upsert(PinLogEntity(note.id, listOf("2026-10-25", "2026-10-26", "2026-10-28"), needsSync = false))
+        actions.setPinned(note.id, false, zone = zone)
+        assertEquals(listOf("2026-10-25", "2026-10-26"), pinDays(note.id))
+        assertTrue(db.pinLogDao().getByNoteId(note.id)!!.needsSync)
+    }
+
+    @Test fun unpinningANoteCreatedTodayStillKeepsEarlierDays() = runTest {
+        val note = insert(NoteType.Note)
+        val days = listOf("2026-10-24", "2026-10-25")
+        db.pinLogDao().upsert(PinLogEntity(note.id, days, needsSync = false))
+        actions.setPinned(note.id, false, zone = zone)
+        assertEquals(days, pinDays(note.id))
+    }
+
+    @Test fun unpinningWithoutALogDoesNotCreateOne() = runTest {
+        val note = insert(NoteType.Note)
+        actions.setPinned(note.id, false, zone = zone)
         assertNull(db.pinLogDao().getByNoteId(note.id))
     }
 

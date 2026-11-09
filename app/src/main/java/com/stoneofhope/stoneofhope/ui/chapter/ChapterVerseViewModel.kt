@@ -114,7 +114,7 @@ class ChapterVerseViewModel @Inject constructor(
     }
 
     fun onAction(note: NoteEntity, action: NoteAction) {
-        viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, unmarkReferenceDay = null, zone = zone) }
+        viewModelScope.launch { NoteActionDispatcher.dispatch(actions, note, action, zone = zone) }
     }
 
     fun onThreadAction(item: ThreadItem, action: NoteAction) {
