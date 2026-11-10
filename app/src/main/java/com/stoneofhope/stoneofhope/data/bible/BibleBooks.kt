@@ -87,7 +87,7 @@ object BibleBooks {
             listOf("1Sa", "1S", "1Sam", "1 Sa", "1 S", "1 Sam"), listOf("撒上"), listOf("撒上"),
             intArrayOf(28, 36, 21, 22, 12, 21, 17, 22, 27, 27, 15, 25, 23, 52, 35, 23, 58, 30, 24, 42, 15, 23, 29, 22, 44, 25, 12, 25, 11, 31, 13)),
         book(10, "2 Samuel", "撒母耳记下", "撒母耳記下",
-            listOf("2Sa", "2S", "2Sam", "2Sa", "2S", "2Sam"), listOf("撒下"), listOf("撒下"),
+            listOf("2Sa", "2S", "2Sam", "2 Sa", "2 S", "2 Sam"), listOf("撒下"), listOf("撒下"),
             intArrayOf(27, 32, 39, 12, 25, 23, 29, 18, 13, 19, 27, 31, 39, 33, 37, 23, 29, 33, 43, 26, 22, 51, 39, 25)),
         book(11, "1 Kings", "列王记上", "列王記上",
             listOf("1Ki", "1K", "1Kg", "1 Ki", "1 K", "1 Kg"), listOf("王上"), listOf("王上"),
