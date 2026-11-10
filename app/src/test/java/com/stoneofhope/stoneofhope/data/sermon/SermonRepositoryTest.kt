@@ -9,6 +9,7 @@ import com.stoneofhope.stoneofhope.data.bible.BookChapter
 import com.stoneofhope.stoneofhope.data.bible.text.BibleTextDatabase
 import com.stoneofhope.stoneofhope.data.bible.text.BibleVerseReader
 import com.stoneofhope.stoneofhope.data.bible.text.UnavailableOnDemandVerseSource
+import com.stoneofhope.stoneofhope.data.image.NoteImageStore
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.NoteCommentEntity
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
@@ -69,9 +70,10 @@ class SermonRepositoryTest {
     private val reading = ReadingRepository(db, clock)
     private val web = FakeYouTubeWeb()
     private val ops = LocalSyncOps(db)
-    private val sermons = SermonRepository(db, clock, reading, notes, web, ops, versions)
-    private val videos = VideoRepository(db, clock, notes, sermons, web, ops, versions)
-    private val actions = NoteActionRepository(db, clock, notes, ops)
+    private val images = NoteImageStore(context)
+    private val sermons = SermonRepository(db, clock, reading, notes, web, ops, versions, images)
+    private val videos = VideoRepository(db, clock, notes, sermons, web, ops, versions, images)
+    private val actions = NoteActionRepository(db, clock, notes, ops, images)
     private val defaultLocale = Locale.getDefault().also { Locale.setDefault(Locale.US) }
     private val vid = "dQw4w9WgXcQ"
     private val link = "https://youtu.be/$vid?si=share"
@@ -412,5 +414,32 @@ class SermonRepositoryTest {
         videos.delete(vid)
         assertTrue(allNotes().isEmpty())
         assertNotNull(db.youTubeVideoDao().getById(vid)!!.deletedAt)
+    }
+
+    @Test fun deletingASermonOrAVideoDeletesThePictureFilesOfItsNotes() = runTest {
+        val names = listOf("SER-A.jpg", "SER-A-thumb.jpg", "VID-A.jpg", "VID-A-thumb.jpg")
+        names.forEach { images.file(it).writeBytes(byteArrayOf(1)) }
+        try {
+            web.info = OEmbedInfo("Grace: Romans 5 | Lee", null, null, null)
+            val id = (sermons.createFromYouTube(link, zone = zone) as SermonCreateResult.Created).sermonId
+            db.noteDao().upsert(noteOn(id, "").copy(noteType = NoteType.Image, imagePath = names[0], thumbnailPath = names[1]))
+            sermons.delete(id)
+            assertFalse(images.exists(names[0]) || images.exists(names[1]))
+            assertTrue(images.exists(names[2]))
+
+            val other = "dQw4w9WgXcR"
+            videos.create("https://youtu.be/$other", null, zone)
+            db.noteDao().upsert(
+                NoteEntity(
+                    id = com.stoneofhope.stoneofhope.data.model.ObjectIds.newId(), noteType = NoteType.Image, content = "",
+                    createdAt = clock.instant(), updatedAt = clock.instant(), youtubeID = other,
+                    imagePath = names[2], thumbnailPath = names[3],
+                ),
+            )
+            videos.delete(other)
+            assertFalse(images.exists(names[2]) || images.exists(names[3]))
+        } finally {
+            names.forEach { images.file(it).delete() }
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.stoneofhope.stoneofhope.data.repository
 import androidx.room.withTransaction
 import com.stoneofhope.stoneofhope.data.bible.BibleAnchorKey
 import com.stoneofhope.stoneofhope.data.bible.SwiftText
+import com.stoneofhope.stoneofhope.data.image.NoteImageStore
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.NoteCommentEntity
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
@@ -30,6 +31,7 @@ class NoteActionRepository @Inject constructor(
     private val clock: Clock,
     private val notes: NoteRepository,
     private val ops: LocalSyncOps,
+    private val images: NoteImageStore,
 ) {
     private val noteDao get() = db.noteDao()
     private val commentDao get() = db.noteCommentDao()
@@ -124,6 +126,7 @@ class NoteActionRepository @Inject constructor(
         update(noteId) { note ->
             for (c in commentDao.activeForNote(noteId)) commentDao.upsert(c.softDeleted(now))
             ops.removePinLog(noteId)
+            images.deleteFilesOf(note)
             note.copy(deletedAt = now, isDeleted = true, needsSync = true, updatedAt = now)
         }
     }

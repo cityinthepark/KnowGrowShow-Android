@@ -106,6 +106,11 @@ class NoteImageStore @Inject constructor(@ApplicationContext private val context
         file(name).delete()
     }
 
+    /** A deleted note's two picture files. Like the note, they cannot come back. */
+    fun deleteFilesOf(note: NoteEntity) {
+        listOfNotNull(note.imagePath, note.thumbnailPath).filter { it.isNotEmpty() }.forEach(::delete)
+    }
+
     private fun write(name: String, bitmap: Bitmap, quality: Int): Boolean = try {
         file(name).outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, quality, it) }
     } catch (_: Exception) {

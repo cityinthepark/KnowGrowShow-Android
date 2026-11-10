@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.stoneofhope.stoneofhope.data.bible.BibleVersions
 import com.stoneofhope.stoneofhope.data.bible.BookChapter
 import com.stoneofhope.stoneofhope.data.bible.SwiftText
+import com.stoneofhope.stoneofhope.data.image.NoteImageStore
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
 import com.stoneofhope.stoneofhope.data.local.entity.YouTubeVideoEntity
@@ -42,6 +43,7 @@ class VideoRepository @Inject constructor(
     private val web: YouTubeWeb,
     private val ops: LocalSyncOps,
     private val bibleVersions: BibleVersionPreferences,
+    private val images: NoteImageStore,
 ) {
     private val videoDao get() = db.youTubeVideoDao()
 
@@ -129,6 +131,7 @@ class VideoRepository @Inject constructor(
                     db.noteCommentDao().upsert(c.copy(deletedAt = now, isDeleted = true, needsSync = true))
                 }
                 ops.removePinLog(note.id)
+                images.deleteFilesOf(note)
                 db.noteDao().upsert(note.copy(deletedAt = now, isDeleted = true, needsSync = true, updatedAt = now))
             }
             videoDao.upsert(video.copy(deletedAt = now, needsSync = true))

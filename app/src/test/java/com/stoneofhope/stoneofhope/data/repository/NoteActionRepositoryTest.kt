@@ -8,6 +8,7 @@ import com.stoneofhope.stoneofhope.data.bible.BibleLanguage
 import com.stoneofhope.stoneofhope.data.bible.text.BibleTextDatabase
 import com.stoneofhope.stoneofhope.data.bible.text.BibleVerseReader
 import com.stoneofhope.stoneofhope.data.bible.text.UnavailableOnDemandVerseSource
+import com.stoneofhope.stoneofhope.data.image.NoteImageStore
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.PinLogEntity
@@ -47,7 +48,7 @@ class NoteActionRepositoryTest {
         BibleVerseReader(bible.verseDao(), db.bibleCacheDao(), UnavailableOnDemandVerseSource()),
         BibleVersionPreferences(context.getSharedPreferences("actions-test", Context.MODE_PRIVATE).apply { edit().clear().commit() }) { BibleLanguage.English },
     )
-    private val actions = NoteActionRepository(db, clock, notes, LocalSyncOps(db))
+    private val actions = NoteActionRepository(db, clock, notes, LocalSyncOps(db), NoteImageStore(context))
 
     @After
     fun tearDown() {
@@ -231,6 +232,22 @@ class NoteActionRepositoryTest {
         val anchor = insert(NoteType.BibleVerse) { copy(content = NoteVerseAnchor.PLACEHOLDER) }
         actions.updateContent(anchor.id, "new")
         assertEquals(NoteVerseAnchor.PLACEHOLDER, get(anchor.id).content)
+    }
+
+    @Test fun deletingAnImageNoteDeletesItsPictureFilesAndOnlyItsOwn() = runTest {
+        val store = NoteImageStore(context)
+        val mine = listOf("DEL-A.jpg", "DEL-A-thumb.jpg")
+        val other = "DEL-KEEP.jpg"
+        (mine + other).forEach { store.file(it).writeBytes(byteArrayOf(1)) }
+        try {
+            val note = insert(NoteType.Image) { copy(imagePath = mine[0], thumbnailPath = mine[1]) }
+            insert(NoteType.Image) { copy(imagePath = other, thumbnailPath = other) }
+            actions.delete(note.id)
+            mine.forEach { assertFalse(it, store.exists(it)) }
+            assertTrue(store.exists(other))
+        } finally {
+            (mine + other).forEach { store.file(it).delete() }
+        }
     }
 
     @Test fun deleteSoftDeletesTheNoteItsCommentsAndPinLog() = runTest {

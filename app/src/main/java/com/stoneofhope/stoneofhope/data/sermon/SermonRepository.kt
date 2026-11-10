@@ -6,6 +6,7 @@ import com.stoneofhope.stoneofhope.data.bible.BibleLanguage
 import com.stoneofhope.stoneofhope.data.bible.BibleVersions
 import com.stoneofhope.stoneofhope.data.bible.BookChapter
 import com.stoneofhope.stoneofhope.data.bible.SwiftText
+import com.stoneofhope.stoneofhope.data.image.NoteImageStore
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.SermonEntity
 import com.stoneofhope.stoneofhope.data.local.entity.SermonSeriesEntity
@@ -70,6 +71,7 @@ class SermonRepository @Inject constructor(
     private val web: YouTubeWeb,
     private val ops: LocalSyncOps,
     private val bibleVersions: BibleVersionPreferences,
+    private val images: NoteImageStore,
 ) {
     private val sermonDao get() = db.sermonDao()
     private val seriesDao get() = db.sermonSeriesDao()
@@ -323,6 +325,7 @@ class SermonRepository @Inject constructor(
                     db.noteCommentDao().upsert(c.copy(deletedAt = now, isDeleted = true, needsSync = true))
                 }
                 ops.removePinLog(note.id)
+                images.deleteFilesOf(note)
                 db.noteDao().upsert(note.copy(deletedAt = now, isDeleted = true, needsSync = true, updatedAt = now))
             }
             sermonDao.upsert(sermon.copy(deletedAt = now, needsSync = true))
