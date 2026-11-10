@@ -157,7 +157,12 @@
     <string name="tag_add_button">Add</string>
     <string name="sort_by_name">By Name</string>
     <string name="sort_by_created">By Create Date</string>
-    <string name="image_placeholder">Image (not shown on Android yet)</string>
+    <string name="image_unavailable">This photo is not on this device</string>
+    <string name="image_add_failed">Could not add the photo</string>
+    <string name="camera_unavailable">No camera app found</string>
+    <string name="take_photo">Take a photo</string>
+    <string name="choose_photos">Choose photos</string>
+    <string name="image_full">Photo</string>
     <string name="notes_empty">No notes</string>
     <string name="note_not_found">Note not found.</string>
     <string name="back">Back</string>

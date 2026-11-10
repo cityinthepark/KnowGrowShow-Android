@@ -19,6 +19,14 @@
         <!-- Rotation is handled in Compose so a playing YouTube video survives it (iOS keeps its web view).
              adjustResize: the keyboard only sends insets (edge-to-edge); screens lift their own input with
              imePadding. The default resolved to "pan", which also slid the whole window up. -->
+        <!-- Hands the camera app a file to write the photo to (no camera permission is needed for that). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
+        </provider>
         <activity
             android:name=".MainActivity"
             android:exported="true"

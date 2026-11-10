@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The camera writes its photo here (cache/camera) before the app saves it as an Image note. -->
+<paths>
+    <cache-path name="camera" path="camera/" />
+</paths>

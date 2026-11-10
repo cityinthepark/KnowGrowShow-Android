@@ -1,7 +1,6 @@
 package com.stoneofhope.stoneofhope.data.crypto
 
 import android.content.Context
-import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -78,7 +77,7 @@ class KeystoreNoteKeyCache @Inject constructor(
             .setKeySize(256)
             .apply {
                 // Closest match to iOS `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) setUnlockedDeviceRequired(true)
+                setUnlockedDeviceRequired(true)
             }
             .build()
         return KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)

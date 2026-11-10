@@ -1,5 +1,6 @@
 package com.stoneofhope.stoneofhope.ui.sermon
 
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -52,6 +53,9 @@ import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.bible.BibleBooks
 import com.stoneofhope.stoneofhope.data.bible.BibleVersions
 import com.stoneofhope.stoneofhope.data.bible.BookChapter
+import com.stoneofhope.stoneofhope.data.image.NoteImageStore
+import com.stoneofhope.stoneofhope.data.image.SavedImage
+import com.stoneofhope.stoneofhope.data.image.TextRecognizing
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.SermonEntity
@@ -103,7 +107,9 @@ abstract class ContainerViewModel(
     private val scriptPrefs: ScriptCapturePreferences,
     bibleVersions: BibleVersionPreferences,
     private val network: NetworkMonitor,
-    private val noteRepository: NoteRepository,
+    protected val noteRepository: NoteRepository,
+    private val imageStore: NoteImageStore,
+    private val textRecognizer: TextRecognizing,
 ) : ViewModel() {
     protected val zone: ZoneId get() = ZoneId.systemDefault()
     protected val selected = bibleVersions.selectedVersions()
@@ -141,6 +147,36 @@ abstract class ContainerViewModel(
         _verseNotices.tryEmit(if (network.isOnline.value) VerseTextNotice.Unavailable else VerseTextNotice.Offline)
     }
 
+    private val _imageErrors = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /** A photo that could not be read or saved: the page says so. */
+    val imageErrors: SharedFlow<Unit> = _imageErrors.asSharedFlow()
+
+    protected abstract suspend fun addImageNote(saved: SavedImage)
+
+    /** The words found in a photo become a note of their own, like a Script (iOS `addOCRNoteIfNeeded`). */
+    protected abstract suspend fun addRecognizedText(text: String)
+
+    /**
+     * iOS `processImages` / `processImage`: each photo is saved as an Image note, then the words read from it,
+     * if any, as a note after it.
+     */
+    fun addImages(uris: List<Uri>) {
+        viewModelScope.launch {
+            for (uri in uris) {
+                val image = imageStore.import(uri)
+                if (image == null) {
+                    _imageErrors.tryEmit(Unit)
+                    continue
+                }
+                addImageNote(image.saved)
+                val text = textRecognizer.recognize(image.bitmap)
+                image.bitmap.recycle()
+                if (text.isNotBlank()) addRecognizedText(text)
+            }
+        }
+    }
+
     /** iOS `backfillMissingVerseText`: fill an anchor's missing versions (no-op when nothing can be fetched). */
     fun backfillVerse(noteId: String) {
         viewModelScope.launch { noteRepository.ensureUserVerses(noteId) }
@@ -171,7 +207,9 @@ class SermonViewModel @Inject constructor(
     private val clock: Clock,
     network: NetworkMonitor,
     noteRepository: NoteRepository,
-) : ContainerViewModel(web, scriptPrefs, bibleVersions, network, noteRepository) {
+    imageStore: NoteImageStore,
+    textRecognizer: TextRecognizing,
+) : ContainerViewModel(web, scriptPrefs, bibleVersions, network, noteRepository, imageStore, textRecognizer) {
 
     val sermonId: String = checkNotNull(savedState[ARG_ID])
     val entry: VideoEntry = VideoEntry.entries[savedState.get<Int>(ARG_ENTRY) ?: 0]
@@ -201,6 +239,15 @@ class SermonViewModel @Inject constructor(
     fun saveNote(content: String, chapterNote: Boolean) {
         val s = sermon.value ?: return
         viewModelScope.launch { noticeIfTextMissing(sermons.saveNote(sermonId, content, anchorChapter(s), chapterNote, zone)) }
+    }
+
+    override suspend fun addImageNote(saved: SavedImage) {
+        noteRepository.addImageNote(saved, sermonId = sermonId)
+    }
+
+    override suspend fun addRecognizedText(text: String) {
+        val s = sermon.value ?: return
+        sermons.saveScriptText(sermonId, text, anchorChapter(s), zone)
     }
 
     fun onAction(note: NoteEntity, action: NoteAction) {
@@ -273,6 +320,8 @@ fun SermonScreen(
         isOnline = isOnline,
         onBackfillVerse = viewModel::backfillVerse,
         verseNotices = viewModel.verseNotices,
+        onAddImages = viewModel::addImages,
+        imageErrors = viewModel.imageErrors,
         snackbar = snackbar,
         actions = {
             if (s.isUserData) TextButton(onClick = { onEdit(s.id) }, modifier = Modifier.testTag("sermonEdit")) { Text(stringResource(R.string.action_edit)) }
@@ -357,7 +406,9 @@ class VideoViewModel @Inject constructor(
     private val clock: Clock,
     network: NetworkMonitor,
     noteRepository: NoteRepository,
-) : ContainerViewModel(web, scriptPrefs, bibleVersions, network, noteRepository) {
+    imageStore: NoteImageStore,
+    textRecognizer: TextRecognizing,
+) : ContainerViewModel(web, scriptPrefs, bibleVersions, network, noteRepository, imageStore, textRecognizer) {
 
     val youtubeID: String = checkNotNull(savedState[ARG_ID])
     val notice: SermonNotice = SermonNotice.entries[savedState.get<Int>(SermonViewModel.ARG_NOTICE) ?: 0]
@@ -392,6 +443,15 @@ class VideoViewModel @Inject constructor(
     fun saveNote(content: String, chapterNote: Boolean) {
         val v = video.value ?: return
         viewModelScope.launch { noticeIfTextMissing(videos.saveNote(youtubeID, content, anchorChapter(v), chapterNote, zone)) }
+    }
+
+    override suspend fun addImageNote(saved: SavedImage) {
+        noteRepository.addImageNote(saved, youtubeID = youtubeID)
+    }
+
+    override suspend fun addRecognizedText(text: String) {
+        val v = video.value ?: return
+        videos.saveScriptText(youtubeID, text, anchorChapter(v), zone)
     }
 
     fun onAction(note: NoteEntity, action: NoteAction) {
@@ -457,6 +517,8 @@ fun VideoScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, viewModel: Vid
         isOnline = isOnline,
         onBackfillVerse = viewModel::backfillVerse,
         verseNotices = viewModel.verseNotices,
+        onAddImages = viewModel::addImages,
+        imageErrors = viewModel.imageErrors,
         snackbar = snackbar,
         actions = {
             IconButton(onClick = { confirmDelete = true }, modifier = Modifier.testTag("videoDelete")) {

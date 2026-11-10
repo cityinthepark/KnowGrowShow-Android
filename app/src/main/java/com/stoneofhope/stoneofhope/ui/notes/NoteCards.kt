@@ -145,11 +145,7 @@ fun NoteListCard(
                     )
                 }
             }
-            if (note.noteType == NoteType.Image) {
-                Surface(shape = RoundedCornerShape(12.dp), color = c.pageBackground, modifier = Modifier.padding(top = 8.dp, end = 10.dp).fillMaxWidth()) {
-                    Text("🖼️  " + stringResource(R.string.image_placeholder), style = textStyle(13), color = c.neutral90, modifier = Modifier.padding(14.dp))
-                }
-            }
+            if (note.noteType == NoteType.Image) NoteImage(note, maxHeight = 180.dp, modifier = Modifier.padding(top = 8.dp, end = 10.dp))
             if (card.showsBody && card.displayContent.isNotBlank()) {
                 Text(
                     card.displayContent,

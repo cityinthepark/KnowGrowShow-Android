@@ -149,7 +149,12 @@
     <string name="tag_add_button">添加</string>
     <string name="sort_by_name">按名称</string>
     <string name="sort_by_created">按创建日期</string>
-    <string name="image_placeholder">图片（安卓暂不显示）</string>
+    <string name="image_unavailable">这张图片不在这台设备上</string>
+    <string name="image_add_failed">无法添加这张图片</string>
+    <string name="camera_unavailable">没有找到相机应用</string>
+    <string name="take_photo">拍照</string>
+    <string name="choose_photos">从相册选择</string>
+    <string name="image_full">图片</string>
     <string name="notes_empty">没有笔记</string>
     <string name="note_not_found">笔记未找到。</string>
     <string name="back">返回</string>

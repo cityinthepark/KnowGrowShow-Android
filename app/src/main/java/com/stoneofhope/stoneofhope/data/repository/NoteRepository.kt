@@ -16,6 +16,8 @@ import com.stoneofhope.stoneofhope.data.bible.ResolvedBibleRef
 import com.stoneofhope.stoneofhope.data.bible.SwiftText
 import com.stoneofhope.stoneofhope.data.bible.VerseShortcutDetector
 import com.stoneofhope.stoneofhope.data.bible.text.BibleVerseReader
+import com.stoneofhope.stoneofhope.data.image.ImageNotes
+import com.stoneofhope.stoneofhope.data.image.SavedImage
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
@@ -76,6 +78,13 @@ class NoteRepository @Inject constructor(
     }
 
     private fun versions() = Versions(bibleVersions.selectedVersions())
+
+    /** iOS `addImageNote(originalURL:thumbnailURL:to:)`: a photo as a note of its own in a sermon or a video. */
+    suspend fun addImageNote(saved: SavedImage, sermonId: String? = null, youtubeID: String? = null): NoteEntity {
+        val note = ImageNotes.note(ObjectIds.newId(), saved, clock.instant(), sermonId, youtubeID)
+        noteDao.upsert(note)
+        return note
+    }
 
     // MARK: - Note sheet (iOS saveNoteFromContent(_:bibleRefText:) → saveSeparatedNoteInput)
 

@@ -240,9 +240,9 @@ private fun NoteCard(
                 }
                 if (!card.isAnchor) {
                     if (note.noteType == NoteType.Image) {
-                        Surface(shape = RoundedCornerShape(14.dp), color = c.pageBackground, modifier = Modifier.fillMaxWidth()) {
-                            Text("🖼️  " + stringResource(R.string.image_placeholder), style = textStyle(14), color = c.neutral90, modifier = Modifier.padding(16.dp))
-                        }
+                        var viewing by rememberSaveable { mutableStateOf(false) }
+                        NoteImage(note, maxHeight = 360.dp, onClick = { viewing = true })
+                        if (viewing) NoteImageViewer(note, onDismiss = { viewing = false })
                     }
                     paragraphs(card.displayContent).forEach {
                         Text(it, style = textStyle(17, 1.6f).withTransformGlow(note.id), color = c.neutral100, modifier = Modifier.transformText(note.id).testTag("noteBody"))

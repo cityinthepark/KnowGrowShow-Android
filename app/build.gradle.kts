@@ -37,7 +37,7 @@ android {
 
     defaultConfig {
         applicationId = "com.stoneofhope.stoneofhope"
-        minSdk = 26
+        minSdk = 28
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0-internal"
@@ -156,6 +156,8 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.session)
+    // On-device text recognition for photos (Chinese + Latin; iOS uses Vision).
+    implementation(libs.mlkit.text.recognition.chinese)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

@@ -1,6 +1,16 @@
 package com.stoneofhope.stoneofhope.ui.sermon
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.core.content.FileProvider
+import java.io.File
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -150,6 +160,16 @@ internal fun containerNotes(db: AppDatabase, notes: Flow<List<NoteEntity>>, zone
     }
 }
 
+/** The photo picker's limit per pick; a few pages of notes fit in one go. */
+private const val MAX_PHOTOS_AT_ONCE = 20
+
+/** A fresh file in the cache's `camera` folder for the camera app to write to; earlier ones are cleared. */
+private fun newCameraFile(context: Context): File {
+    val dir = File(context.cacheDir, "camera").also { it.mkdirs() }
+    dir.listFiles()?.forEach { it.delete() }
+    return File(dir, "capture-${System.currentTimeMillis()}.jpg")
+}
+
 /** What the Script button reports. */
 enum class ScriptResult { Saved, NoTranscript }
 
@@ -184,6 +204,8 @@ fun ContainerPage(
     isOnline: Boolean,
     onBackfillVerse: (noteId: String) -> Unit,
     verseNotices: Flow<VerseTextNotice>,
+    onAddImages: (List<Uri>) -> Unit,
+    imageErrors: Flow<Unit>,
     snackbar: SnackbarHostState,
     actions: @Composable () -> Unit,
     infoBar: @Composable () -> Unit,
@@ -203,6 +225,20 @@ fun ContainerPage(
     val scriptNone = stringResource(R.string.script_none)
     val verseOffline = stringResource(R.string.verse_text_offline)
     val verseUnavailable = stringResource(R.string.verse_text_unavailable)
+    val imageFailed = stringResource(R.string.image_add_failed)
+    val noCamera = stringResource(R.string.camera_unavailable)
+
+    // Photos: the picker needs no permission; the camera app writes into a file we hand it (no permission either).
+    val pickPhotos = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(MAX_PHOTOS_AT_ONCE)) { uris ->
+        if (uris.isNotEmpty()) onAddImages(uris)
+    }
+    var cameraFile by rememberSaveable { mutableStateOf<String?>(null) }
+    val takePhoto = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
+        val path = cameraFile
+        cameraFile = null
+        if (taken && path != null) onAddImages(listOf(Uri.fromFile(File(path))))
+    }
+    LaunchedEffect(imageErrors) { imageErrors.collect { snackbar.showSnackbar(imageFailed) } }
 
     LaunchedEffect(verseNotices) {
         verseNotices.collectLatest { notice ->
@@ -291,6 +327,28 @@ fun ContainerPage(
             onClick = { sheetOpen = true },
             modifier = Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(20.dp).testTag("containerAddNote"),
         ) { Icon(Icons.Filled.Add, stringResource(R.string.new_note)) }
+        Row(
+            Modifier.align(Alignment.BottomStart).navigationBarsPadding().padding(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            SmallFloatingActionButton(
+                onClick = {
+                    val file = newCameraFile(context)
+                    cameraFile = file.path
+                    try {
+                        takePhoto.launch(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file))
+                    } catch (_: ActivityNotFoundException) {
+                        cameraFile = null
+                        scope.launch { snackbar.showSnackbar(noCamera) }
+                    }
+                },
+                modifier = Modifier.testTag("containerCamera"),
+            ) { Icon(Icons.Outlined.PhotoCamera, stringResource(R.string.take_photo)) }
+            SmallFloatingActionButton(
+                onClick = { pickPhotos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                modifier = Modifier.testTag("containerGallery"),
+            ) { Icon(Icons.Outlined.PhotoLibrary, stringResource(R.string.choose_photos)) }
+        }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 80.dp))
     }
 
