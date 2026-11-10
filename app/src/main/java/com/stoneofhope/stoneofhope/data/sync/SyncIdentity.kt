@@ -12,6 +12,9 @@ import javax.inject.Singleton
 interface SyncIdentity {
     val currentAuthUid: String?
 
+    /** The Firebase session's uid even while sync is paused (a cloud sign-out needs to act as that account). */
+    val sessionUid: String?
+
     /** Local sign-out of the Firebase session (data on device is untouched). */
     fun signOut()
 }
@@ -27,6 +30,9 @@ class FirebaseSyncIdentity @Inject constructor(
             if (!bootstrap.configured.value || flags.isCloudSyncPaused) return null
             return bootstrap.auth.currentUser?.uid?.takeIf { it.isNotEmpty() }
         }
+
+    override val sessionUid: String?
+        get() = if (bootstrap.configured.value) bootstrap.auth.currentUser?.uid?.takeIf { it.isNotEmpty() } else null
 
     override fun signOut() {
         if (bootstrap.configured.value) bootstrap.auth.signOut()

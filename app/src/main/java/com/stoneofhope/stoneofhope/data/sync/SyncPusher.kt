@@ -5,6 +5,7 @@ import androidx.room.withTransaction
 import com.stoneofhope.stoneofhope.data.crypto.CryptoSession
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.SyncedRow
+import com.stoneofhope.stoneofhope.data.model.NoteType
 import com.stoneofhope.stoneofhope.data.remote.RemoteStore
 import com.stoneofhope.stoneofhope.data.remote.wire.EncryptedBody
 import com.stoneofhope.stoneofhope.data.remote.wire.NoteBodyCodec
@@ -33,6 +34,7 @@ class SyncPusher @Inject constructor(
     private val remote: RemoteStore,
     private val session: CryptoSession,
     private val ops: LocalSyncOps,
+    private val images: NoteImageSync,
     private val clock: Clock,
 ) {
     data class Result(
@@ -52,6 +54,8 @@ class SyncPusher @Inject constructor(
         val writes = mutableListOf<WireWrite>()
         val settles = mutableListOf<Settle>()
         var bodiesSkipped = 0
+        val thumbUploads = mutableListOf<NoteImageSync.Upload>()
+        val thumbDeletes = mutableListOf<String>()
 
         with(db.tagDao()) {
             for (row in dirty()) {
@@ -98,6 +102,8 @@ class SyncPusher @Inject constructor(
                     encryptOrNull(row.content, key) ?: run { bodiesSkipped++; continue }
                 }
                 writes += WireEncoder.note(row, ownerUid, body, zone)
+                if (body == null && row.noteType == NoteType.Image) thumbDeletes += row.id
+                images.uploadFor(row)?.let { thumbUploads += it }
                 settles += settleIfUnchanged(row, { getById(row.id) }, ::upsert)
             }
         }
@@ -133,11 +139,18 @@ class SyncPusher @Inject constructor(
         commitBatches(ownerUid, writes, guard, delayBetweenBatches = false)
         val pinWrites = pushPinLogs(ownerUid, guard, settles)
 
+        // Thumbnails go up before the dirty flags are cleared: if the app dies mid-upload the notes are
+        // still dirty and the next push sends them again. The documents are already committed.
+        val failedThumbnails = images.upload(thumbUploads, ownerUid)
+        images.delete(thumbDeletes, ownerUid)
+
         // If the account changed / sync was paused meanwhile, leave dirty flags alone.
         guard.check()
         val syncedAt = clock.instant()
         db.withTransaction {
             for (settle in settles) settle.apply(syncedAt)
+            // A thumbnail that did not upload keeps its note dirty so the next push retries it.
+            for (id in failedThumbnails) db.noteDao().getById(id)?.let { db.noteDao().upsert(it.copy(needsSync = true)) }
             ops.purgeSyncedTombstones()
         }
         return Result(documentsUploaded = writes.size + pinWrites, bodiesSkipped = bodiesSkipped)

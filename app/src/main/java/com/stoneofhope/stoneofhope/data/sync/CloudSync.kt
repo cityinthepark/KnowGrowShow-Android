@@ -179,6 +179,17 @@ class CloudSync @Inject constructor(
     private suspend fun reconcileAccountEpoch(ownerUid: String, guard: SyncGuard): Boolean {
         if (epoch.reconcile(ownerUid, guard) != AccountEpoch.Outcome.ResetDetected) return false
         Log.i(TAG, "Cloud reset detected — signing out locally, keeping local data")
+        finishLocalSignOut(ownerUid)
+        flags.showCloudResetNotice = true
+        return true
+    }
+
+    /**
+     * iOS `finishLocalSignOut`: this device leaves the cloud but keeps its data. Tombstones go, everything
+     * is marked for a fresh upload, what this device remembered about the cloud copy is dropped, and the
+     * Firebase session ends.
+     */
+    suspend fun finishLocalSignOut(ownerUid: String) {
         db.withTransaction {
             ops.purgeAllTombstonesForCloudWipe()
             ops.markAllUserScopedDataForResync()
@@ -189,9 +200,8 @@ class CloudSync @Inject constructor(
         state.resetPeerWatermark(ownerUid)
         flags.hasLinkedCloudAccount = false
         identity.signOut()
+        flags.pendingWipeUid = null
         flags.isCloudSyncPaused = false
-        flags.showCloudResetNotice = true
-        return true
     }
 
     /** Pull / push failures are logged and the run continues, like iOS (`do/catch` + `NSLog`). */

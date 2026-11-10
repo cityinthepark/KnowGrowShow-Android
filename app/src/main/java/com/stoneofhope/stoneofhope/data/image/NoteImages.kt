@@ -10,6 +10,7 @@ import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.model.NoteType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.io.IOException
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
@@ -18,6 +19,10 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 
 /*
@@ -106,6 +111,19 @@ class NoteImageStore @Inject constructor(@ApplicationContext private val context
         file(name).delete()
     }
 
+    /** Puts [bytes] (a picture fetched from the cloud) under [name]; screens showing it refresh. */
+    fun saveBytes(name: String, bytes: ByteArray) {
+        val target = file(name)
+        val temp = File(target.parentFile, target.name + ".part")
+        temp.writeBytes(bytes)
+        if (!temp.renameTo(target)) {
+            temp.delete()
+            throw IOException("Could not save $name")
+        }
+        cache.remove(name)
+        _changes.update { it + 1 }
+    }
+
     /** A deleted note's two picture files. Like the note, they cannot come back. */
     fun deleteFilesOf(note: NoteEntity) {
         listOfNotNull(note.imagePath, note.thumbnailPath).filter { it.isNotEmpty() }.forEach(::delete)
@@ -119,9 +137,14 @@ class NoteImageStore @Inject constructor(@ApplicationContext private val context
 
     private fun newName() = UUID.randomUUID().toString().uppercase() + ".jpg"
 
-    private companion object {
+    companion object {
+        private val _changes = MutableStateFlow(0)
+
+        /** Counts pictures that arrived from the cloud, so a screen showing a missing one can look again. */
+        val changes: StateFlow<Int> = _changes.asStateFlow()
+
         /** About 16 MB of decoded pictures, so a list of thumbnails is not decoded again on every scroll. */
-        val cache = object : LruCache<String, Bitmap>(min(16 * 1024 * 1024, Runtime.getRuntime().maxMemory() / 8).toInt()) {
+        private val cache = object : LruCache<String, Bitmap>(min(16 * 1024 * 1024, Runtime.getRuntime().maxMemory() / 8).toInt()) {
             override fun sizeOf(key: String, value: Bitmap) = value.byteCount
         }
     }

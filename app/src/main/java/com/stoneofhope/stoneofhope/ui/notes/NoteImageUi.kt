@@ -19,6 +19,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -58,7 +59,9 @@ private fun rememberImageStore(): NoteImageStore {
 @Composable
 private fun rememberStoredImage(name: String?): Bitmap? {
     val store = rememberImageStore()
-    val bitmap by produceState<Bitmap?>(null, name) {
+    // A picture that arrives from the cloud later bumps this, so a note showing "not on this device" looks again.
+    val arrived by NoteImageStore.changes.collectAsState()
+    val bitmap by produceState<Bitmap?>(null, name, arrived) {
         value = name?.let { withContext(Dispatchers.IO) { store.load(it) } }
     }
     return bitmap
@@ -66,8 +69,8 @@ private fun rememberStoredImage(name: String?): Bitmap? {
 
 /**
  * An Image note's picture (iOS `noteImageBody`): the thumbnail, fitted to the width and at most [maxHeight]
- * tall. A note synced from another device has no file here yet (iOS fetches the thumbnail from Firebase
- * Storage; that is not ported), so it says so. [onClick] opens the full photo.
+ * tall. A note synced from another device has no file here until its thumbnail comes down from Firebase
+ * Storage after a sync (and for an older note Storage never got, never), so it says so. [onClick] opens the full photo.
  */
 @Composable
 fun NoteImage(note: NoteEntity, maxHeight: Dp, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
@@ -75,6 +78,7 @@ fun NoteImage(note: NoteEntity, maxHeight: Dp, modifier: Modifier = Modifier, on
     val name = note.thumbnailPath?.takeIf { it.isNotBlank() } ?: note.imagePath?.takeIf { it.isNotBlank() }
     val store = rememberImageStore()
     val bitmap = rememberStoredImage(name)
+    NoteImageStore.changes.collectAsState().value
     val missing = name == null || !store.exists(name)
     Surface(shape = RoundedCornerShape(12.dp), color = c.pageBackground, modifier = modifier.fillMaxWidth().testTag("noteImage_${note.id}")) {
         when {

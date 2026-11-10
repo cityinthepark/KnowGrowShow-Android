@@ -27,6 +27,14 @@ class CloudAccountFlags(private val prefs: SharedPreferences) {
         get() = prefs.getBoolean("isCloudSyncPaused", false)
         set(value) = prefs.edit().putBoolean("isCloudSyncPaused", value).apply()
 
+    /**
+     * The account whose cloud wipe ("登出云" or account deletion) started but did not finish, so a failed
+     * or interrupted attempt is never silently dropped and can be retried (iOS L1/L2).
+     */
+    var pendingWipeUid: String?
+        get() = prefs.getString("pendingWipeUid", null)
+        set(value) = prefs.edit().apply { if (value == null) remove("pendingWipeUid") else putString("pendingWipeUid", value) }.apply()
+
     /** One-time notice: "signed out because another device cleared the cloud; local data kept". */
     var showCloudResetNotice: Boolean
         get() = prefs.getBoolean("showCloudResetNotice", false)

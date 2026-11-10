@@ -26,7 +26,7 @@
     <string name="tab_calendar">Calendar</string>
     <string name="tab_settings">Settings</string>
     <string name="tab_placeholder">Coming soon</string>
-    <string name="settings_account_sync">Account &amp; Sync</string>
+    <string name="settings_account_sync">Account</string>
     <string name="settings_version">Version</string>
 
     <!-- Today tab: iOS Localizable.strings (zh-Hant simplified-char slips fixed). -->
@@ -525,4 +525,50 @@
     <string name="bible_copyright_nkjv_about">The New King James Version® (NKJV®) is a modern English translation in the King James tradition.</string>
     <string name="bible_copyright_nkjv_how_provided">Verse text is loaded on demand over the internet via API.Bible when you cite a passage in a note or flashcard. Fetched chapters may be cached on your device for up to 30 days, then refreshed.</string>
     <string name="bible_copyright_nkjv_notice">Scripture quotations marked (NKJV®) are taken from the New King James Version®. Copyright © 1982 by Thomas Nelson. Used by permission. All rights reserved.\n\nNKJV® text in this app is accessed through API.Bible, operated by American Bible Society, under a non-commercial license.\n\nStone of Hope does not claim ownership of the NKJV® text.</string>
+
+    <!-- Account (iOS AccountSettingsView) -->
+    <string name="account_title">Account</string>
+    <string name="account_local_only">Local device only</string>
+    <string name="account_register">Register an account</string>
+    <string name="account_register_footer">To access your data from different device, register first.</string>
+    <string name="account_sign_in_method">Sign-in method</string>
+    <string name="account_email">Email</string>
+    <string name="account_method_signed_in">Signed in</string>
+    <string name="account_email_none">No email on file</string>
+    <string name="account_method_email">Email sign-in</string>
+    <string name="account_method_google">Sign in with Google</string>
+    <string name="account_method_apple">Sign in with Apple</string>
+    <string name="account_method_phone">Phone sign-in</string>
+    <string name="account_register_sheet_title">Register</string>
+    <string name="account_registering">Signing in…</string>
+    <string name="account_register_google">Continue with Google</string>
+    <string name="account_auth_error_title">Could not register</string>
+    <string name="account_devices_section">Linked devices</string>
+    <string name="account_devices_footer">When you sign in with the same account, you can access your data on multiple devices. Listed above are all devices that have signed in. When you switch to a new device, remove old ones to reduce unnecessary sync.</string>
+    <string name="account_devices_loading">Loading devices…</string>
+    <string name="account_devices_empty">No linked devices yet.</string>
+    <string name="account_device_this">This device</string>
+    <string name="account_device_web">Web</string>
+    <string name="account_device_web_subtitle">Browser sync</string>
+    <string name="account_device_last_upload_never">Last upload: never</string>
+    <string name="account_device_last_upload">Last upload: %1$s</string>
+    <string name="account_device_inactive">May be inactive</string>
+    <string name="account_device_id_suffix">Device ID: %1$s</string>
+    <string name="account_devices_remove">Remove</string>
+    <string name="account_devices_remove_title">Remove device?</string>
+    <string name="account_devices_remove_message">Remove “%1$s” from your linked devices? This only deletes its cloud registry entry. If that device is still in use, it will re-register on its next sync.</string>
+    <string name="account_devices_error_title">Devices</string>
+    <string name="account_sign_out_cloud">Sign Out of Cloud</string>
+    <string name="account_sign_out_cloud_footer">Switches this device to local-only mode:\n📱 Your data: stays right here on this phone — keep using the app as normal.\n☁️ Your cloud backup: will be cleared, to protect your privacy and keep accounts separate.</string>
+    <string name="account_sign_out_cloud_confirm_title">Sign out of cloud?</string>
+    <string name="account_sign_out_cloud_confirm_message">Your data on this device is not affected — keep using the app as normal. Your cloud backup will be cleared; you can sign back in anytime to resume syncing.</string>
+    <string name="account_sign_out_cloud_confirm_message_other">Your data on this device is not affected — keep using the app as normal. But your cloud backup will be cleared, and other devices signed into this account (like an iPad) will no longer be able to restore it from the cloud. Continue?</string>
+    <string name="account_sign_out_cloud_confirm_action">Sign Out &amp; Clear Cloud</string>
+    <string name="account_sign_out_cloud_problem_title">Couldn\'t finish</string>
+    <string name="account_sign_out_cloud_needs_network">An internet connection is needed to clear your cloud backup. Nothing was changed — please connect and try again.</string>
+    <string name="account_sign_out_cloud_incomplete">Some of your cloud data couldn\'t be cleared yet. Cloud sync is paused and your data on this device is untouched. Please try again when you have a stable connection.</string>
+    <string name="account_sign_out_cloud_retry">Finish clearing cloud data</string>
+    <string name="account_sign_out_cloud_pending_footer">Clearing your cloud backup didn\'t finish. Cloud sync stays paused until it does. You can also just sign in again — the unfinished clean-up will be settled for you.</string>
+    <string name="account_devices_error_cannot_remove">You cannot remove this device.</string>
+    <string name="account_google_unavailable">Google sign-in isn\'t available in this build yet.</string>
 </resources>

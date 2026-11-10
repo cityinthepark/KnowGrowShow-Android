@@ -32,6 +32,15 @@ interface RemoteStore {
      */
     suspend fun fetchOrCreateAccountEpoch(ownerUid: String, fresh: String): String
 
+    /**
+     * Deletes every document in [collection] under `users/{uid}`, then confirms by a server read that
+     * it is empty (iOS `CloudDataWipeService.deleteAndVerifyEmpty`). False when anything is left.
+     */
+    suspend fun deleteAllDocuments(ownerUid: String, collection: String): Boolean
+
+    /** Removes one `users/{uid}/devices/{deviceId}` row (a peer registry entry, not user data). */
+    suspend fun deleteDevice(ownerUid: String, deviceId: String)
+
     /** Every document in `users/{uid}/devices`. */
     suspend fun listDevices(ownerUid: String): List<RemoteDocument>
 

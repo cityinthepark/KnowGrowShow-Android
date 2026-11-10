@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.MemoryCacheSettings
+import com.google.firebase.storage.FirebaseStorage
 import com.stoneofhope.stoneofhope.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -36,6 +37,7 @@ class FirebaseBootstrap @Inject constructor(@param:ApplicationContext private va
     data class Emulator(val host: String, val projectId: String) {
         val authPort = 9099
         val firestorePort = 8080
+        val storagePort = 9199
     }
 
     val emulator: Emulator? =
@@ -66,6 +68,8 @@ class FirebaseBootstrap @Inject constructor(@param:ApplicationContext private va
                         // Placeholders: the emulator accepts any app id / API key.
                         .setApplicationId("1:000000000000:android:0000000000000000")
                         .setApiKey("emulator-api-key")
+                        // The Storage emulator takes any bucket name.
+                        .setStorageBucket("${emulator.projectId}.appspot.com")
                         .build(),
                 )
             } else {
@@ -76,7 +80,7 @@ class FirebaseBootstrap @Inject constructor(@param:ApplicationContext private va
         if (!isConfigured) return false
         if (emulator != null) {
             FirebaseAuth.getInstance().useEmulator(emulator.host, emulator.authPort)
-            Log.i(TAG, "Firebase emulator — Auth ${emulator.host}:${emulator.authPort} | Firestore ${emulator.host}:${emulator.firestorePort} | project ${emulator.projectId}")
+            Log.i(TAG, "Firebase emulator — Auth ${emulator.host}:${emulator.authPort} | Firestore ${emulator.host}:${emulator.firestorePort} | Storage ${emulator.host}:${emulator.storagePort} | project ${emulator.projectId}")
         }
         _configured.value = true
         return true
@@ -91,6 +95,14 @@ class FirebaseBootstrap @Inject constructor(@param:ApplicationContext private va
             firestoreSettings = FirebaseFirestoreSettings.Builder()
                 .setLocalCacheSettings(MemoryCacheSettings.newBuilder().build())
                 .build()
+        }
+    }
+
+    /** Firebase Storage (note thumbnails); on the emulator it must be pointed there before first use. */
+    val storage: FirebaseStorage by lazy {
+        check(_configured.value) { "Firebase is not configured" }
+        FirebaseStorage.getInstance().apply {
+            emulator?.let { useEmulator(it.host, it.storagePort) }
         }
     }
 

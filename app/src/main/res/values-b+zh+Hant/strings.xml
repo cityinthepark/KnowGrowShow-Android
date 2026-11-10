@@ -23,7 +23,7 @@
     <string name="tab_calendar">行事曆</string>
     <string name="tab_settings">設定</string>
     <string name="tab_placeholder">即將推出</string>
-    <string name="settings_account_sync">帳號與同步</string>
+    <string name="settings_account_sync">帳戶</string>
     <string name="settings_version">版本</string>
 
     <!-- Today tab: iOS Localizable.strings (zh-Hant simplified-char slips fixed). -->
@@ -504,4 +504,50 @@
     <string name="bible_copyright_nkjv_about">新欽定版（NKJV®）是在 KJV 傳統上更新的現代英語譯本。</string>
     <string name="bible_copyright_nkjv_how_provided">在筆記或記憶卡片中引用經節時，經 API.Bible 按需連網載入。已獲取的章節可在裝置上快取最多約 30 天，之後會自動刷新。</string>
     <string name="bible_copyright_nkjv_notice">標注 (NKJV®) 的經文引自 New King James Version®。Copyright © 1982 by Thomas Nelson. Used by permission. All rights reserved.\n\n本應用中的 NKJV® 經文透過 American Bible Society 運營的 API.Bible 在非商業許可下提供。\n\n本應用不主張對 NKJV® 文本的版權。</string>
+
+    <!-- Account (iOS AccountSettingsView) -->
+    <string name="account_title">帳戶</string>
+    <string name="account_local_only">僅使用本機</string>
+    <string name="account_register">註冊帳戶</string>
+    <string name="account_register_footer">若要在其他裝置上存取您的資料，請先註冊。</string>
+    <string name="account_sign_in_method">登入方式</string>
+    <string name="account_email">電子郵件</string>
+    <string name="account_method_signed_in">已登入</string>
+    <string name="account_email_none">無電子郵件</string>
+    <string name="account_method_email">電子郵件登入</string>
+    <string name="account_method_google">Google 登入</string>
+    <string name="account_method_apple">Apple 登入</string>
+    <string name="account_method_phone">手機登入</string>
+    <string name="account_register_sheet_title">註冊</string>
+    <string name="account_registering">正在登入…</string>
+    <string name="account_register_google">使用 Google 繼續</string>
+    <string name="account_auth_error_title">無法完成註冊</string>
+    <string name="account_devices_section">已關聯裝置</string>
+    <string name="account_devices_footer">使用同一登入方式時，可在多台裝置上存取您的帳戶和資料。上方列出所有曾登入的裝置。更換裝置後，建議移除舊裝置，以減少不必要的資料同步。</string>
+    <string name="account_devices_loading">正在載入裝置…</string>
+    <string name="account_devices_empty">尚無關聯裝置。</string>
+    <string name="account_device_this">本機</string>
+    <string name="account_device_web">Web</string>
+    <string name="account_device_web_subtitle">瀏覽器同步</string>
+    <string name="account_device_last_upload_never">上次上傳：從未</string>
+    <string name="account_device_last_upload">上次上傳：%1$s</string>
+    <string name="account_device_inactive">可能已停用</string>
+    <string name="account_device_id_suffix">裝置 ID：%1$s</string>
+    <string name="account_devices_remove">移除</string>
+    <string name="account_devices_remove_title">移除裝置？</string>
+    <string name="account_devices_remove_message">從已關聯裝置中移除「%1$s」？這只會刪除其雲端註冊記錄。若該裝置仍在使用，下次同步時會重新註冊。</string>
+    <string name="account_devices_error_title">裝置</string>
+    <string name="account_sign_out_cloud">退出雲端服務</string>
+    <string name="account_sign_out_cloud_footer">退出後將切換為純單機模式：\n📱 本機資料：完好保留在您的手機上，您可以繼續正常使用。\n☁️ 雲端備份：雲端儲存的資料將被清除，保障您的隱私與帳號隔離。</string>
+    <string name="account_sign_out_cloud_confirm_title">退出雲端服務？</string>
+    <string name="account_sign_out_cloud_confirm_message">退出後本機資料不受任何影響，您可以繼續正常使用。雲端保存的備份將被清除，之後可以隨時重新登入開啟同步。</string>
+    <string name="account_sign_out_cloud_confirm_message_other">退出後本機資料不受任何影響，您可以繼續正常使用。但雲端備份將被清除，其他登入此帳號的裝置（如 iPad）將無法再從雲端恢復這些記錄。確定要繼續嗎？</string>
+    <string name="account_sign_out_cloud_confirm_action">退出並清除雲端</string>
+    <string name="account_sign_out_cloud_problem_title">未能完成</string>
+    <string name="account_sign_out_cloud_needs_network">清除雲端備份需要連線。目前沒有做任何更動，請連線後重試。</string>
+    <string name="account_sign_out_cloud_incomplete">部分雲端資料暫時未能清除。雲端同步已暫停，本機資料不受影響。請在網路穩定時重試。</string>
+    <string name="account_sign_out_cloud_retry">繼續清除雲端資料</string>
+    <string name="account_sign_out_cloud_pending_footer">雲端備份的清除尚未完成，完成前雲端同步會保持暫停。您也可以直接重新登入，我們會替您處理未完成的清除。</string>
+    <string name="account_devices_error_cannot_remove">無法移除此裝置。</string>
+    <string name="account_google_unavailable">此版本暫不支援 Google 登入。</string>
 </resources>

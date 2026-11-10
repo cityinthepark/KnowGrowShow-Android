@@ -3,7 +3,9 @@ package com.stoneofhope.stoneofhope.data.sync
 import com.stoneofhope.stoneofhope.data.crypto.KeystoreNoteKeyCache
 import com.stoneofhope.stoneofhope.data.crypto.NoteKeyCache
 import com.stoneofhope.stoneofhope.data.crypto.NoteKeyProvider
+import com.stoneofhope.stoneofhope.data.remote.NoteImageCloud
 import com.stoneofhope.stoneofhope.data.remote.RemoteStore
+import com.stoneofhope.stoneofhope.data.remote.firestore.FirebaseNoteImageCloud
 import com.stoneofhope.stoneofhope.data.remote.firestore.FirestoreNoteKeyProvider
 import com.stoneofhope.stoneofhope.data.remote.firestore.FirestoreRemoteStore
 import dagger.Binds
@@ -27,6 +29,7 @@ annotation class ApplicationScope
 @InstallIn(SingletonComponent::class)
 abstract class SyncBindings {
     @Binds abstract fun remoteStore(impl: FirestoreRemoteStore): RemoteStore
+    @Binds abstract fun noteImageCloud(impl: FirebaseNoteImageCloud): NoteImageCloud
     @Binds abstract fun noteKeyProvider(impl: FirestoreNoteKeyProvider): NoteKeyProvider
     @Binds abstract fun noteKeyCache(impl: KeystoreNoteKeyCache): NoteKeyCache
     @Binds abstract fun syncIdentity(impl: FirebaseSyncIdentity): SyncIdentity

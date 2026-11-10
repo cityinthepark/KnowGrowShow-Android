@@ -1,8 +1,11 @@
 package com.stoneofhope.stoneofhope.data.sync
 
 import android.content.Context
+import android.content.ContextWrapper
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.stoneofhope.stoneofhope.data.account.AccountService
+import com.stoneofhope.stoneofhope.data.account.DeviceRegistry
 import com.stoneofhope.stoneofhope.data.church.ChurchListSync
 import com.stoneofhope.stoneofhope.data.church.OnlineChurches
 import com.stoneofhope.stoneofhope.data.crypto.CryptoSession
@@ -11,12 +14,15 @@ import com.stoneofhope.stoneofhope.data.crypto.NoteKeyProvider
 import com.stoneofhope.stoneofhope.data.crypto.StoneOfHopeCrypto
 import com.stoneofhope.stoneofhope.data.image.NoteImageStore
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
+import com.stoneofhope.stoneofhope.data.remote.NoteImageCloud
 import com.stoneofhope.stoneofhope.data.remote.RemoteDocument
 import com.stoneofhope.stoneofhope.data.remote.RemoteStore
+import com.stoneofhope.stoneofhope.data.remote.firestore.FirebaseBootstrap
 import com.stoneofhope.stoneofhope.data.remote.wire.FakeFirestore
 import com.stoneofhope.stoneofhope.data.remote.wire.WireData
 import com.stoneofhope.stoneofhope.data.remote.wire.WireWrite
 import com.stoneofhope.stoneofhope.data.remote.wire.WriteMode
+import java.io.File
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -37,6 +43,9 @@ class FakeRemoteStore(val server: FakeFirestore = FakeFirestore()) : RemoteStore
 
     /** Collections whose fetch throws, to simulate a failing read. */
     val failingCollections = mutableSetOf<String>()
+
+    /** Firebase Storage for the same account. */
+    val images = FakeNoteImageCloud()
 
     override suspend fun fetch(ownerUid: String, collection: String, since: Instant?): List<RemoteDocument> {
         fetches += collection to since
@@ -59,6 +68,19 @@ class FakeRemoteStore(val server: FakeFirestore = FakeFirestore()) : RemoteStore
 
     override suspend fun listDevices(ownerUid: String): List<RemoteDocument> =
         server.query(DEVICES, null).map { (id, data) -> RemoteDocument(id, data) }
+
+    /** Collections whose wipe fails, to simulate a partial delete. */
+    val failingWipes = mutableSetOf<String>()
+
+    override suspend fun deleteAllDocuments(ownerUid: String, collection: String): Boolean {
+        if (collection in failingWipes) return false
+        server.query(collection, null).forEach { (id, _) -> server.apply(WireWrite(collection, id, emptyMap(), WriteMode.Delete)) }
+        return true
+    }
+
+    override suspend fun deleteDevice(ownerUid: String, deviceId: String) {
+        server.apply(WireWrite(DEVICES, deviceId, emptyMap(), WriteMode.Delete))
+    }
 
     override suspend fun mergeDevice(ownerUid: String, deviceId: String, data: WireData) {
         server.serverNow = server.serverNow.plusMillis(1)
@@ -90,6 +112,41 @@ class FakeRemoteStore(val server: FakeFirestore = FakeFirestore()) : RemoteStore
     }
 }
 
+/** Firebase Storage's note thumbnails, shared by every simulated device. */
+class FakeNoteImageCloud : NoteImageCloud {
+    val objects = mutableMapOf<String, ByteArray>()
+    val downloads = AtomicInteger()
+    val failingUploads = mutableSetOf<String>()
+
+    private fun key(ownerUid: String, noteId: String) = "$ownerUid/$noteId"
+
+    override suspend fun uploadThumbnail(ownerUid: String, noteId: String, file: File) {
+        if (noteId in failingUploads) error("upload $noteId failed")
+        objects[key(ownerUid, noteId)] = file.readBytes()
+    }
+
+    override suspend fun downloadThumbnail(ownerUid: String, noteId: String): ByteArray? {
+        downloads.incrementAndGet()
+        return objects[key(ownerUid, noteId)]
+    }
+
+    override suspend fun deleteThumbnail(ownerUid: String, noteId: String) {
+        objects.remove(key(ownerUid, noteId))
+    }
+
+    var deleteAllFails = false
+
+    /** The note ids the last wipe was told about. */
+    var wipedKnownIds: Collection<String> = emptyList()
+
+    override suspend fun deleteAllThumbnails(ownerUid: String, knownNoteIds: Collection<String>): Boolean {
+        wipedKnownIds = knownNoteIds
+        if (deleteAllFails) return false
+        objects.keys.removeAll { it.startsWith("$ownerUid/") }
+        return true
+    }
+}
+
 /** `private/{uid}/secureKeys/noteKey`, shared by devices of the same account. */
 class FakeKeyVault {
     val keys = mutableMapOf<String, ByteArray>()
@@ -112,7 +169,11 @@ class InMemoryKeyCache : NoteKeyCache {
 
 class FakeIdentity(var uid: String?) : SyncIdentity {
     var signOuts = 0
-    override val currentAuthUid: String? get() = uid
+    override val currentAuthUid: String? get() = uid.takeIf { !paused }
+    override val sessionUid: String? get() = uid
+
+    /** What `CloudAccountFlags.isCloudSyncPaused` does to the real identity. */
+    var paused = false
     override fun signOut() {
         uid = null
         signOuts++
@@ -145,18 +206,32 @@ class TestDevice(
     val state = SyncStateStore(context.getSharedPreferences("sync_state_$name", Context.MODE_PRIVATE).also { it.edit().clear().commit() })
     val flags = CloudAccountFlags(context.getSharedPreferences("flags_$name", Context.MODE_PRIVATE).also { it.edit().clear().commit() })
     val session = CryptoSession(identity, vault.provider(), cache)
-    val ops = LocalSyncOps(db, NoteImageStore(context))
-    val puller = SyncPuller(db, remote, state, session, ops, SyncConflictDetector(db), clock)
-    val pusher = SyncPusher(db, remote, session, ops, clock)
+    private val imageDir = File(context.cacheDir, "device_${name}_${System.nanoTime()}").also { it.mkdirs() }
+
+    /** This install's own pictures folder, so two devices in one test do not share files. */
+    val imageStore = NoteImageStore(object : ContextWrapper(context) {
+        override fun getFilesDir(): File = imageDir
+    })
+    val ops = LocalSyncOps(db, imageStore)
+    val images = NoteImageSync(remote.images, imageStore, clock)
+    val puller = SyncPuller(db, remote, state, session, ops, SyncConflictDetector(db), images, clock)
+    val pusher = SyncPusher(db, remote, session, ops, images, clock)
     val peers = SyncPeerRegistry(remote, state)
     val churches = OnlineChurches(db, clock)
+    val bootstrap = FirebaseBootstrap(context)
     val cloudSync = CloudSync(
         identity, network, flags, state, session, puller, pusher, peers,
         AccountEpoch(remote, state), ops, db, ChurchListSync(db, remote, clock), CoroutineScope(SupervisorJob() + Dispatchers.Default),
     )
 
+    val account = AccountService(bootstrap, flags, cloudSync, session, remote, remote.images, network, identity, db)
+    val devices = DeviceRegistry(remote, state, peers)
+
     val uid: String get() = identity.uid!!
     fun guard() = SyncGuard(uid, identity)
 
-    fun close() = db.close()
+    fun close() {
+        db.close()
+        imageDir.deleteRecursively()
+    }
 }

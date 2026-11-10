@@ -1,7 +1,7 @@
 # Copy to dev.properties (gitignored) for local development. Only debug builds read these.
 # Android counterpart of the iOS Run-scheme env vars FIREBASE_USE_EMULATORS / KGS_DEMO_AUTH_*.
 
-# Use the Firebase Local Emulator Suite (auth + firestore) instead of production.
+# Use the Firebase Local Emulator Suite (auth + firestore + storage) instead of production.
 # Start it from the iOS repo: ./Scripts/start-firebase-emulators.sh
 firebase.useEmulators=true
 

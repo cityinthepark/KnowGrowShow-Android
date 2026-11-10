@@ -27,6 +27,14 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun getById(id: String): NoteEntity?
 
+    /** Every Image note id, deleted or not: the thumbnails a cloud wipe has to remove. */
+    @Query("SELECT id FROM notes WHERE noteType = 'image'")
+    suspend fun imageNoteIds(): List<String>
+
+    /** Live Image notes: the ones whose pictures may still need fetching from the cloud. */
+    @Query("SELECT * FROM notes WHERE noteType = 'image' AND deletedAt IS NULL AND isDeleted = 0")
+    suspend fun activeImageNotes(): List<NoteEntity>
+
     @Query("SELECT * FROM notes WHERE id = :id")
     fun observeById(id: String): Flow<NoteEntity?>
 

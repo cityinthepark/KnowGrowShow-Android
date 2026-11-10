@@ -23,7 +23,7 @@
     <string name="tab_calendar">日历</string>
     <string name="tab_settings">设置</string>
     <string name="tab_placeholder">即将推出</string>
-    <string name="settings_account_sync">账号与同步</string>
+    <string name="settings_account_sync">账户</string>
     <string name="settings_version">版本</string>
 
     <!-- Today tab: iOS Localizable.strings (zh-Hant simplified-char slips fixed). -->
@@ -504,4 +504,50 @@
     <string name="bible_copyright_nkjv_about">新钦定版（NKJV®）是在 KJV 传统上更新的现代英语译本。</string>
     <string name="bible_copyright_nkjv_how_provided">在笔记或记忆卡片中引用经节时，经 API.Bible 按需联网加载。已获取的章节可在设备上缓存最多约 30 天，之后会自动刷新。</string>
     <string name="bible_copyright_nkjv_notice">标注 (NKJV®) 的经文引自 New King James Version®。Copyright © 1982 by Thomas Nelson. Used by permission. All rights reserved.\n\n本应用中的 NKJV® 经文通过 American Bible Society 运营的 API.Bible 在非商业许可下提供。\n\n本应用不主张对 NKJV® 文本的版权。</string>
+
+    <!-- Account (iOS AccountSettingsView) -->
+    <string name="account_title">账户</string>
+    <string name="account_local_only">仅使用本机</string>
+    <string name="account_register">注册用户</string>
+    <string name="account_register_footer">若要在其他设备上访问您的数据，请先注册。</string>
+    <string name="account_sign_in_method">登录方式</string>
+    <string name="account_email">邮箱</string>
+    <string name="account_method_signed_in">已登录</string>
+    <string name="account_email_none">无邮箱</string>
+    <string name="account_method_email">邮箱登录</string>
+    <string name="account_method_google">Google 登录</string>
+    <string name="account_method_apple">Apple 登录</string>
+    <string name="account_method_phone">手机登录</string>
+    <string name="account_register_sheet_title">注册</string>
+    <string name="account_registering">正在登录…</string>
+    <string name="account_register_google">使用 Google 继续</string>
+    <string name="account_auth_error_title">无法完成注册</string>
+    <string name="account_devices_section">已关联设备</string>
+    <string name="account_devices_footer">使用同一登录方式时，可在多台设备上访问您的账户和数据。上方列出所有曾登录的设备。更换设备后，建议移除旧设备，以减少不必要的数据同步。</string>
+    <string name="account_devices_loading">正在加载设备…</string>
+    <string name="account_devices_empty">暂无关联设备。</string>
+    <string name="account_device_this">本机</string>
+    <string name="account_device_web">Web</string>
+    <string name="account_device_web_subtitle">浏览器同步</string>
+    <string name="account_device_last_upload_never">上次上传：从未</string>
+    <string name="account_device_last_upload">上次上传：%1$s</string>
+    <string name="account_device_inactive">可能已停用</string>
+    <string name="account_device_id_suffix">设备 ID：%1$s</string>
+    <string name="account_devices_remove">移除</string>
+    <string name="account_devices_remove_title">移除设备？</string>
+    <string name="account_devices_remove_message">从已关联设备中移除「%1$s」？这只会删除其云端注册记录。若该设备仍在使用，下次同步时会重新注册。</string>
+    <string name="account_devices_error_title">设备</string>
+    <string name="account_sign_out_cloud">退出云端服务</string>
+    <string name="account_sign_out_cloud_footer">退出后将切换为纯单机模式：\n📱 本机数据：完好保留在您的手机上，您可以继续正常使用。\n☁️ 云端备份：云端存储的数据将被清理，保障您的隐私与账号隔离。</string>
+    <string name="account_sign_out_cloud_confirm_title">退出云端服务？</string>
+    <string name="account_sign_out_cloud_confirm_message">退出后本机数据不受任何影响，您可以继续正常使用。云端保存的备份将被清理，之后可以随时重新登录开启同步。</string>
+    <string name="account_sign_out_cloud_confirm_message_other">退出后本机数据不受任何影响，您可以继续正常使用。但云端备份将被清理，其他登录此账号的设备（如 iPad）将无法再从云端恢复这些记录。确定要继续吗？</string>
+    <string name="account_sign_out_cloud_confirm_action">退出并清理云端</string>
+    <string name="account_sign_out_cloud_problem_title">未能完成</string>
+    <string name="account_sign_out_cloud_needs_network">清理云端备份需要联网。目前没有做任何改动，请联网后重试。</string>
+    <string name="account_sign_out_cloud_incomplete">部分云端数据暂时未能清除。云端同步已暂停，本机数据不受影响。请在网络稳定时重试。</string>
+    <string name="account_sign_out_cloud_retry">继续清理云端数据</string>
+    <string name="account_sign_out_cloud_pending_footer">云端备份的清理尚未完成，完成前云端同步会保持暂停。您也可以直接重新登录，我们会替您处理未完成的清理。</string>
+    <string name="account_devices_error_cannot_remove">无法移除此设备。</string>
+    <string name="account_google_unavailable">此版本暂不支持 Google 登录。</string>
 </resources>

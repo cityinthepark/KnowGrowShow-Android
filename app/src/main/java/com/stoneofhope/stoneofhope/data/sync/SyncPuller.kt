@@ -33,6 +33,7 @@ class SyncPuller @Inject constructor(
     private val session: CryptoSession,
     private val ops: LocalSyncOps,
     private val conflicts: SyncConflictDetector,
+    private val images: NoteImageSync,
     private val clock: Clock,
 ) {
     data class Result(
@@ -65,6 +66,10 @@ class SyncPuller @Inject constructor(
             db.withTransaction {
                 merge(collection, docs, run)
                 if (collection == FirestoreSchema.SERMONS) rebuildSeriesMembership(run)
+            }
+            if (collection == FirestoreSchema.NOTES) {
+                images.downloadMissing(db.noteDao().activeImageNotes(), ownerUid)
+                guard.check()
             }
         }
 
@@ -128,7 +133,6 @@ class SyncPuller @Inject constructor(
                     hardDelete = ops::hardDeleteNote,
                     write = { dao.upsert(it) },
                 )
-                // Note images are not downloaded yet: Firebase Storage needs the Blaze plan.
             }
             FirestoreSchema.PIN_LOG -> {
                 val dao = db.pinLogDao()

@@ -1,5 +1,6 @@
 package com.stoneofhope.stoneofhope.data.remote.firestore
 
+import android.util.Log
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
@@ -15,6 +16,7 @@ import com.stoneofhope.stoneofhope.data.remote.wire.WriteMode
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.tasks.await
 
 @Singleton
@@ -72,6 +74,34 @@ class FirestoreRemoteStore @Inject constructor(
             RemoteDocument(it.id, FirestoreWireAdapter.fromFirestore(it.data.orEmpty()))
         }
 
+    override suspend fun deleteAllDocuments(ownerUid: String, collection: String): Boolean {
+        val ref = userDoc(ownerUid).collection(collection)
+        return try {
+            var empty = false
+            while (!empty) {
+                // A server read, so a partial local cache can never make a collection look empty.
+                val page = ref.limit(WIPE_PAGE).get(Source.SERVER).await().documents
+                if (page.isEmpty()) {
+                    empty = true
+                } else {
+                    val batch = db.batch()
+                    page.forEach { batch.delete(it.reference) }
+                    batch.commit().await()
+                }
+            }
+            true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("FirestoreRemoteStore", "delete collection $collection failed", e)
+            false
+        }
+    }
+
+    override suspend fun deleteDevice(ownerUid: String, deviceId: String) {
+        userDoc(ownerUid).collection(DEVICES).document(deviceId).delete().await()
+    }
+
     override suspend fun mergeDevice(ownerUid: String, deviceId: String, data: WireData) {
         userDoc(ownerUid).collection(DEVICES).document(deviceId)
             .set(FirestoreWireAdapter.toFirestore(data), SetOptions.merge())
@@ -93,5 +123,8 @@ class FirestoreRemoteStore @Inject constructor(
         const val ACCOUNT = "account"
         const val EPOCH = "epoch"
         const val DEVICES = "devices"
+
+        /** Firestore allows 500 writes per batch. */
+        const val WIPE_PAGE = 500L
     }
 }
