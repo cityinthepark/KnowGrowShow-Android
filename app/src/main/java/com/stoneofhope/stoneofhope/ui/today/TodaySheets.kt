@@ -92,7 +92,7 @@ fun PrayerSheet(
                 }
                 Box {
                     TextButton(onClick = { menuOpen = true }, enabled = tagNames.isNotEmpty() || tag != null) {
-                        Text(tag?.let { "#$it" } ?: stringResource(R.string.tag_add))
+                        Text(tag ?: stringResource(R.string.tag_add))
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.tag_add)) }, onClick = { tag = null; menuOpen = false })

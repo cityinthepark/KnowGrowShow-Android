@@ -2,6 +2,7 @@ package com.stoneofhope.stoneofhope.ui.notes
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,6 +49,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -79,7 +81,7 @@ private enum class Composer { Note, Prayer }
  * "New note" pill for today's list. Filter, sort and grouping rules are unchanged (NOTES_PLAN §1).
  */
 @Composable
-fun NoteListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, viewModel: NoteListViewModel = hiltViewModel()) {
+fun NoteListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, onOpenVersions: () -> Unit, viewModel: NoteListViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val expanded by viewModel.expanded.collectAsStateWithLifecycle()
     val prayerVerses by viewModel.prayerVerses.collectAsStateWithLifecycle()
@@ -112,7 +114,7 @@ fun NoteListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, viewModel: 
             ) {
                 items(items, key = { it.key }) { item ->
                     when (item) {
-                        is ListItem.Header -> SectionHeader(item.section, viewModel.today, viewModel.versionsLabel, first = item == items.first())
+                        is ListItem.Header -> SectionHeader(item.section, viewModel.today, viewModel.versionsLabel, first = item == items.first(), onOpenVersions = onOpenVersions)
                         is ListItem.Row -> {
                             val day = item.section.day.takeIf { !item.section.pinned }
                             when (val row = item.row) {
@@ -207,7 +209,7 @@ private fun Header(
     }
 }
 
-/** A 44 round tag button, or a "#tag" pill once a tag is chosen; opens the tag menu. */
+/** A 44 round tag button, or a tag-name pill once a tag is chosen; opens the tag menu. */
 @Composable
 private fun TagFilterButton(tag: String?, tagNames: List<String>, onTag: (String?) -> Unit) {
     val c = AppTheme.colors
@@ -228,7 +230,7 @@ private fun TagFilterButton(tag: String?, tagNames: List<String>, onTag: (String
                 Row(Modifier.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Outlined.Sell, null, tint = c.blue100, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("#$tag", style = textStyle(15, weight = FontWeight.SemiBold), color = c.blue100, maxLines = 1)
+                    Text(tag, style = textStyle(15, weight = FontWeight.SemiBold), color = c.blue100, maxLines = 1)
                 }
             }
         }
@@ -240,7 +242,7 @@ private fun TagFilterButton(tag: String?, tagNames: List<String>, onTag: (String
             )
             tagNames.forEach { name ->
                 DropdownMenuItem(
-                    text = { Text("#$name") },
+                    text = { Text(name) },
                     leadingIcon = { if (name == tag) Icon(Icons.Filled.Check, null) else Spacer(Modifier.width(24.dp)) },
                     onClick = { onTag(name); open = false },
                 )
@@ -293,7 +295,7 @@ private fun TypeChipsRow(selected: NoteFilter, onSelect: (NoteFilter) -> Unit) {
 
 /** "TODAY · MON, OCT 26" + versions, or "📌 PINNED" (design L §2.1). */
 @Composable
-private fun SectionHeader(section: NoteSectionUi, today: LocalDate, versions: String, first: Boolean) {
+private fun SectionHeader(section: NoteSectionUi, today: LocalDate, versions: String, first: Boolean, onOpenVersions: () -> Unit) {
     val c = AppTheme.colors
     Row(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = if (first) 0.dp else 18.dp), verticalAlignment = Alignment.CenterVertically) {
         if (section.pinned) {
@@ -302,8 +304,11 @@ private fun SectionHeader(section: NoteSectionUi, today: LocalDate, versions: St
             val day = weekdayMonthDay(section.day).uppercase()
             val text = if (section.day == today) stringResource(R.string.notes_title_today).uppercase() + " · " + day else day
             Text(text, style = capsStyle(0.06f), color = c.neutral90, modifier = Modifier.weight(1f))
-            // iOS opens the version settings from here; Android has no such page yet.
-            Text(versions, style = textStyle(12, weight = FontWeight.SemiBold), color = c.neutral90)
+            // iOS opens the Bible versions page from here (`goToAvailableBibleVersions`).
+            Text(
+                versions, style = textStyle(12, weight = FontWeight.SemiBold), color = c.blue80, textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable(onClick = onOpenVersions).testTag("versionsLink"),
+            )
         }
     }
 }

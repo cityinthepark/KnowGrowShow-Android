@@ -48,6 +48,7 @@ import com.stoneofhope.stoneofhope.data.model.NoteType
 import com.stoneofhope.stoneofhope.data.notes.MarkedVerse
 import com.stoneofhope.stoneofhope.data.notes.NoteBadges
 import com.stoneofhope.stoneofhope.data.notes.ResolvedVerse
+import com.stoneofhope.stoneofhope.data.notes.ThreadItem
 import com.stoneofhope.stoneofhope.ui.theme.AppColors
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 import java.time.LocalDate
@@ -159,17 +160,39 @@ fun NoteListCard(
                     modifier = Modifier.padding(top = 8.dp, end = 10.dp),
                 )
             }
+            InlineThread(card.inline, Modifier.padding(top = 8.dp, end = 10.dp))
             if (hasBottomRow) {
                 Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(Icons.Outlined.ChatBubbleOutline, null, tint = c.neutral90, modifier = Modifier.size(14.dp))
                     Text(threadLabel(card.isAnchor, card.threadCount), style = textStyle(12), color = c.neutral90)
-                    card.tagNames.firstOrNull()?.let { TagPill(it, compact = true) }
+                    card.tagNames.firstOrNull()?.let { TagPill(it, compact = true, ownerId = card.note.id) }
                     if (crowded) StatusIcons(note)
                     Spacer(Modifier.weight(1f))
                     MoreButton(note.id, onMenu)
                 }
             } else {
                 Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+/**
+ * The reflections and comments of a card, shown in full under it (the sermon and video pages, as iOS):
+ * a bubble, the text, and when it was written. Nothing is drawn when there are none.
+ */
+@Composable
+fun InlineThread(items: List<ThreadItem>, modifier: Modifier = Modifier) {
+    if (items.isEmpty()) return
+    val c = AppTheme.colors
+    Column(modifier.testTag("inlineThread"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items.forEach { item ->
+            Row(Modifier.testTag("inlineComment_${item.id}"), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Outlined.ChatBubbleOutline, null, tint = c.neutral90, modifier = Modifier.padding(top = 3.dp).size(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text((if (item.isAnswered) "\uD83D\uDE4C " else "") + item.text, style = textStyle(15, 1.5f), color = c.neutral100)
+                    Text(relativeTime(item.createdAt), style = textStyle(11), color = c.neutral90)
+                }
             }
         }
     }
@@ -232,10 +255,11 @@ fun VerseAnchorCard(card: NoteCardUi, sectionDay: LocalDate?, onOpen: () -> Unit
                 }
             }
             HorizontalDivider(color = c.noteTypeBibleVerse.copy(alpha = 0.12f))
+            InlineThread(card.inline, Modifier.padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 2.dp))
             Row(Modifier.height(44.dp).padding(start = 16.dp, end = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Icon(Icons.Outlined.ChatBubbleOutline, null, tint = c.neutral90, modifier = Modifier.size(14.dp))
                 Text(threadLabel(isAnchor = true, count = card.threadCount), style = textStyle(12), color = c.neutral90)
-                card.tagNames.firstOrNull()?.let { TagPill(it, compact = true) }
+                card.tagNames.firstOrNull()?.let { TagPill(it, compact = true, ownerId = card.note.id) }
                 Spacer(Modifier.weight(1f))
                 MoreButton(note.id, onMenu)
             }

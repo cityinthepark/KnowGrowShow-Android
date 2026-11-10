@@ -9,7 +9,19 @@ import com.stoneofhope.stoneofhope.ui.sermon.IncomingShare
 import com.stoneofhope.stoneofhope.ui.theme.KnowGrowShowTheme
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import com.stoneofhope.stoneofhope.ui.effects.LocalTransformEffects
+import com.stoneofhope.stoneofhope.ui.effects.TransformEffectController
+import com.stoneofhope.stoneofhope.ui.effects.TransformEffectOverlay
+import com.stoneofhope.stoneofhope.ui.effects.animationsOff
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
@@ -38,7 +50,22 @@ class MainActivity : ComponentActivity() {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, density.fontScale * fontSize.scale)) {
                 KnowGrowShowTheme(darkTheme = dark) {
-                    KnowGrowShowApp()
+                    val context = LocalContext.current
+                    val scope = rememberCoroutineScope()
+                    val haptics = LocalHapticFeedback.current
+                    val effects = remember {
+                        TransformEffectController(
+                            scope, reduceMotion = { animationsOff(context) },
+                            onThump = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
+                            onSettled = { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) },
+                        )
+                    }
+                    CompositionLocalProvider(LocalTransformEffects provides effects) {
+                        Box(Modifier.fillMaxSize()) {
+                            KnowGrowShowApp()
+                            TransformEffectOverlay(effects)
+                        }
+                    }
                 }
             }
         }

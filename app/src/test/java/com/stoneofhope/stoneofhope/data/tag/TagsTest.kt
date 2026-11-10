@@ -14,7 +14,17 @@ class TagsTest {
         assertNull(PresetTag.of("faith"))
     }
 
+    @Test fun transformMatchesTheNameSetSharedWithIosAndWeb() {
+        for (name in listOf("transform", "Transformed", " TRANSFORMATION ", "转化", "轉化", "蜕变", "蛻變")) {
+            assertEquals(name, PresetTag.Transform, PresetTag.of(name))
+        }
+        assertNull(PresetTag.of("transforming"))
+        assertNull(PresetTag.of("变化"))
+    }
+
     @Test fun labelsCarryTheMark() {
+        assertEquals("🦋 Transform", PresetTag.label("Transform"))
+        assertEquals("🦋 轉化", PresetTag.label("轉化"))
         assertEquals("🏆 Milestone", PresetTag.label("Milestone"))
         assertEquals("🗑️ Trash", PresetTag.label("Trash"))
         assertEquals("Faith", PresetTag.label("Faith"))

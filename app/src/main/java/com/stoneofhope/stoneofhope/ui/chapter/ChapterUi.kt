@@ -83,7 +83,7 @@ internal fun DatedNoteCard(card: NoteCardUi, onOpen: () -> Unit, onMenu: () -> U
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Icon(Icons.Outlined.ChatBubbleOutline, null, tint = c.neutral90, modifier = Modifier.size(14.dp))
                 Text(threadLabel(isAnchor = false, count = card.threadCount), style = textStyle(12), color = c.neutral90)
-                card.tagNames.firstOrNull()?.let { TagPill(it, compact = true) }
+                card.tagNames.firstOrNull()?.let { TagPill(it, compact = true, ownerId = card.note.id) }
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = onMenu, modifier = Modifier.size(44.dp).testTag("noteMenu_${note.id}")) {
                     Icon(Icons.Filled.MoreHoriz, stringResource(R.string.action_more), tint = c.neutral90)

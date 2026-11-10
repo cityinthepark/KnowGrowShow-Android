@@ -447,6 +447,7 @@
     <string name="tag_recommended">Recommended</string>
     <string name="tag_preset_trash">Trash</string>
     <string name="tag_preset_milestone">Milestone</string>
+    <string name="tag_preset_transform">Transform</string>
     <plurals name="tag_count_notes"><item quantity="one">%d note</item><item quantity="other">%d notes</item></plurals>
     <plurals name="tag_count_comments"><item quantity="one">%d comment</item><item quantity="other">%d comments</item></plurals>
     <plurals name="tag_count_sermons"><item quantity="one">%d sermon</item><item quantity="other">%d sermons</item></plurals>

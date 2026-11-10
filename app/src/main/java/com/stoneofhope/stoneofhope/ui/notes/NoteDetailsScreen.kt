@@ -64,6 +64,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.stoneofhope.stoneofhope.ui.effects.transformText
+import com.stoneofhope.stoneofhope.ui.effects.withTransformGlow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.sizeIn
@@ -233,7 +235,7 @@ private fun NoteCard(
                             Modifier.weight(1f).padding(top = 6.dp),
                             horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
                             verticalArrangement = Arrangement.spacedBy(6.dp),
-                        ) { card.tagNames.forEach { TagPill(it) } }
+                        ) { card.tagNames.forEach { TagPill(it, ownerId = note.id) } }
                     }
                 }
                 if (!card.isAnchor) {
@@ -243,7 +245,7 @@ private fun NoteCard(
                         }
                     }
                     paragraphs(card.displayContent).forEach {
-                        Text(it, style = textStyle(17, 1.6f), color = c.neutral100, modifier = Modifier.testTag("noteBody"))
+                        Text(it, style = textStyle(17, 1.6f).withTransformGlow(note.id), color = c.neutral100, modifier = Modifier.transformText(note.id).testTag("noteBody"))
                     }
                 }
             }
@@ -585,14 +587,14 @@ private fun CommentLine(item: ThreadItem, actions: CommentActionsState, onAction
         if (showsAnswered || item.starLevel > 0 || item.tagNames.isNotEmpty()) {
             FlowRow(Modifier.padding(end = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (showsAnswered) Text("🙌", style = textStyle(15), modifier = Modifier.align(Alignment.CenterVertically).testTag("commentAnswered"))
-                item.tagNames.forEach { TagPill(it, compact = true) }
+                item.tagNames.forEach { TagPill(it, compact = true, ownerId = item.id) }
                 if (item.starLevel > 0) StarIcons(item.starLevel, Modifier.align(Alignment.CenterVertically), size = 13.dp)
             }
         }
         if (item.isAnsweredMarker) {
             Text("🙌 " + stringResource(R.string.answered_today), style = textStyle(15, 1.5f, FontWeight.SemiBold), color = c.answeredInk, modifier = Modifier.testTag("answeredMarker"))
         } else {
-            Text(item.text, style = textStyle(15, 1.6f), color = c.neutral100, modifier = Modifier.padding(end = 10.dp))
+            Text(item.text, style = textStyle(15, 1.6f).withTransformGlow(item.id), color = c.neutral100, modifier = Modifier.padding(end = 10.dp).transformText(item.id))
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(clockTime(item.createdAt), style = textStyle(12), color = c.neutral90, maxLines = 1)

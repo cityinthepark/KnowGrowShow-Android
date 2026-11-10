@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.stoneofhope.stoneofhope.ui.effects.transformChip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -160,12 +161,14 @@ fun Pill(color: Color, modifier: Modifier = Modifier, content: @Composable () ->
     }
 }
 
-/** A tag pill: "#name" on the page background. */
+/** A tag pill: the name on the page background. [ownerId] is the note or comment it labels. */
 @Composable
-fun TagPill(name: String, compact: Boolean = false) {
-    Surface(shape = RoundedCornerShape(50), color = AppTheme.colors.pageBackground) {
+fun TagPill(name: String, compact: Boolean = false, ownerId: String? = null) {
+    // iOS: a preset chip is a button that plays its effect again (only Transform has one here).
+    val replays = com.stoneofhope.stoneofhope.data.tag.PresetTag.of(name) == com.stoneofhope.stoneofhope.data.tag.PresetTag.Transform
+    Surface(shape = RoundedCornerShape(50), color = AppTheme.colors.pageBackground, modifier = Modifier.transformChip(ownerId, replays)) {
         Text(
-            "#${com.stoneofhope.stoneofhope.data.tag.PresetTag.label(name)}",
+            com.stoneofhope.stoneofhope.data.tag.PresetTag.label(name),
             style = textStyle(12),
             color = AppTheme.colors.neutral90,
             maxLines = 1,

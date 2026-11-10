@@ -426,6 +426,7 @@
     <string name="tag_recommended">推薦</string>
     <string name="tag_preset_trash">回收站</string>
     <string name="tag_preset_milestone">里程碑</string>
+    <string name="tag_preset_transform">轉化</string>
     <plurals name="tag_count_notes"><item quantity="other">%d 則筆記</item></plurals>
     <plurals name="tag_count_comments"><item quantity="other">%d 則留言</item></plurals>
     <plurals name="tag_count_sermons"><item quantity="other">%d 篇講道</item></plurals>

@@ -1,6 +1,7 @@
 package com.stoneofhope.stoneofhope.ui.sermon
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -237,6 +238,7 @@ fun SermonScreen(
     onBack: () -> Unit,
     onOpenNote: (String) -> Unit,
     onEdit: (String) -> Unit,
+    onOpenVersions: () -> Unit,
     viewModel: SermonViewModel = hiltViewModel(),
 ) {
     val sermonState by viewModel.sermonState.collectAsStateWithLifecycle()
@@ -280,7 +282,11 @@ fun SermonScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     s.chapterRange?.trim()?.takeIf { it.isNotEmpty() }?.let { ReferenceChip(it) }
                     Spacer(Modifier.weight(1f))
-                    Text(viewModel.versionsLabel, style = textStyle(12, weight = FontWeight.SemiBold), color = c.blue80)
+                    // iOS opens the Bible versions page from here (`goToAvailableBibleVersions`).
+                    Text(
+                        viewModel.versionsLabel, style = textStyle(12, weight = FontWeight.SemiBold), color = c.blue80,
+                        modifier = Modifier.clickable(onClick = onOpenVersions).padding(vertical = 8.dp).testTag("sermonVersions"),
+                    )
                 }
                 val audio = s.audioUrl?.trim()?.ifEmpty { null }
                 val pdf = s.pdfUrl?.trim()?.ifEmpty { null }

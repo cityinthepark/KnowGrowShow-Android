@@ -264,7 +264,7 @@ private fun ItemRow(title: String, noteCount: Int, tags: List<String>, onOpen: (
             Text(title, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val meta = buildList {
                 if (noteCount > 0) add("📝 $noteCount")
-                addAll(tags.map { "#$it" })
+                addAll(tags)
             }
             if (meta.isNotEmpty()) {
                 Text(meta.joinToString("  "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

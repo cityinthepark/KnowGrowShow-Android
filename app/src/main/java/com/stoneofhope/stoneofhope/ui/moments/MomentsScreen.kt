@@ -201,7 +201,7 @@ private fun TagMenu(tag: String?, tagNames: List<String>, onTag: (String?) -> Un
     var open by remember { mutableStateOf(false) }
     Box {
         MenuPill(
-            label = tag?.let { "#$it" } ?: stringResource(R.string.filter_all),
+            label = tag ?: stringResource(R.string.filter_all),
             leading = { Icon(Icons.Outlined.Sell, null, tint = AppTheme.colors.neutral90, modifier = Modifier.size(16.dp)) },
             onClick = { open = true },
             tag = "momentsTag",
@@ -210,7 +210,7 @@ private fun TagMenu(tag: String?, tagNames: List<String>, onTag: (String?) -> Un
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             DropdownMenuItem(text = { Text(stringResource(R.string.filter_all)) }, leadingIcon = { CheckSlot(tag == null) }, onClick = { onTag(null); open = false })
             tagNames.forEach { name ->
-                DropdownMenuItem(text = { Text("#$name") }, leadingIcon = { CheckSlot(name == tag) }, onClick = { onTag(name); open = false })
+                DropdownMenuItem(text = { Text(name) }, leadingIcon = { CheckSlot(name == tag) }, onClick = { onTag(name); open = false })
             }
         }
     }

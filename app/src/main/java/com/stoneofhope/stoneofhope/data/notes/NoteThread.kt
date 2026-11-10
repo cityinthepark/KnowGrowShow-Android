@@ -124,6 +124,14 @@ object NoteThread {
     }
 
     /**
+     * What the sermon / video page shows under a card without opening it (iOS `noteCommentsListSection`):
+     * an anchor's reflections and the note's comments, oldest first. A marker paired with a comment is
+     * folded into it (🙌); one standing alone has no text to show and is left out.
+     */
+    fun inline(reflections: List<ThreadItem>, comments: List<ThreadItem>): List<ThreadItem> =
+        foldAnswered(comments).filter { !it.isAnsweredMarker }.plus(reflections).sortedBy { it.createdAt }
+
+    /**
      * iOS links a day to the next only when they are consecutive. Here a pinned run is one row on its
      * last day, so the days in between may be hidden pinned days: link when every day strictly between
      * is pinned. (iOS also breaks the line between consecutive days outside one run when the note has

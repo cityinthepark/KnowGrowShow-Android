@@ -82,6 +82,9 @@ import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.NoteEntity
 import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
 import com.stoneofhope.stoneofhope.data.notes.NoteRelations
+import com.stoneofhope.stoneofhope.data.notes.NoteThread
+import com.stoneofhope.stoneofhope.data.notes.ThreadItem
+import com.stoneofhope.stoneofhope.data.notes.threadItem
 import com.stoneofhope.stoneofhope.data.notes.VerseMarks
 import com.stoneofhope.stoneofhope.data.sermon.ScriptCaptureDuration
 import com.stoneofhope.stoneofhope.data.sermon.YouTubeLinkParser
@@ -133,7 +136,16 @@ internal fun containerNotes(db: AppDatabase, notes: Flow<List<NoteEntity>>, zone
         val marks = VerseMarks.byVerseId(markRows)
         val cards = list.filter { !NoteRelations.isHiddenFromTopLevel(it, list, zone) }
             .sortedBy { it.createdAt }
-            .map { NoteCards.card(it, list, c, tagNames, sermonIds.toSet(), versesById, zone, marks, selectedVersions) }
+            .map { note ->
+                val card = NoteCards.card(note, list, c, tagNames, sermonIds.toSet(), versesById, zone, marks, selectedVersions)
+                val reflections = if (card.isAnchor) {
+                    NoteRelations.reflections(note, list, zone).map {
+                        ThreadItem(it.id, it.content, false, it.createdAt, it.starLevel, it.tagIds, it.tagIds.mapNotNull(tagNames::get), isReflection = true)
+                    }
+                } else emptyList()
+                val comments = c.filter { it.noteId == note.id }.map { it.threadItem(tagNames) }
+                card.copy(inline = NoteThread.inline(reflections, comments))
+            }
         ContainerNotesState(cards, tags, loaded = true)
     }
 }

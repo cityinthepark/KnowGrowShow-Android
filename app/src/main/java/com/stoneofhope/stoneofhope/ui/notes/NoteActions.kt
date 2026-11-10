@@ -59,6 +59,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -166,7 +167,14 @@ fun NoteActionsHost(
             }
         })
         Sub.Star -> StarDialog(onDismiss = state::close) { state.close(); act(NoteAction.Star(it)) }
-        Sub.Tags -> TagPickerSheet(allTags, note.tagIds.toSet(), onAdd = { act(NoteAction.AddTag(it)) }, onRemove = { act(NoteAction.RemoveTag(it)) }, onDismiss = state::close, recommend = true)
+        Sub.Tags -> {
+            val effects = com.stoneofhope.stoneofhope.ui.effects.LocalTransformEffects.current
+            TagPickerSheet(
+                allTags, note.tagIds.toSet(), onAdd = { act(NoteAction.AddTag(it)) }, onRemove = { act(NoteAction.RemoveTag(it)) },
+                onDismiss = state::close, recommend = true,
+                onPresetsAdded = { kinds -> if (com.stoneofhope.stoneofhope.data.tag.PresetTag.Transform in kinds) effects?.playAfterSheet(note.id) },
+            )
+        }
         Sub.Edit -> EditNoteSheet(note.content, onDismiss = state::close) { state.close(); act(NoteAction.Edit(it)) }
         Sub.Comment -> CommentSheet(
             t.displayContent, canMarkAnswered = false, onDismiss = state::close, isReflection = note.noteType == NoteType.BibleVerse,
@@ -276,10 +284,10 @@ private fun ActionsSheet(t: NoteActionTarget, onDismiss: () -> Unit, onSub: (Sub
 
 private fun firstLine(text: String) = text.lineSequence().firstOrNull { it.isNotBlank() }?.trim().orEmpty()
 
-/** "#a #b +N" (at most two names). */
+/** "a b +N" (at most two names). */
 private fun tagsSummary(names: List<String>): String? {
     if (names.isEmpty()) return null
-    val shown = names.take(2).joinToString(" ") { "#$it" }
+    val shown = names.take(2).joinToString(" ")
     return if (names.size > 2) "$shown +${names.size - 2}" else shown
 }
 
@@ -412,9 +420,26 @@ internal fun TagPickerSheet(
     onAdd: (String) -> Unit,
     onRemove: (String) -> Unit,
     onDismiss: () -> Unit,
-    /** iOS: only a note's picker offers the preset tags (Trash, Milestone) that don't exist yet. */
+    /** iOS: only a note's picker offers the preset tags (Trash, Milestone, Transform) that don't exist yet. */
     recommend: Boolean = false,
+    /** Preset tags added in this sheet and still on the note when it closes (iOS `presetsAddedThisSession`). */
+    onPresetsAdded: (List<com.stoneofhope.stoneofhope.data.tag.PresetTag>) -> Unit = {},
 ) {
+    val addedKinds = remember { mutableListOf<com.stoneofhope.stoneofhope.data.tag.PresetTag>() }
+    val latestTags by rememberUpdatedState(allTags)
+    val latestSelected by rememberUpdatedState(selectedIds)
+    val latestReport by rememberUpdatedState(onPresetsAdded)
+    DisposableEffect(Unit) {
+        onDispose {
+            val names = latestTags.filter { it.id in latestSelected }.map { it.name }
+            val still = addedKinds.distinct().filter { kind -> names.any { com.stoneofhope.stoneofhope.data.tag.PresetTag.of(it) == kind } }
+            if (still.isNotEmpty()) latestReport(still)
+        }
+    }
+    val add: (String) -> Unit = { name ->
+        if (recommend) com.stoneofhope.stoneofhope.data.tag.PresetTag.of(name)?.let(addedKinds::add)
+        onAdd(name)
+    }
     var byName by rememberSaveable { mutableStateOf(true) }
     var sortMenu by remember { mutableStateOf(false) }
     var newTag by rememberSaveable { mutableStateOf("") }
@@ -438,7 +463,7 @@ internal fun TagPickerSheet(
                     val selected = tag.id in selectedIds
                     FilterChip(
                         selected = selected,
-                        onClick = { if (selected) onRemove(tag.id) else onAdd(tag.name) },
+                        onClick = { if (selected) onRemove(tag.id) else add(tag.name) },
                         label = { Text(com.stoneofhope.stoneofhope.data.tag.PresetTag.label(tag.name)) },
                         modifier = Modifier.testTag("tag_${tag.name}"),
                     )
@@ -450,8 +475,14 @@ internal fun TagPickerSheet(
                 Text(stringResource(R.string.tag_recommended), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     missing.forEach { kind ->
-                        val name = stringResource(if (kind == com.stoneofhope.stoneofhope.data.tag.PresetTag.Trash) R.string.tag_preset_trash else R.string.tag_preset_milestone)
-                        androidx.compose.material3.AssistChip(onClick = { onAdd(name) }, label = { Text(com.stoneofhope.stoneofhope.data.tag.PresetTag.label(name)) }, modifier = Modifier.testTag("preset_${kind.name}"))
+                        val name = stringResource(
+                            when (kind) {
+                                com.stoneofhope.stoneofhope.data.tag.PresetTag.Trash -> R.string.tag_preset_trash
+                                com.stoneofhope.stoneofhope.data.tag.PresetTag.Milestone -> R.string.tag_preset_milestone
+                                com.stoneofhope.stoneofhope.data.tag.PresetTag.Transform -> R.string.tag_preset_transform
+                            },
+                        )
+                        androidx.compose.material3.AssistChip(onClick = { add(name) }, label = { Text(com.stoneofhope.stoneofhope.data.tag.PresetTag.label(name)) }, modifier = Modifier.testTag("preset_${kind.name}"))
                     }
                 }
             }
@@ -463,7 +494,7 @@ internal fun TagPickerSheet(
                     placeholder = { Text(stringResource(R.string.tag_new_placeholder)) },
                     modifier = Modifier.weight(1f).testTag("newTag"),
                 )
-                Button(onClick = { onAdd(newTag.trim()); newTag = "" }, enabled = newTag.isNotBlank()) {
+                Button(onClick = { add(newTag.trim()); newTag = "" }, enabled = newTag.isNotBlank()) {
                     Text(stringResource(R.string.tag_add_button))
                 }
             }

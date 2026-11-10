@@ -139,4 +139,23 @@ class NoteThreadTest {
         val days = NoteThread.build(listOf(comment("a", "2026-11-01"), comment("b", "2026-10-31")), emptyList(), null, zone)
         assertEquals(listOf(false, false), days.map { it.connectsBelow })
     }
+
+    @Test fun theSermonPageShowsReflectionsAndCommentsOldestFirst() {
+        val reflection = comment("r", "2026-11-02").copy(isReflection = true)
+        val items = NoteThread.inline(listOf(reflection), listOf(comment("b", "2026-11-03"), comment("a", "2026-11-01")))
+        assertEquals(listOf("a", "r", "b"), items.map { it.id })
+    }
+
+    @Test fun anAnsweredMarkerFoldsIntoItsCommentAndALoneOneIsLeftOut() {
+        val items = NoteThread.inline(
+            emptyList(),
+            listOf(comment("a", "2026-11-01"), comment("m", "2026-11-01", marker = true, pairedWith = "a"), comment("lone", "2026-11-02", marker = true)),
+        )
+        assertEquals(listOf("a"), items.map { it.id })
+        assertTrue(items.single().isAnswered)
+    }
+
+    @Test fun noCommentsMeansNothingInline() {
+        assertTrue(NoteThread.inline(emptyList(), emptyList()).isEmpty())
+    }
 }

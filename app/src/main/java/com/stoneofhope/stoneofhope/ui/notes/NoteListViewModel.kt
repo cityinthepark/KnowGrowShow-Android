@@ -63,6 +63,11 @@ data class NoteCardUi(
     val bodyMarks: List<VerseMark> = emptyList(),
     /** An anchor still without its text in some selected version: the row fetches it (iOS `456b7e6`). */
     val missingVerseText: Boolean = false,
+    /**
+     * The reflections and comments shown straight under the card, oldest first — only the sermon and video
+     * pages fill this (iOS draws their rows without the compact "open note details" entry).
+     */
+    val inline: List<ThreadItem> = emptyList(),
 ) {
     val isAnchor: Boolean get() = note.noteType == NoteType.BibleVerse
     val threadCount: Int get() = when (val t = thread) { is CompactSummary.Notes -> t.count; is CompactSummary.Comments -> t.count }

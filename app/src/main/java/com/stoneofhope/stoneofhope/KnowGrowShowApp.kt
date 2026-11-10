@@ -237,6 +237,7 @@ fun KnowGrowShowApp(
                     NoteListScreen(
                         onBack = { navController.popBackStack() },
                         onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
+                        onOpenVersions = { navController.navigate(Routes.BibleVersions) },
                     )
                 }
                 composable(
@@ -306,6 +307,7 @@ fun KnowGrowShowApp(
                         onBack = { navController.popBackStack() },
                         onOpenNote = { id -> navController.navigate(Routes.noteDetails(id)) },
                         onEdit = { id -> navController.navigate(Routes.sermonEdit(id)) },
+                        onOpenVersions = { navController.navigate(Routes.BibleVersions) },
                     )
                 }
                 composable(Routes.SermonReader, arguments = listOf(navArgument(SermonViewModel.ARG_ID) { type = NavType.StringType })) {

@@ -32,12 +32,15 @@ object TagStats {
 enum class TagRenameResult { Renamed, Empty, Duplicate }
 
 /**
- * iOS `PresetTag`: the two names with a special mark. [names] are the English and the translated
+ * iOS `PresetTag`: the three names with a special mark. [names] are the English and the translated
  * names, lower-cased and trimmed, as iOS matches them.
  */
 enum class PresetTag(val names: Set<String>) {
     Trash(setOf("trash", "trash it", "回收站")),
-    Milestone(setOf("milestone", "里程碑"));
+    Milestone(setOf("milestone", "里程碑")),
+
+    /** iOS 373d3a5 / web `transformEffect.ts`: the name set is shared by all three platforms. */
+    Transform(setOf("transform", "transformed", "transformation", "转化", "轉化", "蜕变", "蛻變"));
 
     companion object {
         fun of(name: String): PresetTag? {
@@ -52,6 +55,7 @@ enum class PresetTag(val names: Set<String>) {
         fun label(name: String): String = when (of(name)) {
             Milestone -> "🏆 $name"
             Trash -> "🗑️ $name"
+            Transform -> "🦋 $name"
             null -> name
         }
     }
