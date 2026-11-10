@@ -9,6 +9,7 @@ import com.stoneofhope.stoneofhope.data.crypto.CryptoSession
 import com.stoneofhope.stoneofhope.data.crypto.NoteKeyCache
 import com.stoneofhope.stoneofhope.data.crypto.NoteKeyProvider
 import com.stoneofhope.stoneofhope.data.crypto.StoneOfHopeCrypto
+import com.stoneofhope.stoneofhope.data.image.NoteImageStore
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.remote.RemoteDocument
 import com.stoneofhope.stoneofhope.data.remote.RemoteStore
@@ -144,7 +145,7 @@ class TestDevice(
     val state = SyncStateStore(context.getSharedPreferences("sync_state_$name", Context.MODE_PRIVATE).also { it.edit().clear().commit() })
     val flags = CloudAccountFlags(context.getSharedPreferences("flags_$name", Context.MODE_PRIVATE).also { it.edit().clear().commit() })
     val session = CryptoSession(identity, vault.provider(), cache)
-    val ops = LocalSyncOps(db)
+    val ops = LocalSyncOps(db, NoteImageStore(context))
     val puller = SyncPuller(db, remote, state, session, ops, SyncConflictDetector(db), clock)
     val pusher = SyncPusher(db, remote, session, ops, clock)
     val peers = SyncPeerRegistry(remote, state)

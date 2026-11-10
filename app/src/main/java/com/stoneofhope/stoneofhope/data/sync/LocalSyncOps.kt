@@ -1,5 +1,6 @@
 package com.stoneofhope.stoneofhope.data.sync
 
+import com.stoneofhope.stoneofhope.data.image.NoteImageStore
 import com.stoneofhope.stoneofhope.data.local.AppDatabase
 import com.stoneofhope.stoneofhope.data.local.entity.PinLogEntity
 import com.stoneofhope.stoneofhope.data.local.entity.PinLogPendingDeleteEntity
@@ -17,10 +18,12 @@ import javax.inject.Singleton
  * `FlashCardUserVerseBackfill.apply`. Callers wrap these in a Room transaction.
  */
 @Singleton
-class LocalSyncOps @Inject constructor(private val db: AppDatabase) {
+class LocalSyncOps @Inject constructor(private val db: AppDatabase, private val images: NoteImageStore) {
 
     /** iOS `hardDeleteNote`: also removes the note's PinLog (queuing its Firestore delete) and comments. */
     suspend fun hardDeleteNote(noteId: String) {
+        // A note deleted on another device arrives as a tombstone; its photo must leave this phone too.
+        db.noteDao().getById(noteId)?.let(images::deleteFilesOf)
         removePinLog(noteId)
         db.noteCommentDao().hardDeleteForNote(noteId)
         db.noteDao().hardDelete(noteId)

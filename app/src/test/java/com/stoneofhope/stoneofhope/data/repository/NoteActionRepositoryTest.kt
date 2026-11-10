@@ -48,7 +48,7 @@ class NoteActionRepositoryTest {
         BibleVerseReader(bible.verseDao(), db.bibleCacheDao(), UnavailableOnDemandVerseSource()),
         BibleVersionPreferences(context.getSharedPreferences("actions-test", Context.MODE_PRIVATE).apply { edit().clear().commit() }) { BibleLanguage.English },
     )
-    private val actions = NoteActionRepository(db, clock, notes, LocalSyncOps(db), NoteImageStore(context))
+    private val actions = NoteActionRepository(db, clock, notes, LocalSyncOps(db, NoteImageStore(context)), NoteImageStore(context))
 
     @After
     fun tearDown() {
@@ -247,6 +247,20 @@ class NoteActionRepositoryTest {
             assertTrue(store.exists(other))
         } finally {
             (mine + other).forEach { store.file(it).delete() }
+        }
+    }
+
+    @Test fun aDeleteArrivingFromAnotherDeviceRemovesThePictureFilesToo() = runTest {
+        val store = NoteImageStore(context)
+        val names = listOf("SYNC-A.jpg", "SYNC-A-thumb.jpg")
+        names.forEach { store.file(it).writeBytes(byteArrayOf(1)) }
+        try {
+            val note = insert(NoteType.Image) { copy(imagePath = names[0], thumbnailPath = names[1]) }
+            LocalSyncOps(db, store).hardDeleteNote(note.id)
+            names.forEach { assertFalse(it, store.exists(it)) }
+            assertNull(db.noteDao().getById(note.id))
+        } finally {
+            names.forEach { store.file(it).delete() }
         }
     }
 
