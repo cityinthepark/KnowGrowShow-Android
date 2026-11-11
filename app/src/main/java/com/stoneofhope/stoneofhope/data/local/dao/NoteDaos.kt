@@ -91,6 +91,10 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE needsSync = 1")
     suspend fun dirty(): List<NoteEntity>
 
+    /** Emits again whenever any note changes; the sync trigger uses it to upload shortly after an edit. */
+    @Query("SELECT COUNT(*) FROM notes WHERE needsSync = 1")
+    fun observeDirtyCount(): Flow<Int>
+
     @Query("DELETE FROM notes WHERE id = :id")
     suspend fun hardDelete(id: String)
 
@@ -154,6 +158,9 @@ interface NoteCommentDao {
 
     @Query("SELECT * FROM noteComments WHERE needsSync = 1")
     suspend fun dirty(): List<NoteCommentEntity>
+
+    @Query("SELECT COUNT(*) FROM noteComments WHERE needsSync = 1")
+    fun observeDirtyCount(): Flow<Int>
 
     @Query("DELETE FROM noteComments WHERE id = :id")
     suspend fun hardDelete(id: String)

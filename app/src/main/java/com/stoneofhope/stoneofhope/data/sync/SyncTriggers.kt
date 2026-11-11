@@ -15,6 +15,7 @@ import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -68,6 +69,14 @@ class SyncTriggers @Inject constructor(
                 identity.currentAuthUid?.let { uid -> cloudSync.autoSync(uid) }
             }
         }
+
+        // Upload shortly after an edit instead of waiting for the app to go to the background.
+        EditPushTrigger.start(
+            scope,
+            combine(db.noteDao().observeDirtyCount(), db.noteCommentDao().observeDirtyCount()) { notes, comments -> notes + comments },
+            currentUid = { identity.currentAuthUid },
+            push = cloudSync::push,
+        )
 
         // Firebase may come up later (welcome "Register", or turning sync on from the account screen).
         scope.launch {
