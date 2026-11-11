@@ -119,5 +119,23 @@ class MomentsViewModel @Inject constructor(
         }
     }
 
+    private var lastAutoSyncAt: java.time.Instant? = null
+
+    /**
+     * Opening the tab: pull only if another device changed something (cheap check), then push. Quiet, and at
+     * most every [AUTO_SYNC_MIN_INTERVAL_SECONDS], so switching tabs back and forth costs nothing.
+     */
+    fun autoSyncOnAppear() {
+        val uid = identity.currentAuthUid ?: return
+        val now = clock.instant()
+        if (lastAutoSyncAt?.let { java.time.Duration.between(it, now).seconds < AUTO_SYNC_MIN_INTERVAL_SECONDS } == true) return
+        lastAutoSyncAt = now
+        viewModelScope.launch { cloudSync.autoSync(uid) }
+    }
+
+    private companion object {
+        const val AUTO_SYNC_MIN_INTERVAL_SECONDS = 30L
+    }
+
     private fun currentDay(): LocalDate = clock.instant().atZone(zone).toLocalDate()
 }

@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stoneofhope.stoneofhope.R
+import com.stoneofhope.stoneofhope.data.notes.NoteSwipeSequence
 import com.stoneofhope.stoneofhope.data.local.entity.TagEntity
 import com.stoneofhope.stoneofhope.data.sermon.SermonRules
 import com.stoneofhope.stoneofhope.data.tag.PresetTag
@@ -264,7 +265,13 @@ fun TagNotesScreen(
             if (state.notes.isNotEmpty()) {
                 item { SectionLabel(stringResource(R.string.tag_section_notes)) }
                 items(state.notes, key = { "n" + it.note.id }) { row ->
-                    ItemCard(onClick = { onOpenNote(row.note.id) }, modifier = Modifier.testTag("tagNoteRow")) {
+                    ItemCard(
+                        onClick = {
+                            NoteSwipeSequence.offer(state.notes.map { it.note.id })
+                            onOpenNote(row.note.id)
+                        },
+                        modifier = Modifier.testTag("tagNoteRow"),
+                    ) {
                         Text(row.preview.ifEmpty { stringResource(R.string.tag_empty_note) }, style = textStyle(16), color = c.neutral100, maxLines = 3)
                         Text(formatter.format(row.note.createdAt.atZone(ZoneId.systemDefault())), style = textStyle(12), color = c.neutral50)
                     }

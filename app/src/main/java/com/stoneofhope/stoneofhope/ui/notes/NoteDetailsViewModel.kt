@@ -18,6 +18,7 @@ import com.stoneofhope.stoneofhope.data.notes.VerseDisplay
 import com.stoneofhope.stoneofhope.data.notes.VerseMarks
 import com.stoneofhope.stoneofhope.data.notes.threadItem
 import com.stoneofhope.stoneofhope.data.repository.NoteActionRepository
+import com.stoneofhope.stoneofhope.data.notes.NoteSwipeSequence
 import com.stoneofhope.stoneofhope.data.repository.NoteRepository
 import com.stoneofhope.stoneofhope.data.settings.BibleVersionPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -60,6 +61,12 @@ class NoteDetailsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val noteId: String = checkNotNull(savedState[ARG_NOTE_ID])
+
+    /** The list this note was opened from, in its order (empty when opened from somewhere without one). */
+    private val sequence: List<String> = NoteSwipeSequence.take()
+
+    /** The note [step] places along the list this one was opened from, handing the list on for it to use too. */
+    fun neighbor(step: Int): String? = NoteSwipeSequence.neighbor(noteId, sequence, step)?.also { NoteSwipeSequence.offer(sequence) }
     private val selectedVersions = bibleVersions.selectedVersions()
     private val zone: ZoneId get() = ZoneId.systemDefault()
 

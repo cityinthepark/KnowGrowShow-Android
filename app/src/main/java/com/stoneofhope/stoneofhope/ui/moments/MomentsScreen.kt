@@ -65,6 +65,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stoneofhope.stoneofhope.R
+import com.stoneofhope.stoneofhope.data.notes.NoteSwipeSequence
 import com.stoneofhope.stoneofhope.data.model.NoteType
 import com.stoneofhope.stoneofhope.data.notes.MomentLine
 import com.stoneofhope.stoneofhope.data.notes.MomentsRange
@@ -98,6 +99,8 @@ fun MomentsScreen(onOpenNote: (noteId: String) -> Unit, viewModel: MomentsViewMo
         viewModel.refreshDay()
         onPauseOrDispose { }
     }
+    // Opening the tab picks up what another device changed (rate-limited), so pull-to-refresh is only the manual fallback.
+    LaunchedEffect(Unit) { viewModel.autoSyncOnAppear() }
     // A new filter, tag or window starts from the top.
     LaunchedEffect(state.filter, state.tag, state.range) { listState.scrollToItem(0) }
 
@@ -120,7 +123,11 @@ fun MomentsScreen(onOpenNote: (noteId: String) -> Unit, viewModel: MomentsViewMo
                 }
                 state.sections.forEachIndexed { index, section ->
                     item(key = "day_${section.day}") { DayHeader(section.day, first = index == 0) }
-                    items(section.rows, key = { it.noteId }) { row -> MomentRow(row, onClick = { onOpenNote(row.noteId) }) }
+                    items(section.rows, key = { it.noteId }) { row -> MomentRow(row, onClick = {
+                        // Swiping in note details walks the feed as shown now, in its order (the type and tag menus apply).
+                        NoteSwipeSequence.offer(state.sections.flatMap { it.rows }.map { it.noteId })
+                        onOpenNote(row.noteId)
+                    }) }
                 }
                 item(key = "earlier") {
                     Box(Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {

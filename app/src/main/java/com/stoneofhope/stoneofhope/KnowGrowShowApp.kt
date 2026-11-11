@@ -247,7 +247,15 @@ fun KnowGrowShowApp(
                     Routes.NoteDetails,
                     arguments = listOf(navArgument(NoteDetailsViewModel.ARG_NOTE_ID) { type = NavType.StringType }),
                 ) {
-                    NoteDetailsScreen(onBack = { navController.popBackStack() })
+                    NoteDetailsScreen(
+                        onBack = { navController.popBackStack() },
+                        // Swiping replaces this page with the neighbour, so Back still returns to the list.
+                        onOpenNeighbor = { id ->
+                            navController.navigate(Routes.noteDetails(id)) {
+                                popUpTo(Routes.NoteDetails) { inclusive = true }
+                            }
+                        },
+                    )
                 }
                 composable(
                     Routes.NotesReview,

@@ -84,7 +84,9 @@ sealed interface NoteRowUi {
 }
 
 /** A day of the list, or the "📌 PINNED" block on top of today's "All" list (design L §2.1). */
-data class NoteSectionUi(val day: LocalDate, val rows: List<NoteRowUi>, val pinned: Boolean = false)
+data class NoteSectionUi(val day: LocalDate, val rows: List<NoteRowUi>, val pinned: Boolean = false) {
+    fun notes(): List<String> = rows.mapNotNull { (it as? NoteRowUi.Single)?.card?.note?.id }
+}
 
 data class NoteListState(
     val filter: NoteFilter,
@@ -96,6 +98,11 @@ data class NoteListState(
     /** Notes in the current results, for the header ("6 notes"). */
     val total: Int = 0,
     val loaded: Boolean = false,
+    /**
+     * What swiping in note details walks through (iOS `swipeSequenceIDs`): the "All" list of the shown day,
+     * whichever type or tag the list is filtered to now, in the list's own order.
+     */
+    val swipeIds: List<String> = emptyList(),
 ) {
     /** The card behind the "⋯" sheet. */
     fun actionTarget(noteId: String): NoteActionTarget? = sections.asSequence()
@@ -199,6 +206,11 @@ class NoteListViewModel @Inject constructor(
         var sections = NoteListBuilder.build(d, f, tg, day, today, zone).map { section ->
             NoteSectionUi(section.day, section.notes.map { NoteRowUi.Single(card(it)) })
         }
+        val swipeIds = if (f == NoteFilter.All && tg == null) {
+            sections.flatMap { s -> s.notes() }
+        } else {
+            NoteListBuilder.build(d, NoteFilter.All, null, day, today, zone).flatMap { s -> s.notes.map { it.id } }
+        }
         // "All" on today: pinned notes get their own block on top (the rules already put them first in today).
         if (f == NoteFilter.All && day == today) {
             val pinnedRows = sections.flatMap { s -> s.rows.filter { it is NoteRowUi.Single && it.card.note.isPinned == true } }
@@ -208,7 +220,7 @@ class NoteListViewModel @Inject constructor(
             }
         }
         val total = sections.sumOf { it.rows.size }
-        NoteListState(f, tg, src.tagsByCreation.map { it.name }, src.tagsByCreation, sections, total, loaded = true)
+        NoteListState(f, tg, src.tagsByCreation.map { it.name }, src.tagsByCreation, sections, total, loaded = true, swipeIds = swipeIds)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NoteListState(filter.value, null))
 
     private val _expanded = MutableStateFlow<Set<String>>(emptySet())

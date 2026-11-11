@@ -1,5 +1,14 @@
 package com.stoneofhope.stoneofhope.ui.notes
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.composed
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import com.stoneofhope.stoneofhope.data.notes.NoteSwipeSequence
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -125,7 +134,7 @@ import java.time.ZoneId
  * The "⋯" sheet stays as a second way to every action.
  */
 @Composable
-fun NoteDetailsScreen(onBack: () -> Unit, viewModel: NoteDetailsViewModel = hiltViewModel()) {
+fun NoteDetailsScreen(onBack: () -> Unit, onOpenNeighbor: (noteId: String) -> Unit = {}, viewModel: NoteDetailsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val actions = rememberNoteActionsState()
     val commentActions = rememberCommentActionsState()
@@ -134,7 +143,9 @@ fun NoteDetailsScreen(onBack: () -> Unit, viewModel: NoteDetailsViewModel = hilt
     val c = AppTheme.colors
     val card = state.card
 
-    Box(Modifier.fillMaxSize().background(c.pageBackground)) {
+    Box(
+        Modifier.fillMaxSize().background(c.pageBackground).swipeBetweenNotes { step -> viewModel.neighbor(step)?.let(onOpenNeighbor) },
+    ) {
         // Android 12+ blurs the page behind a lifted comment (design C4); older versions only dim it.
         Column(Modifier.fillMaxSize().statusBarsPadding().then(if (commentActions.isLifted) Modifier.blur(3.dp) else Modifier)) {
             TopBar(card, onBack, onMenu = { card?.let { actions.open(it.note.id) } })
@@ -702,6 +713,27 @@ internal fun Composer(
                     Icon(Icons.Filled.ArrowUpward, stringResource(R.string.send), tint = if (canSend) Color.White else c.neutral90)
                 }
             }
+        }
+    }
+}
+
+/**
+ * iOS `NoteDetailsPagerView`: swipe sideways for the next / previous note of the list this one was opened
+ * from. Watches the gesture without consuming it, so the page still scrolls and its buttons still work.
+ */
+private fun Modifier.swipeBetweenNotes(onStep: (Int) -> Unit): Modifier = composed {
+    val density = LocalDensity.current.density
+    val widthDp = LocalConfiguration.current.screenWidthDp.toFloat()
+    pointerInput(Unit) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            var total = Offset.Zero
+            while (true) {
+                val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id } ?: break
+                total += change.positionChange()
+                if (!change.pressed) break
+            }
+            NoteSwipeSequence.swipeStep(total.x / density, total.y / density, down.position.x / density, widthDp)?.let(onStep)
         }
     }
 }

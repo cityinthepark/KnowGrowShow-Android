@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stoneofhope.stoneofhope.R
+import com.stoneofhope.stoneofhope.data.notes.NoteSwipeSequence
 import com.stoneofhope.stoneofhope.data.notes.NoteFilter
 import com.stoneofhope.stoneofhope.ui.theme.AppTheme
 import com.stoneofhope.stoneofhope.ui.today.NoteSheet
@@ -83,6 +84,8 @@ private enum class Composer { Note, Prayer }
 @Composable
 fun NoteListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, onOpenVersions: () -> Unit, viewModel: NoteListViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // Note details can swipe along this list (iOS `swipeSequenceIDs`).
+    val openNote = { id: String -> NoteSwipeSequence.offer(state.swipeIds); onOpenNote(id) }
     val expanded by viewModel.expanded.collectAsStateWithLifecycle()
     val prayerVerses by viewModel.prayerVerses.collectAsStateWithLifecycle()
     val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
@@ -122,7 +125,7 @@ fun NoteListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, onOpenVersi
                                     val card = row.card
                                     VerseBackfillEffect(card, isOnline, viewModel::backfillVerse)
                                     if (card.isAnchor) {
-                                        VerseAnchorCard(card, day, onOpen = { onOpenNote(card.note.id) }, onMenu = { actions.open(card.note.id) })
+                                        VerseAnchorCard(card, day, onOpen = { openNote(card.note.id) }, onMenu = { actions.open(card.note.id) })
                                     } else {
                                         NoteListCard(
                                             card = card,
@@ -130,7 +133,7 @@ fun NoteListScreen(onBack: () -> Unit, onOpenNote: (String) -> Unit, onOpenVersi
                                             maxLines = if (item.section.pinned) 2 else 4,
                                             verseExpanded = card.note.id in expanded,
                                             verse = prayerVerses[card.note.id],
-                                            onOpen = { onOpenNote(card.note.id) },
+                                            onOpen = { openNote(card.note.id) },
                                             onMenu = { actions.open(card.note.id) },
                                             onToggleVerse = { viewModel.togglePrayerVerse(card.note) },
                                         )
