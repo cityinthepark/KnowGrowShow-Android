@@ -70,7 +70,7 @@ Firebase 本地模拟器，确认 `notes` / `noteComments` / `tags` / `PinLog` �
 - Firebase 本地模拟器：同步后 `notes`（`isPinned`、`starLevel`、`tagIds`、`isAnswered`、`answeredAt`）、`tags`、`PinLog`、
   `noteComments` 与 iOS 推送字段一致；用 CryptoKit 解密评论：已应允标记的正文就是配对评论的 id（与 iOS 相同）。
 - 新发现的 iOS 问题见 `IOS_ISSUES.md` G1–G7。
-- 未做（N2）：详情完整时间轴（月/日节点、置顶记录、已应允徽章）、评论自身的编辑/删除/星级/标签、回顾页；经文划线（`IndexedText`）叠层显示。
+- 当时未做的 N2 内容（详情时间轴的置顶记录和已应允行、评论自身的编辑/删除/星级/标签、回顾页、经文划线）已在 §8–§9 完成。
 
 ## 7. 按设计稿重做界面（2026-10-26）
 
@@ -168,3 +168,21 @@ N1 重做时只做了 C1–C3，评论卡片上现在还没有「⋯」，长按
 - 置顶记录没有时刻（`PinLog` 只存日期），连续的日子合成一行（用户决定）。
 - 回顾页底部的圆点会压在露出的评论标题上，和 iOS 一样（iOS 也是叠在上面）。
 - 感想在详情里可以操作（设计稿 C4）；iOS 详情里的感想没有操作。
+
+## 10. 跟进 iOS 分支 `claude/ios-manual-test-fixes-8020b5`（2026-11-10）
+
+iOS 手工测试后的修补，逐条对照安卓：
+
+| iOS 提交 | 安卓 |
+| --- | --- |
+| 保存后 3 秒上传 + Moments 出现时限频 autoSync（182d744） | 本来就是安卓先做的（`EditPushTrigger`、`autoSyncOnAppear`），已一致 |
+| 感想并入时间线日卡（47f7de8）、经文详情改底部输入栏 + 感想/祷告切换（5a6b0c9） | 安卓的详情已是这个结构（`ThreadItem.isReflection`、Composer 的 `top` 切换），已一致 |
+| 详情页左右滑动到下一条 / 上一条（4809e58、57be1ae） | **已做**：`NoteSwipeSequence`；Moments 按屏幕上筛选后的顺序，Today 列表按当天"全部"的顺序（不受类型 / 标签筛选影响），标签页按标签下的笔记顺序；从章节页等没有列表的地方进入不滑动。安卓的返回手势左右边缘都有，所以两侧边缘 24dp 内都不算滑动 |
+| 当天写了笔记 / 评论的旧讲道、旧视频出现在当天的讲道 / 视频里（e2f082e、7222533） | **已做**：`TodayRepository`，Today 和日历的日摘要都生效 |
+| "已读章节"卡片也列当天写了笔记的章节（9c6de14） | **已做**：`TodayActivityBuilder.chaptersReadOn`；这类章节没有"取消已读"按钮 |
+| 摘要行点标题 / 空白处等于"打开"（d23c838） | **已做**：今天的讲道行、视频列表行；章节行 iOS 没有"打开"，所以也不加 |
+| 音频条滑开收成中间的小播放按钮，点箭头或上滑展开（a93f2ec、1c248d0） | **已做**：`MiniAudioPlayer`，任何方向滑动超过 40dp 收起；换新音频自动展开 |
+| 日历讲道 / 视频日期深色模式着色加深（490ac32） | **已做**：`CalendarColors.sermonFill / videoFill`（与 iOS 同值） |
+
+验证：新增 `NoteSwipeSequenceTest` 6 个、`TodayActivityTest` 2 个（旧讲道 / 视频、章节）；模拟器上从 Moments 和 Today 列表进详情，左滑下一条、右滑上一条、到末尾不动、边缘拖动返回。
+未在设备上看：音频小按钮（没有可播放的讲道音频）、日历深色着色（没有讲道数据）。
