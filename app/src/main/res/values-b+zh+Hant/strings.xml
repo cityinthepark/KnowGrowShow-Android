@@ -550,4 +550,7 @@
     <string name="account_sign_out_cloud_pending_footer">雲端備份的清除尚未完成，完成前雲端同步會保持暫停。您也可以直接重新登入，我們會替您處理未完成的清除。</string>
     <string name="account_devices_error_cannot_remove">無法移除此裝置。</string>
     <string name="account_google_unavailable">此版本暫不支援 Google 登入。</string>
+    <string name="account_auth_config_missing">缺少 Google 登入設定。</string>
+    <string name="account_auth_google_token_missing">無法讀取 Google 憑證。</string>
+    <string name="account_auth_no_user">沒有使用中的工作階段，請重新啟動 App 後再試。</string>
 </resources>

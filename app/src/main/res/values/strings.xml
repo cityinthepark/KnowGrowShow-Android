@@ -571,4 +571,7 @@
     <string name="account_sign_out_cloud_pending_footer">Clearing your cloud backup didn\'t finish. Cloud sync stays paused until it does. You can also just sign in again — the unfinished clean-up will be settled for you.</string>
     <string name="account_devices_error_cannot_remove">You cannot remove this device.</string>
     <string name="account_google_unavailable">Google sign-in isn\'t available in this build yet.</string>
+    <string name="account_auth_config_missing">Missing Google Sign-In configuration.</string>
+    <string name="account_auth_google_token_missing">Could not read Google credentials.</string>
+    <string name="account_auth_no_user">No active session. Restart the app and try again.</string>
 </resources>

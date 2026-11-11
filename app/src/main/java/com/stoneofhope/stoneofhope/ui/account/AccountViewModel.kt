@@ -5,9 +5,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.content.Context
+import androidx.annotation.StringRes
 import com.stoneofhope.stoneofhope.BuildConfig
+import com.stoneofhope.stoneofhope.R
 import com.stoneofhope.stoneofhope.data.account.AccountService
 import com.stoneofhope.stoneofhope.data.account.DeviceRegistry
+import com.stoneofhope.stoneofhope.data.account.GoogleCredentialSource
+import com.stoneofhope.stoneofhope.data.account.SocialSignInException
 import com.stoneofhope.stoneofhope.data.account.RegisteredDevice
 import com.stoneofhope.stoneofhope.data.crypto.CryptoSession
 import com.stoneofhope.stoneofhope.data.remote.firestore.FirebaseBootstrap
@@ -36,6 +41,7 @@ enum class SignOutProblem { NeedsNetwork, Incomplete }
 @HiltViewModel
 class AccountViewModel @Inject constructor(
     private val account: AccountService,
+    private val google: GoogleCredentialSource,
     private val bootstrap: FirebaseBootstrap,
     private val cloudSync: CloudSync,
     private val identity: SyncIdentity,
@@ -81,6 +87,9 @@ class AccountViewModel @Inject constructor(
         private set
     var registerError by mutableStateOf<String?>(null)
 
+    /** Same alert, for failures that have a localized message (Google sign-in). */
+    @get:StringRes var registerErrorRes by mutableStateOf<Int?>(null)
+
     val now: Instant get() = clock.instant()
 
     // Developer section (debug builds only).
@@ -116,6 +125,13 @@ class AccountViewModel @Inject constructor(
     fun signInWithEmail(email: String, password: String) = runRegistration {
         check(bootstrap.configured.value) { "Cloud sync isn't available in this build" }
         account.signInWithEmail(email.trim(), password, createIfMissing = bootstrap.emulator != null)
+        refreshState()
+    }
+
+    /** "Continue with Google" (iOS `signInGoogle`). [activity] hosts Credential Manager's account picker. */
+    fun signInWithGoogle(activity: Context) = runRegistration {
+        check(bootstrap.configured.value) { "Cloud sync isn't available in this build" }
+        account.linkOrSignIn(google.credential(activity))
         refreshState()
     }
 
@@ -207,6 +223,13 @@ class AccountViewModel @Inject constructor(
                 block()
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: SocialSignInException) {
+                when (e.kind) {
+                    SocialSignInException.Kind.Cancelled -> Unit // the user closed the picker
+                    SocialSignInException.Kind.MissingConfig -> registerErrorRes = R.string.account_auth_config_missing
+                    SocialSignInException.Kind.MissingToken -> registerErrorRes = R.string.account_auth_google_token_missing
+                    SocialSignInException.Kind.NoUser -> registerErrorRes = R.string.account_auth_no_user
+                }
             } catch (e: Exception) {
                 registerError = e.message ?: e.javaClass.simpleName
             } finally {

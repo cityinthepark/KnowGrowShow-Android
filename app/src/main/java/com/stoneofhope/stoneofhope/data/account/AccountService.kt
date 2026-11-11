@@ -1,5 +1,6 @@
 package com.stoneofhope.stoneofhope.data.account
 
+import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
@@ -31,8 +32,8 @@ import kotlinx.coroutines.tasks.await
  * Signing in only flips the account flags; `SyncTriggers` sees the auth change and runs the full
  * sync (pull this account, then upload local rows — local-first data is merged by stable ids).
  *
- * Today: email/password, used by the debug demo sign-in (iOS `linkOrSignInDemoFromSchemeEnvironment`).
- * Google / Apple come with the production `google-services.json`.
+ * Email/password is the debug demo sign-in (iOS `linkOrSignInDemoFromSchemeEnvironment`); Google goes
+ * through [linkOrSignIn] with a credential from `GoogleCredentialProvider`. Apple is iOS/Web only.
  */
 @Singleton
 class AccountService @Inject constructor(
@@ -68,6 +69,9 @@ class AccountService @Inject constructor(
     val user: StateFlow<SignedInUser?> = _user.asStateFlow()
 
     private var listening = false
+
+    /** Firebase Auth calls used by [linkOrSignIn]; tests swap in a fake. */
+    internal var authPort: AuthPort = FirebaseAuthPort(bootstrap)
 
     /** Starts mirroring Firebase's current user into [user]. Safe to call repeatedly. */
     fun observe() {
@@ -113,6 +117,31 @@ class AccountService @Inject constructor(
                 auth.createUserWithEmailAndPassword(email, password).await()
             } catch (collision: FirebaseAuthUserCollisionException) {
                 throw e // the account exists: the original error (wrong password) is the real one
+            }
+        }
+        completeSignIn()
+    }
+
+    /**
+     * iOS `linkOrSignIn(credential:)` for Google: sign in when there is no session, otherwise link the
+     * credential to the current user. A credential that already belongs to another account signs into
+     * that account instead (this device's local data then merges in by stable ids).
+     */
+    suspend fun linkOrSignIn(credential: AuthCredential) {
+        settlePendingWipeBeforeSignIn() // L4: never link into a half signed-out session
+        if (!authPort.hasCurrentUser) {
+            authPort.signIn(credential)
+            completeSignIn()
+            return
+        }
+        try {
+            authPort.link(credential)
+        } catch (e: Exception) {
+            when (e.authErrorCode) {
+                ERROR_CREDENTIAL_ALREADY_IN_USE, ERROR_EMAIL_ALREADY_IN_USE -> authPort.signIn(credential)
+                ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL -> authPort.signIn(e.updatedCredential ?: throw e)
+                ERROR_PROVIDER_ALREADY_LINKED -> Unit // already linked to this user: just finish
+                else -> throw e
             }
         }
         completeSignIn()

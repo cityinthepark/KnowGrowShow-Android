@@ -40,6 +40,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -286,12 +287,12 @@ private fun DeviceRow(device: RegisteredDevice, viewModel: AccountViewModel) {
 
 private fun formatTimestamp(at: Instant): String = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date.from(at))
 
-/** iOS `AccountRegistrationSheet`. Google sign-in comes with the production Firebase config; debug builds also get the email demo. */
+/** iOS `AccountRegistrationSheet`. Google sign-in needs the production Firebase config (`default_web_client_id`); debug builds also get the email demo. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RegisterSheet(viewModel: AccountViewModel, onDismiss: () -> Unit) {
     LaunchedEffect(Unit) { viewModel.prepareCloud() }
-    var googleMessage by remember { mutableStateOf<Int?>(null) }
+    val context = LocalContext.current
     val signedIn by viewModel.user.collectAsStateWithLifecycle()
     val isAnonymous by viewModel.isAnonymous.collectAsStateWithLifecycle()
     LaunchedEffect(isAnonymous, signedIn) { if (!isAnonymous) onDismiss() }
@@ -300,11 +301,10 @@ private fun RegisterSheet(viewModel: AccountViewModel, onDismiss: () -> Unit) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp).testTag("registerSheet"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.account_register_sheet_title), style = MaterialTheme.typography.titleLarge)
             OutlinedButton(
-                onClick = { googleMessage = R.string.account_google_unavailable },
+                onClick = { viewModel.signInWithGoogle(context) },
                 enabled = !viewModel.isRegistering,
                 modifier = Modifier.fillMaxWidth().testTag("registerGoogle"),
             ) { Text(stringResource(R.string.account_register_google)) }
-            googleMessage?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
 
             if (BuildConfig.DEBUG) {
                 var email by rememberSaveable { mutableStateOf(viewModel.demoEmail) }
@@ -335,12 +335,14 @@ private fun RegisterSheet(viewModel: AccountViewModel, onDismiss: () -> Unit) {
             }
         }
     }
-    viewModel.registerError?.let { message ->
+    val errorText = viewModel.registerErrorRes?.let { stringResource(it) } ?: viewModel.registerError
+    if (errorText != null) {
+        val close = { viewModel.registerError = null; viewModel.registerErrorRes = null }
         AlertDialog(
-            onDismissRequest = { viewModel.registerError = null },
+            onDismissRequest = close,
             title = { Text(stringResource(R.string.account_auth_error_title)) },
-            text = { Text(message) },
-            confirmButton = { TextButton(onClick = { viewModel.registerError = null }) { Text(stringResource(R.string.ok)) } },
+            text = { Text(errorText) },
+            confirmButton = { TextButton(onClick = close) { Text(stringResource(R.string.ok)) } },
         )
     }
 }

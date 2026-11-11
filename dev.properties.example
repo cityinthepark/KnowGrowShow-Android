@@ -9,6 +9,11 @@ firebase.useEmulators=true
 # (and add it to app/src/debug/res/xml/network_security_config.xml).
 firebase.emulatorHost=10.0.2.2
 
+# Optional: ports, when another emulator suite already holds the defaults (9099 / 8080 / 9199).
+# firebase.authPort=9099
+# firebase.firestorePort=8080
+# firebase.storagePort=9199
+
 # Must match the iOS app's project so both share the same emulator data.
 firebase.projectId=knowgrowshow-d3609
 

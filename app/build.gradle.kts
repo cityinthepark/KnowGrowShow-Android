@@ -51,6 +51,9 @@ android {
         buildConfigField("boolean", "FIREBASE_USE_EMULATORS", "false")
         buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"\"")
         buildConfigField("String", "FIREBASE_EMULATOR_PROJECT_ID", "\"\"")
+        buildConfigField("int", "FIREBASE_EMULATOR_AUTH_PORT", "9099")
+        buildConfigField("int", "FIREBASE_EMULATOR_FIRESTORE_PORT", "8080")
+        buildConfigField("int", "FIREBASE_EMULATOR_STORAGE_PORT", "9199")
         buildConfigField("String", "DEMO_AUTH_EMAIL", "\"\"")
         buildConfigField("String", "DEMO_AUTH_PASSWORD", "\"\"")
     }
@@ -76,6 +79,10 @@ android {
             buildConfigField("String", "FIREBASE_EMULATOR_HOST", devString("firebase.emulatorHost", "10.0.2.2"))
             // Must equal the iOS project id so both simulators share the same emulator data.
             buildConfigField("String", "FIREBASE_EMULATOR_PROJECT_ID", devString("firebase.projectId", "knowgrowshow-d3609"))
+            // Ports only differ when another emulator suite already holds the defaults (firebase.authPort etc.).
+            buildConfigField("int", "FIREBASE_EMULATOR_AUTH_PORT", devProperties.getProperty("firebase.authPort", "9099"))
+            buildConfigField("int", "FIREBASE_EMULATOR_FIRESTORE_PORT", devProperties.getProperty("firebase.firestorePort", "8080"))
+            buildConfigField("int", "FIREBASE_EMULATOR_STORAGE_PORT", devProperties.getProperty("firebase.storagePort", "9199"))
             buildConfigField("String", "DEMO_AUTH_EMAIL", devString("demoAuth.email"))
             buildConfigField("String", "DEMO_AUTH_PASSWORD", devString("demoAuth.password"))
         }
@@ -173,6 +180,9 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.storage)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play)
+    implementation(libs.googleid)
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.play.services)

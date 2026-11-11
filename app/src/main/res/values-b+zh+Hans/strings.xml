@@ -550,4 +550,7 @@
     <string name="account_sign_out_cloud_pending_footer">云端备份的清理尚未完成，完成前云端同步会保持暂停。您也可以直接重新登录，我们会替您处理未完成的清理。</string>
     <string name="account_devices_error_cannot_remove">无法移除此设备。</string>
     <string name="account_google_unavailable">此版本暂不支持 Google 登录。</string>
+    <string name="account_auth_config_missing">缺少 Google 登录配置。</string>
+    <string name="account_auth_google_token_missing">无法读取 Google 凭证。</string>
+    <string name="account_auth_no_user">没有活动会话，请重启应用后再试。</string>
 </resources>

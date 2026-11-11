@@ -35,9 +35,9 @@ class FirebaseBootstrap @Inject constructor(@param:ApplicationContext private va
 
     /** Emulator connection, or null for production / local-only. Always null in release builds. */
     data class Emulator(val host: String, val projectId: String) {
-        val authPort = 9099
-        val firestorePort = 8080
-        val storagePort = 9199
+        val authPort = BuildConfig.FIREBASE_EMULATOR_AUTH_PORT
+        val firestorePort = BuildConfig.FIREBASE_EMULATOR_FIRESTORE_PORT
+        val storagePort = BuildConfig.FIREBASE_EMULATOR_STORAGE_PORT
     }
 
     val emulator: Emulator? =
@@ -68,8 +68,9 @@ class FirebaseBootstrap @Inject constructor(@param:ApplicationContext private va
                         // Placeholders: the emulator accepts any app id / API key.
                         .setApplicationId("1:000000000000:android:0000000000000000")
                         .setApiKey("emulator-api-key")
-                        // The Storage emulator takes any bucket name.
-                        .setStorageBucket("${emulator.projectId}.appspot.com")
+                        // The emulator keeps one store per bucket name, so this must be the name iOS uses
+                        // (GoogleService-Info STORAGE_BUCKET); the old "<project>.appspot.com" is a different bucket.
+                        .setStorageBucket("${emulator.projectId}.firebasestorage.app")
                         .build(),
                 )
             } else {
