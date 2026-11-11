@@ -23,6 +23,9 @@ interface RemoteStore {
      */
     suspend fun fetch(ownerUid: String, collection: String, since: Instant?): List<RemoteDocument>
 
+    /** One document from the server (never the local cache), or null when it does not exist. */
+    suspend fun fetchDocument(ownerUid: String, collection: String, documentId: String): RemoteDocument?
+
     /** Commits [writes] atomically (one Firestore batch; callers keep it at or under 400). */
     suspend fun commit(ownerUid: String, writes: List<WireWrite>)
 

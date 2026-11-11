@@ -574,4 +574,25 @@
     <string name="account_auth_config_missing">Missing Google Sign-In configuration.</string>
     <string name="account_auth_google_token_missing">Could not read Google credentials.</string>
     <string name="account_auth_no_user">No active session. Restart the app and try again.</string>
+    <string name="cloud_reset_title">Signed Out</string>
+    <string name="cloud_reset_message">The cloud data for this account was cleared from another device, so you\'ve been signed out here. Your data on this device is untouched.</string>
+    <string name="sync_section">Sync</string>
+    <string name="sync_conflicts">Sync Conflicts</string>
+    <string name="sync_conflicts_empty">No sync conflicts.</string>
+    <string name="sync_conflicts_review">Needs your review</string>
+    <string name="sync_conflict_note">Note</string>
+    <string name="sync_conflict_comment">Comment</string>
+    <string name="sync_conflict_highlight">Highlight/underline</string>
+    <string name="sync_conflict_title">Sync Conflict</string>
+    <string name="sync_conflict_explainer">This item was edited on another device since this device last synced it.</string>
+    <string name="sync_conflict_this_device">This device</string>
+    <string name="sync_conflict_other_device">Other device</string>
+    <string name="sync_conflict_keep_local">Keep this device\'s version</string>
+    <string name="sync_conflict_keep_remote">Use the other device\'s version</string>
+    <string name="sync_conflict_keep_both">Keep both (create a copy)</string>
+    <string name="sync_conflict_close">Close</string>
+    <string name="sync_conflict_err_signed_out">Sign in to the cloud account first, then try again.</string>
+    <string name="sync_conflict_err_missing">The other device\'s version no longer exists in the cloud.</string>
+    <string name="sync_conflict_err_unreadable">The other device\'s version can\'t be read yet. Try again after syncing.</string>
+    <string name="sync_conflict_err_network">Couldn\'t reach the cloud. Check your connection and try again.</string>
 </resources>

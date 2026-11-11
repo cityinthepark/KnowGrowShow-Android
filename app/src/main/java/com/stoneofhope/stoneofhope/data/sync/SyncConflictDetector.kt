@@ -87,6 +87,11 @@ class SyncConflictDetector @Inject constructor(private val db: AppDatabase) {
         now: Instant,
     ) {
         val dao = db.syncConflictDao()
+        // An incremental pull re-reads the document at the cursor (`>=`). If the user already ruled on this
+        // very remote version, a still-dirty row (e.g. "keep this device's version" before the next push)
+        // must not raise the same conflict again. iOS has no such check, so every resolution is followed by
+        // one repeat entry until the push lands.
+        dao.latestResolvedRemoteUpdatedAt(recordId, type)?.let { if (remoteUpdatedAt <= it) return }
         val existing = dao.findUnresolved(recordId, type)
         dao.upsert(
             existing?.copy(

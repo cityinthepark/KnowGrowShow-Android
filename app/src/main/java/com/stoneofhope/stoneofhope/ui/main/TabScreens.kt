@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -87,11 +86,11 @@ fun PlaceholderTab(tab: MainTab) {
     }
 }
 
-/** iOS `SettingsView`: Online Resources, App Settings, Legal, then the account row (Sync conflicts come later). */
+/** iOS `SettingsView`: Online Resources, App Settings, Legal (the account row lives in Profile), Sync (conflicts). */
 @Composable
 fun SettingsTab(
-    onOpenAccount: () -> Unit,
     onOpenChurch: (churchKey: String) -> Unit,
+    onOpenSyncConflicts: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
     online: OnlineResourcesViewModel = hiltViewModel(),
 ) {
@@ -101,6 +100,7 @@ fun SettingsTab(
     val fontSize by viewModel.fontSize.collectAsStateWithLifecycle()
     val showOnLaunch by viewModel.showOnLaunch.collectAsStateWithLifecycle()
     val seconds by viewModel.scriptSeconds.collectAsStateWithLifecycle()
+    val pendingConflicts by viewModel.pendingConflicts.collectAsStateWithLifecycle()
     val context = LocalContext.current
     fun open(url: String) = context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
 
@@ -147,15 +147,29 @@ fun SettingsTab(
                 }
             },
         )
+        SectionTitle(stringResource(R.string.sync_section))
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.sync_conflicts)) },
+            trailingContent = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (pendingConflicts > 0) {
+                        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("conflictBadge")) {
+                            Text(
+                                "$pendingConflicts",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onError,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            )
+                        }
+                    }
+                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null)
+                }
+            },
+            modifier = Modifier.testTag("syncConflictsRow").clickable(onClick = onOpenSyncConflicts),
+        )
         SectionTitle(stringResource(R.string.settings_legal))
         LinkRow(stringResource(R.string.settings_privacy), "settingsPrivacy") { open(LegalUrls.PRIVACY) }
         LinkRow(stringResource(R.string.settings_terms), "settingsTerms") { open(LegalUrls.TERMS) }
-        ListItem(
-            headlineContent = { Text(stringResource(R.string.settings_account_sync)) },
-            leadingContent = { Icon(Icons.Outlined.CloudSync, contentDescription = null) },
-            trailingContent = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null) },
-            modifier = Modifier.testTag("openAccount").clickable(onClick = onOpenAccount),
-        )
         HorizontalDivider(Modifier.padding(horizontal = 20.dp))
         ListItem(
             headlineContent = { Text(stringResource(R.string.settings_version)) },

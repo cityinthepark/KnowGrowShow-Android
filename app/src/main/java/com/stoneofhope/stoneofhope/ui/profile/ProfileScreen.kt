@@ -4,11 +4,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.material.icons.outlined.Sell
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -28,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.stoneofhope.stoneofhope.R
 
 @HiltViewModel
@@ -36,10 +39,10 @@ class ProfileViewModel @Inject constructor(private val versions: BibleVersionPre
     val versionsLabel: String get() = versions.displayString()
 }
 
-/** iOS `ProfileView` (the Today avatar): my tags now; the Bible version and account rows follow in P4-3. */
+/** iOS `ProfileView` (the Today avatar): my tags, the Bible versions, and the Account section. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onBack: () -> Unit, onOpenTags: () -> Unit, onOpenVersions: () -> Unit, viewModel: ProfileViewModel = hiltViewModel()) {
+fun ProfileScreen(onBack: () -> Unit, onOpenTags: () -> Unit, onOpenVersions: () -> Unit, onOpenAccount: () -> Unit, viewModel: ProfileViewModel = hiltViewModel()) {
     Column(Modifier.fillMaxSize().safeDrawingPadding().testTag("profile")) {
         TopAppBar(
             title = { Text(stringResource(R.string.today_profile)) },
@@ -59,6 +62,19 @@ fun ProfileScreen(onBack: () -> Unit, onOpenTags: () -> Unit, onOpenVersions: ()
             leadingContent = { Icon(Icons.AutoMirrored.Outlined.MenuBook, null) },
             trailingContent = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null) },
             modifier = Modifier.testTag("profileVersions").clickable(onClick = onOpenVersions),
+        )
+        // iOS shows this section only when `AppDistribution.accountSignInEnabled`; Android always has sign-in.
+        Text(
+            stringResource(R.string.settings_account_sync),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 4.dp),
+        )
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.settings_account_sync)) },
+            leadingContent = { Icon(Icons.Outlined.CloudSync, null) },
+            trailingContent = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null) },
+            modifier = Modifier.testTag("openAccount").clickable(onClick = onOpenAccount),
         )
     }
 }

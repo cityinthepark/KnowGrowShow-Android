@@ -13,6 +13,7 @@ import com.stoneofhope.stoneofhope.data.local.entity.IndexedTextEntity
 import com.stoneofhope.stoneofhope.data.local.entity.SyncConflictEntity
 import com.stoneofhope.stoneofhope.data.local.entity.UserVerseEntity
 import com.stoneofhope.stoneofhope.data.model.SyncConflictType
+import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -208,6 +209,16 @@ interface SyncConflictDao {
 
     @Query("SELECT * FROM syncConflicts WHERE resolvedAt IS NULL ORDER BY detectedAt DESC")
     fun observeUnresolved(): Flow<List<SyncConflictEntity>>
+
+    @Query("SELECT COUNT(*) FROM syncConflicts WHERE resolvedAt IS NULL")
+    fun observePendingCount(): Flow<Int>
+
+    /** Newest remote version the user already ruled on for this record, or null. */
+    @Query("SELECT MAX(remoteUpdatedAt) FROM syncConflicts WHERE recordId = :recordId AND recordType = :recordType AND resolvedAt IS NOT NULL")
+    suspend fun latestResolvedRemoteUpdatedAt(recordId: String, recordType: SyncConflictType): Instant?
+
+    @Query("SELECT * FROM syncConflicts WHERE id = :id")
+    suspend fun getById(id: String): SyncConflictEntity?
 
     @Query("SELECT * FROM syncConflicts WHERE recordId = :recordId AND recordType = :recordType AND resolvedAt IS NULL LIMIT 1")
     suspend fun findUnresolved(recordId: String, recordType: SyncConflictType): SyncConflictEntity?

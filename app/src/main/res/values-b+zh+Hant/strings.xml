@@ -553,4 +553,25 @@
     <string name="account_auth_config_missing">缺少 Google 登入設定。</string>
     <string name="account_auth_google_token_missing">無法讀取 Google 憑證。</string>
     <string name="account_auth_no_user">沒有使用中的工作階段，請重新啟動 App 後再試。</string>
+    <string name="cloud_reset_title">已登出</string>
+    <string name="cloud_reset_message">此帳號的雲端資料已在另一台裝置上被清除，因此這台裝置已自動登出。本機上的資料不受影響。</string>
+    <string name="sync_section">同步</string>
+    <string name="sync_conflicts">同步衝突</string>
+    <string name="sync_conflicts_empty">暫無同步衝突。</string>
+    <string name="sync_conflicts_review">需要你確認</string>
+    <string name="sync_conflict_note">筆記</string>
+    <string name="sync_conflict_comment">留言</string>
+    <string name="sync_conflict_highlight">高亮/底線</string>
+    <string name="sync_conflict_title">同步衝突</string>
+    <string name="sync_conflict_explainer">自本裝置上次同步以來，該內容已在其他裝置上被修改。</string>
+    <string name="sync_conflict_this_device">本裝置</string>
+    <string name="sync_conflict_other_device">其他裝置</string>
+    <string name="sync_conflict_keep_local">保留本裝置的版本</string>
+    <string name="sync_conflict_keep_remote">使用其他裝置的版本</string>
+    <string name="sync_conflict_keep_both">兩者都保留（建立副本）</string>
+    <string name="sync_conflict_close">關閉</string>
+    <string name="sync_conflict_err_signed_out">請先登入雲端帳號，然後重試。</string>
+    <string name="sync_conflict_err_missing">其他裝置的版本已不在雲端。</string>
+    <string name="sync_conflict_err_unreadable">暫時無法讀取其他裝置的版本，請同步後重試。</string>
+    <string name="sync_conflict_err_network">無法連線雲端，請檢查網路後重試。</string>
 </resources>

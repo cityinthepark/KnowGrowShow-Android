@@ -553,4 +553,25 @@
     <string name="account_auth_config_missing">缺少 Google 登录配置。</string>
     <string name="account_auth_google_token_missing">无法读取 Google 凭证。</string>
     <string name="account_auth_no_user">没有活动会话，请重启应用后再试。</string>
+    <string name="cloud_reset_title">已退出登录</string>
+    <string name="cloud_reset_message">此账号的云端数据已在另一台设备上被清除，因此这台设备已自动退出登录。本机上的数据不受影响。</string>
+    <string name="sync_section">同步</string>
+    <string name="sync_conflicts">同步冲突</string>
+    <string name="sync_conflicts_empty">暂无同步冲突。</string>
+    <string name="sync_conflicts_review">需要你确认</string>
+    <string name="sync_conflict_note">笔记</string>
+    <string name="sync_conflict_comment">评论</string>
+    <string name="sync_conflict_highlight">高亮/下划线</string>
+    <string name="sync_conflict_title">同步冲突</string>
+    <string name="sync_conflict_explainer">自本设备上次同步以来，该内容已在其他设备上被修改。</string>
+    <string name="sync_conflict_this_device">本设备</string>
+    <string name="sync_conflict_other_device">其他设备</string>
+    <string name="sync_conflict_keep_local">保留本设备的版本</string>
+    <string name="sync_conflict_keep_remote">使用其他设备的版本</string>
+    <string name="sync_conflict_keep_both">两者都保留（创建副本）</string>
+    <string name="sync_conflict_close">关闭</string>
+    <string name="sync_conflict_err_signed_out">请先登录云端账号，然后重试。</string>
+    <string name="sync_conflict_err_missing">其他设备的版本已不在云端。</string>
+    <string name="sync_conflict_err_unreadable">暂时无法读取其他设备的版本，请同步后重试。</string>
+    <string name="sync_conflict_err_network">无法连接云端，请检查网络后重试。</string>
 </resources>

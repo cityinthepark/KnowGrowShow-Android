@@ -6,6 +6,10 @@ import android.os.Build
 import com.stoneofhope.stoneofhope.data.local.Converters
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Instant
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -39,6 +43,16 @@ class CloudAccountFlags(private val prefs: SharedPreferences) {
     var showCloudResetNotice: Boolean
         get() = prefs.getBoolean("showCloudResetNotice", false)
         set(value) = prefs.edit().putBoolean("showCloudResetNotice", value).apply()
+
+    /** iOS reads this with `@AppStorage`, so the alert appears the moment a sync run sets it; same here. */
+    val showCloudResetNoticeFlow: Flow<Boolean> = callbackFlow {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == "showCloudResetNotice") trySend(showCloudResetNotice)
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        trySend(showCloudResetNotice)
+        awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }.distinctUntilChanged()
 }
 
 /**

@@ -50,6 +50,7 @@ import com.stoneofhope.stoneofhope.ui.sermon.VideoViewModel
 import com.stoneofhope.stoneofhope.ui.ComingSoonScreen
 import com.stoneofhope.stoneofhope.ui.RootViewModel
 import com.stoneofhope.stoneofhope.ui.account.AccountScreen
+import com.stoneofhope.stoneofhope.ui.account.CloudResetNoticeDialog
 import com.stoneofhope.stoneofhope.data.chapter.ChapterVerse
 import com.stoneofhope.stoneofhope.data.notes.NoteFilter
 import com.stoneofhope.stoneofhope.ui.chapter.ChapterScreen
@@ -68,6 +69,7 @@ import com.stoneofhope.stoneofhope.ui.settings.BibleVersionCopyrightScreen
 import com.stoneofhope.stoneofhope.ui.settings.BibleVersionsScreen
 import com.stoneofhope.stoneofhope.ui.settings.OnlineResourceScreen
 import com.stoneofhope.stoneofhope.ui.settings.OnlineResourceViewModel
+import com.stoneofhope.stoneofhope.ui.settings.SyncConflictsScreen
 import com.stoneofhope.stoneofhope.ui.tag.MyTagsScreen
 import com.stoneofhope.stoneofhope.ui.tag.TagNotesScreen
 import com.stoneofhope.stoneofhope.ui.tag.TagNotesViewModel
@@ -86,6 +88,7 @@ private object Routes {
     const val Welcome = "welcome"
     const val Main = "main"
     const val Account = "account"
+    const val SyncConflicts = "syncConflicts"
     const val ComingSoon = "comingSoon/{title}"
     const val FlashCards = "flashCards"
     const val Profile = "profile"
@@ -212,7 +215,6 @@ fun KnowGrowShowApp(
                 }
                 composable(Routes.Main) {
                     MainScreen(
-                        onOpenAccount = { navController.navigate(Routes.Account) },
                         onOpenPlaceholder = { title -> navController.navigate(Routes.comingSoon(title)) },
                         onOpenFlashCards = { navController.navigate(Routes.FlashCards) },
                         onOpenProfile = { navController.navigate(Routes.Profile) },
@@ -225,6 +227,7 @@ fun KnowGrowShowApp(
                         onOpenDestination = openDestination,
                         onOpenSeries = { id -> navController.navigate(Routes.seriesDetail(id)) },
                         onOpenChurch = { key -> navController.navigate(Routes.onlineResource(key)) },
+                        onOpenSyncConflicts = { navController.navigate(Routes.SyncConflicts) },
                     )
                 }
                 composable(
@@ -251,6 +254,9 @@ fun KnowGrowShowApp(
                     arguments = listOf(navArgument(NotesReviewViewModel.ARG_DAY) { type = NavType.LongType }),
                 ) {
                     NotesReviewScreen(onClose = { navController.popBackStack() })
+                }
+                composable(Routes.SyncConflicts) {
+                    SyncConflictsScreen(onBack = { navController.popBackStack() })
                 }
                 composable(Routes.Account) {
                     AccountScreen(onBack = { navController.popBackStack() })
@@ -343,6 +349,7 @@ fun KnowGrowShowApp(
                         onBack = { navController.popBackStack() },
                         onOpenTags = { navController.navigate(Routes.MyTags) },
                         onOpenVersions = { navController.navigate(Routes.BibleVersions) },
+                        onOpenAccount = { navController.navigate(Routes.Account) },
                     )
                 }
                 composable(Routes.BibleVersions) {
@@ -386,6 +393,9 @@ fun KnowGrowShowApp(
             if (barBelowPage) FloatingAudioBar(Modifier.navigationBarsPadding())
         }
     }
+
+    // iOS AppRootView: one-time "signed out because the cloud was cleared elsewhere" alert.
+    CloudResetNoticeDialog()
 
     // iOS: a link shared from the YouTube app opens the new-video sheet over whatever is on screen.
     share?.let { shared ->

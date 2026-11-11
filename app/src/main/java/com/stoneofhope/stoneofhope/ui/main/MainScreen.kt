@@ -51,7 +51,6 @@ enum class MainTab(@param:StringRes val title: Int, val icon: ImageVector) {
 /** Main app shell after onboarding (iOS `MainTabView`). */
 @Composable
 fun MainScreen(
-    onOpenAccount: () -> Unit,
     onOpenPlaceholder: (title: String) -> Unit,
     onOpenFlashCards: () -> Unit,
     onOpenProfile: () -> Unit,
@@ -64,6 +63,7 @@ fun MainScreen(
     onOpenDestination: (SermonDestination) -> Unit,
     onOpenSeries: (seriesId: String) -> Unit,
     onOpenChurch: (churchKey: String) -> Unit,
+    onOpenSyncConflicts: () -> Unit,
 ) {
     var selected by rememberSaveable { mutableStateOf(MainTab.Today) }
 
@@ -112,7 +112,7 @@ fun MainScreen(
                     onOpenNotes = onOpenNotes,
                     onOpenReview = onOpenReview,
                 )
-                MainTab.Settings -> SettingsTab(onOpenAccount, onOpenChurch)
+                MainTab.Settings -> SettingsTab(onOpenChurch, onOpenSyncConflicts)
             }
         }
     }

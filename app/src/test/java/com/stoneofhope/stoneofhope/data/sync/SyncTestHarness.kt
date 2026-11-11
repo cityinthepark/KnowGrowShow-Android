@@ -53,6 +53,9 @@ class FakeRemoteStore(val server: FakeFirestore = FakeFirestore()) : RemoteStore
         return server.query(collection, since).map { (id, data) -> RemoteDocument(id, data) }
     }
 
+    override suspend fun fetchDocument(ownerUid: String, collection: String, documentId: String): RemoteDocument? =
+        server.get(collection, documentId)?.let { RemoteDocument(documentId, it) }
+
     override suspend fun commit(ownerUid: String, writes: List<WireWrite>) {
         beforeCommit(writes)
         server.serverNow = server.serverNow.plusMillis(1)
@@ -152,9 +155,13 @@ class FakeKeyVault {
     val keys = mutableMapOf<String, ByteArray>()
     val calls = AtomicInteger()
 
+    /** True = the device cannot reach `private/{uid}/secureKeys/noteKey` (offline). */
+    var unreachable = false
+
     fun provider() = object : NoteKeyProvider {
         override suspend fun fetchOrCreate(ownerUid: String): ByteArray {
             calls.incrementAndGet()
+            if (unreachable) throw java.io.IOException("offline")
             return keys.getOrPut(ownerUid) { StoneOfHopeCrypto.generateNoteKey() }
         }
     }
@@ -187,7 +194,9 @@ class FakeNetwork(online: Boolean = true) : NetworkMonitor {
 class MutableClock(var now: Instant = Instant.parse("2026-10-26T09:00:00.000001Z")) : Clock() {
     override fun getZone(): ZoneId = ZoneOffset.UTC
     override fun withZone(zone: ZoneId?): Clock = this
-    override fun instant(): Instant = now
+    /** When set, the clock reads this instead of [now] (a phone whose clock agrees with the server). */
+    var follow: (() -> Instant)? = null
+    override fun instant(): Instant = follow?.invoke() ?: now
 }
 
 /** One simulated install: its own Room database, prefs and key session, wired like Hilt would. */

@@ -1,6 +1,10 @@
 package com.stoneofhope.stoneofhope.ui.settings
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.stoneofhope.stoneofhope.data.local.AppDatabase
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import com.stoneofhope.stoneofhope.data.bible.BibleLanguage
 import com.stoneofhope.stoneofhope.data.bible.BibleVersionSelection
 import com.stoneofhope.stoneofhope.data.bible.BibleVersions
@@ -22,7 +26,12 @@ class SettingsViewModel @Inject constructor(
     private val appearance: AppearancePreferences,
     private val flashCards: FlashCardPreferences,
     private val script: ScriptCapturePreferences,
+    db: AppDatabase,
 ) : ViewModel() {
+    /** iOS `pendingSyncConflictCount`: the red badge on the Sync Conflicts row. */
+    val pendingConflicts: StateFlow<Int> = db.syncConflictDao().observePendingCount()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     val theme: StateFlow<ThemePreference> = appearance.theme
     val fontSize: StateFlow<FontSizePreference> = appearance.fontSize
 

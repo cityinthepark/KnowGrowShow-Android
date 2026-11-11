@@ -40,6 +40,12 @@ class FirestoreRemoteStore @Inject constructor(
         }
     }
 
+    override suspend fun fetchDocument(ownerUid: String, collection: String, documentId: String): RemoteDocument? {
+        val snapshot = userDoc(ownerUid).collection(collection).document(documentId).get(Source.SERVER).await()
+        if (!snapshot.exists()) return null
+        return RemoteDocument(snapshot.id, FirestoreWireAdapter.fromFirestore(snapshot.data.orEmpty()))
+    }
+
     override suspend fun commit(ownerUid: String, writes: List<WireWrite>) {
         if (writes.isEmpty()) return
         val batch = db.batch()
