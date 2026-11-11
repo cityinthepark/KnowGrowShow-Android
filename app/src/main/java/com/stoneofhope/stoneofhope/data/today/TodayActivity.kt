@@ -13,7 +13,7 @@ import com.stoneofhope.stoneofhope.data.model.isVerseAnchoredQuickNote
 /** One day's activity on the Today tab (iOS `TodayActivityBuilder.build`). */
 data class TodayActivity(
     val tiles: List<Tile>,
-    val chaptersRead: List<ChapterLogEntity>,
+    val chaptersRead: List<ChapterRead>,
     val sermons: List<SermonRow>,
     val videos: List<VideoRow>,
     /** iOS shows "Review" when there are notes/prayers that day or any pinned note. */
@@ -23,6 +23,9 @@ data class TodayActivity(
     val isEmpty: Boolean get() = tiles.isEmpty() && chaptersRead.isEmpty() && sermons.isEmpty() && videos.isEmpty()
 
     enum class TileKind { Pinned, Starred, QuickNote, StudyNote, Bible, Prayer, AnsweredPrayer, Image }
+
+    /** A chapter that counts as read that day: marked read ([isLogged]), or one the user wrote a note on. */
+    data class ChapterRead(val bookOrd: Int, val chapter: Int, val isLogged: Boolean)
 
     data class Tile(val kind: TileKind, val count: Int)
 
@@ -36,6 +39,22 @@ data class TodayActivity(
 }
 
 object TodayActivityBuilder {
+
+    /** iOS `chaptersWithNotes(on:)`: marked read, plus chapters of any Bible-anchored note written that day. */
+    internal fun chaptersReadOn(logs: List<ChapterLogEntity>, notesThatDay: List<NoteEntity>): List<TodayActivity.ChapterRead> {
+        val logged = logs.map { TodayActivity.ChapterRead(it.bookOrd, it.chapter, isLogged = true) }
+        val seen = logged.map { it.bookOrd to it.chapter }.toSet()
+        val noted = notesThatDay
+            .mapNotNull { n ->
+                val book = n.bookOrd ?: return@mapNotNull null
+                val chapter = n.chapterOrd?.takeIf { it > 0 } ?: return@mapNotNull null
+                book to chapter
+            }
+            .distinct()
+            .filter { it !in seen }
+            .map { TodayActivity.ChapterRead(it.first, it.second, isLogged = false) }
+        return (logged + noted).sortedWith(compareBy({ it.bookOrd }, { it.chapter }))
+    }
 
     /**
      * @param createdThatDay active notes whose `createdAt` falls on the day
@@ -94,7 +113,7 @@ object TodayActivityBuilder {
 
         return TodayActivity(
             tiles = tiles,
-            chaptersRead = chaptersRead.sortedWith(compareBy({ it.bookOrd }, { it.chapter })),
+            chaptersRead = chaptersReadOn(chaptersRead, createdThatDay),
             sermons = sermons
                 .sortedWith(compareBy({ it.createdAt }, { it.title }))
                 .map { s -> TodayActivity.SermonRow(s, sermonNotes.count { it.sermonId == s.id }, names(s.tagIds)) },

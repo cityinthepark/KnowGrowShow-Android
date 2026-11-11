@@ -1,5 +1,16 @@
 package com.stoneofhope.stoneofhope.ui.sermon
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlin.math.abs
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -99,7 +110,12 @@ fun SermonDayRow(
 ) {
     val c = AppTheme.colors
     val context = LocalContext.current
-    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("sermonRow_${sermon.id}")) {
+    Column(
+        Modifier.fillMaxWidth()
+            // iOS: tapping the title or the empty part of the row does what "Open" does (today's rows have it).
+            .then(if (isToday) Modifier.clickable { nav.openSermon(sermon.id, VideoEntry.Default) } else Modifier)
+            .padding(vertical = 4.dp).testTag("sermonRow_${sermon.id}"),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(SermonRules.displayTitle(sermon), style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             if (noteCount > 0) Text("$noteCount", style = textStyle(13), color = c.neutral90, modifier = Modifier.padding(horizontal = 4.dp))
@@ -183,6 +199,7 @@ class AudioBarViewModel @Inject constructor(private val player: SermonAudioPlaye
     fun playPause() = player.playPause()
     fun seekTo(ms: Long) = player.seekTo(ms)
     fun close() = player.stop()
+    fun setMinimized(minimized: Boolean) = player.setMinimized(minimized)
 }
 
 /**
@@ -196,10 +213,16 @@ fun FloatingAudioBar(modifier: Modifier = Modifier, viewModel: AudioBarViewModel
     val c = AppTheme.colors
     var dragging by remember { mutableStateOf(false) }
     var dragValue by remember { mutableFloatStateOf(0f) }
+    if (state.minimized) {
+        MiniAudioPlayer(state.isPlaying, state.title, viewModel, modifier)
+        return
+    }
     val shape = RoundedCornerShape(20.dp)
     Surface(
         shape = shape, color = c.surface0, tonalElevation = 2.dp,
-        modifier = modifier.padding(horizontal = 12.dp, vertical = 6.dp).shadow(8.dp, shape).fillMaxWidth().testTag("audioBar"),
+        modifier = modifier.padding(horizontal = 12.dp, vertical = 6.dp).shadow(8.dp, shape).fillMaxWidth()
+            .pointerInput(Unit) { swipeToMinimize { viewModel.setMinimized(true) } }
+            .testTag("audioBar"),
     ) {
         Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 10.dp, bottom = 4.dp)) {
             Text(state.title, style = textStyle(15, weight = FontWeight.SemiBold), color = c.neutral100, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -234,6 +257,53 @@ fun FloatingAudioBar(modifier: Modifier = Modifier, viewModel: AudioBarViewModel
             }
         }
     }
+}
+
+/**
+ * iOS `miniPlayer`: a small play/pause button in the middle (the bottom bars keep their buttons at both
+ * edges, so it never covers the "+"), with a chevron to expand; a swipe up expands too.
+ */
+@Composable
+private fun MiniAudioPlayer(isPlaying: Boolean, title: String, viewModel: AudioBarViewModel, modifier: Modifier) {
+    val c = AppTheme.colors
+    Row(modifier.fillMaxWidth().padding(vertical = 6.dp).testTag("audioMini"), horizontalArrangement = Arrangement.Center) {
+        Surface(
+            shape = CircleShape, color = c.surface0, tonalElevation = 2.dp,
+            modifier = Modifier.shadow(8.dp, CircleShape).pointerInput(Unit) { swipeUpToExpand { viewModel.setMinimized(false) } },
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { viewModel.setMinimized(false) }, modifier = Modifier.testTag("audioExpand")) {
+                    Icon(Icons.Outlined.ExpandLess, title, tint = c.neutral90)
+                }
+                IconButton(
+                    onClick = viewModel::playPause,
+                    modifier = Modifier.padding(end = 4.dp).size(40.dp).background(c.blue80, CircleShape).testTag("audioPlayPause"),
+                ) {
+                    Icon(
+                        if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        stringResource(if (isPlaying) R.string.audio_pause else R.string.audio_play), tint = Color.White,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** iOS: any clear swipe (more than 40 px either way) tucks the player away. */
+private suspend fun PointerInputScope.swipeToMinimize(onSwipe: () -> Unit) {
+    var total = Offset.Zero
+    detectDragGestures(
+        onDragStart = { total = Offset.Zero },
+        onDragEnd = { if (maxOf(abs(total.x), abs(total.y)) > 40.dp.toPx()) onSwipe() },
+    ) { change, drag -> change.consume(); total += drag }
+}
+
+private suspend fun PointerInputScope.swipeUpToExpand(onSwipe: () -> Unit) {
+    var total = 0f
+    detectVerticalDragGestures(
+        onDragStart = { total = 0f },
+        onDragEnd = { if (total < -40.dp.toPx()) onSwipe() },
+    ) { change, drag -> change.consume(); total += drag }
 }
 
 private fun clock(ms: Long): String {

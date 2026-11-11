@@ -79,6 +79,10 @@ interface SermonDao {
     @Query("SELECT * FROM sermons WHERE preachedOn = :dayKey AND deletedAt IS NULL")
     fun observePreachedOn(dayKey: String): Flow<List<SermonEntity>>
 
+    /** Live sermons among [ids] (older sermons someone wrote on today: iOS `getSermons(on:)`). */
+    @Query("SELECT * FROM sermons WHERE id IN (:ids) AND deletedAt IS NULL")
+    fun observeByIds(ids: List<String>): Flow<List<SermonEntity>>
+
     /** Day keys in [startKey, endKeyExclusive) — `yyyyMMdd` sorts like the dates (iOS `CalendarDayKey.queryRange`). */
     @Query("SELECT * FROM sermons WHERE preachedOn >= :startKey AND preachedOn < :endKeyExclusive AND deletedAt IS NULL")
     fun observePreachedBetween(startKey: String, endKeyExclusive: String): Flow<List<SermonEntity>>
@@ -144,6 +148,10 @@ interface YouTubeVideoDao {
             "AND createdAt >= :start AND createdAt < :end ORDER BY createdAt DESC"
     )
     fun observeCreatedBetween(start: Instant, end: Instant): Flow<List<YouTubeVideoEntity>>
+
+    /** Personal rows among [ids] (older videos someone wrote on today: iOS `getYouTubeVideos(on:)`). */
+    @Query("SELECT * FROM youtubeVideos WHERE deletedAt IS NULL AND sermonId IS NULL AND youtubeID IN (:ids)")
+    fun observeByIds(ids: List<String>): Flow<List<YouTubeVideoEntity>>
 
     /** iOS `Note.hasLinkedYouTubeVideo` resolves the id against live videos. */
     @Query("SELECT youtubeID FROM youtubeVideos WHERE deletedAt IS NULL")

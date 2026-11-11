@@ -17,6 +17,8 @@ import javax.inject.Singleton
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 
@@ -59,12 +61,25 @@ class TodayRepository @Inject constructor(
             if (isToday) noteDao.observePinned() else flowOf(emptyList()),
         ) { created, c, commentedNotes, pinned -> NoteInputs(created, c, commentedNotes, pinned) }
 
+        // iOS `getSermons(on:)` / `getYouTubeVideos(on:)`: the day's own, plus older ones the user wrote a
+        // note or comment on that day (otherwise today's writing on an earlier sermon can't be found from today).
+        val writtenOn = notes.map { n -> (n.created + n.commented).distinctBy { it.id } }
         // iOS `CalendarDayKey`: the local day as yyyyMMdd.
-        val sermons = db.sermonDao().observePreachedOn(day.format(DateTimeFormatter.BASIC_ISO_DATE))
+        val sermons = combine(
+            db.sermonDao().observePreachedOn(day.format(DateTimeFormatter.BASIC_ISO_DATE)),
+            writtenOn.map { list -> list.mapNotNull { it.sermonId }.distinct() }.distinctUntilChanged().flatMapLatest { ids ->
+                if (ids.isEmpty()) flowOf(emptyList()) else db.sermonDao().observeByIds(ids)
+            },
+        ) { own, extra -> (own + extra).distinctBy { it.id } }
         val sermonNotes = sermons.flatMapLatest { list ->
             if (list.isEmpty()) flowOf(emptyList()) else noteDao.observeForSermons(list.map { it.id })
         }
-        val videos = db.youTubeVideoDao().observeCreatedBetween(start, end)
+        val videos = combine(
+            db.youTubeVideoDao().observeCreatedBetween(start, end),
+            writtenOn.map { list -> list.mapNotNull { it.youtubeID }.distinct() }.distinctUntilChanged().flatMapLatest { ids ->
+                if (ids.isEmpty()) flowOf(emptyList()) else db.youTubeVideoDao().observeByIds(ids)
+            },
+        ) { own, extra -> (own + extra).distinctBy { it.youtubeID } }
         val videoNotes = videos.flatMapLatest { list ->
             if (list.isEmpty()) flowOf(emptyList()) else noteDao.observeForVideos(list.map { it.youtubeID })
         }

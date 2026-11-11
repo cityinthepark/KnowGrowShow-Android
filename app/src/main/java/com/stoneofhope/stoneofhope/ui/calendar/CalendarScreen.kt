@@ -291,7 +291,7 @@ private fun DayCell(
             .heightIn(min = 44.dp)
             .padding(horizontal = 2.dp, vertical = 1.dp)
             .clip(shape)
-            .dayTint(sermon, video, c.yellow40, c.blue20)
+            .dayTint(sermon, video, c.calendar.sermonFill, c.calendar.videoFill)
             .then(if (isFuture) Modifier else Modifier.clickable(onClick = onClick))
             .alpha(if (isFuture) 0.5f else 1f)
             .padding(vertical = 3.dp)

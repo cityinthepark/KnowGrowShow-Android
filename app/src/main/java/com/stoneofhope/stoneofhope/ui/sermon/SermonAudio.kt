@@ -87,6 +87,8 @@ data class AudioUiState(
     val positionMs: Long = 0,
     val durationMs: Long = 0,
     val failed: Boolean = false,
+    /** Tucked away as a small play/pause button so the screen behind can be used (iOS `isMinimized`). */
+    val minimized: Boolean = false,
 )
 
 /** The app's one audio player; the service owns the actual player, this talks to it. */
@@ -143,6 +145,8 @@ class SermonAudioPlayer @Inject constructor(@ApplicationContext private val cont
         }
         startTicker()
     }
+
+    fun setMinimized(minimized: Boolean) = _state.update { if (it.visible) it.copy(minimized = minimized) else it }
 
     fun playPause() = withController { c -> if (c.isPlaying) c.pause() else c.play() }
 

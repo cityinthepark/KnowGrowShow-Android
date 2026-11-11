@@ -166,4 +166,54 @@ class TodayActivityTest {
         assertEquals(NoteType.Note, quick.noteType)
         assertEquals(3, activity().let { it.count(TileKind.Prayer) + it.count(TileKind.QuickNote) })
     }
+
+    @Test
+    fun anOlderSermonOrVideoWrittenOnTodayShowsInTodaysLists() = runTest {
+        val olderSermon = SermonEntity(id = id(), title = "Old", createdAt = yesterday, preachedOn = "20261025")
+        val commentedSermon = SermonEntity(id = id(), title = "Commented", createdAt = yesterday, preachedOn = "20261020")
+        val untouched = SermonEntity(id = id(), title = "Untouched", createdAt = yesterday, preachedOn = "20261019")
+        listOf(olderSermon, commentedSermon, untouched).forEach { db.sermonDao().upsert(it) }
+        db.youTubeVideoDao().upsert(YouTubeVideoEntity(youtubeID = "old", title = "Old talk", createdAt = yesterday, updatedAt = yesterday))
+        db.youTubeVideoDao().upsert(YouTubeVideoEntity(youtubeID = "cmt", title = "Commented talk", createdAt = yesterday, updatedAt = yesterday))
+        db.youTubeVideoDao().upsert(YouTubeVideoEntity(youtubeID = "none", title = "Untouched talk", createdAt = yesterday, updatedAt = yesterday))
+        val noteOnCommentedSermon = note(NoteType.SermonNote, yesterday) { copy(sermonId = commentedSermon.id) }
+        val noteOnCommentedVideo = note(NoteType.YouTubeVideo, yesterday) { copy(youtubeID = "cmt") }
+        db.noteDao().upsertAll(
+            listOf(
+                note(NoteType.SermonNote) { copy(sermonId = olderSermon.id) },
+                note(NoteType.YouTubeVideo) { copy(youtubeID = "old") },
+                noteOnCommentedSermon,
+                noteOnCommentedVideo,
+            )
+        )
+        db.noteCommentDao().upsertAll(
+            listOf(
+                NoteCommentEntity(id = id(), noteId = noteOnCommentedSermon.id, content = "c", createdAt = inDay),
+                NoteCommentEntity(id = id(), noteId = noteOnCommentedVideo.id, content = "c", createdAt = inDay),
+            )
+        )
+        val a = activity()
+        assertEquals(setOf("Old", "Commented"), a.sermons.map { it.sermon.title }.toSet())
+        assertEquals(setOf("old", "cmt"), a.videos.map { it.video.youtubeID }.toSet())
+        // Yesterday's own list doesn't pick up today's writing, and the untouched ones stay out everywhere.
+        val yesterdayActivity = repo.observeActivity(LocalDate.of(2026, 10, 25), zone, isToday = false).first()
+        assertTrue("Untouched" !in yesterdayActivity.sermons.map { it.sermon.title })
+    }
+
+    @Test
+    fun aChapterWithANoteTodayCountsAsRead() = runTest {
+        db.noteDao().upsertAll(
+            listOf(
+                note(NoteType.Note) { copy(bookOrd = 43, chapterOrd = 3, verseStart = 16) },
+                note(NoteType.Prayer) { copy(bookOrd = 43, chapterOrd = 3) },        // same chapter: one row
+                note(NoteType.Note) { copy(bookOrd = 45, chapterOrd = 8) },
+                note(NoteType.Note) { copy(bookOrd = 19, chapterOrd = 0) },          // no chapter: not a chapter
+                note(NoteType.Note, yesterday) { copy(bookOrd = 1, chapterOrd = 1) }, // another day
+            )
+        )
+        db.chapterLogDao().upsert(com.stoneofhope.stoneofhope.data.local.entity.ChapterLogEntity(id = id(), bookOrd = 45, chapter = 8, readOn = inDay))
+        val rows = activity().chaptersRead
+        assertEquals(listOf(43 to 3, 45 to 8), rows.map { it.bookOrd to it.chapter })
+        assertEquals("only the marked one can be unread", listOf(false, true), rows.map { it.isLogged })
+    }
 }

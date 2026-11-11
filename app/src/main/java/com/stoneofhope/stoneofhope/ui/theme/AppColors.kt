@@ -120,6 +120,9 @@ data class CalendarColors(
     val todayRingFill: Color,
     val todayButton: Color,
     val todayButtonText: Color,
+    /** Sermon / video day tints (iOS `calendarSermonFill` / `calendarVideoFill`): the plain chip tints vanish on the dark card. */
+    val sermonFill: Color,
+    val videoFill: Color,
     val gridBackground: Color,
 ) {
     companion object {
@@ -134,7 +137,8 @@ data class CalendarColors(
             starredBar = ButterBar, prayerBar = Color(0xFFF5EED8), answeredBar = Color(0xFF73C785),
             pinnedBar = Color(0xFF5856D6).copy(alpha = 0.55f), imageBar = Color(0xFFDBE8FF), bibleBar = PinkBar,
             selectedDay = SkyBlueText, todayRing = SkyBlueText.copy(alpha = 0.55f), todayRingFill = SkyBlueLight.copy(alpha = 0.35f),
-            todayButton = SkyBlueLight, todayButtonText = SkyBlueText, gridBackground = Color(0xFFF1F3F1),
+            todayButton = SkyBlueLight, todayButtonText = SkyBlueText,
+            sermonFill = Color(0xFFF9EEE0), videoFill = Color(0xFFD9F2F7), gridBackground = Color(0xFFF1F3F1),
         )
 
         val Dark = CalendarColors(
@@ -142,7 +146,8 @@ data class CalendarColors(
             starredBar = ButterBar, prayerBar = NightMutedBlue, answeredBar = Color(0xFF59A66B),
             pinnedBar = Color(0xFF5E5CE6).copy(alpha = 0.72f), imageBar = Color(0xFF5C4A69), bibleBar = PinkBar,
             selectedDay = NightMutedBlue, todayRing = NightMutedBlue, todayRingFill = Color(0xFF3B4A5C).copy(alpha = 0.35f),
-            todayButton = Color(0xFF3D3D42), todayButtonText = Color(0xFFF2F5F5), gridBackground = Color(0xFF2E2E33),
+            todayButton = Color(0xFF3D3D42), todayButtonText = Color(0xFFF2F5F5),
+            sermonFill = Color(0xFF6B5130), videoFill = Color(0xFF2F6170), gridBackground = Color(0xFF2E2E33),
         )
     }
 }

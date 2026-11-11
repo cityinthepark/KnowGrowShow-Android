@@ -1,6 +1,7 @@
 package com.stoneofhope.stoneofhope.ui.today
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -185,7 +186,7 @@ private fun ChaptersCard(activity: TodayActivity, isToday: Boolean, onOpenChapte
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                 // iOS offers "Unread" on today's rows only.
-                if (onUnread != null) TextButton(onClick = { onUnread(log.bookOrd, log.chapter) }) { Text(stringResource(R.string.action_unread)) }
+                if (onUnread != null && log.isLogged) TextButton(onClick = { onUnread(log.bookOrd, log.chapter) }) { Text(stringResource(R.string.action_unread)) }
                 TextButton(onClick = { onOpenChapter(log.bookOrd, log.chapter, ChapterTab.Sermons) }) { Text(stringResource(R.string.card_sermons)) }
                 TextButton(onClick = { onOpenChapter(log.bookOrd, log.chapter, ChapterTab.Notes) }) { Text(stringResource(R.string.action_notes)) }
             }
@@ -259,7 +260,8 @@ private fun VideosCard(rows: List<TodayActivity.VideoRow>, isToday: Boolean, nav
 
 @Composable
 private fun ItemRow(title: String, noteCount: Int, tags: List<String>, onOpen: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    // iOS: tapping the title or the empty part of the row does what "Open" does.
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable(onClick = onOpen)) {
         Column(Modifier.weight(1f).padding(vertical = 4.dp)) {
             Text(title, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val meta = buildList {

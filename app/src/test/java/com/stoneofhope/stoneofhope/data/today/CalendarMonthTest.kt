@@ -106,7 +106,7 @@ class CalendarMonthTest {
     @Test fun theTypeMenuNarrowsTheDaySummary() {
         val activity = TodayActivity(
             tiles = listOf(TodayActivity.Tile(TileKind.Prayer, 2), TodayActivity.Tile(TileKind.QuickNote, 1)),
-            chaptersRead = listOf(ChapterLogEntity(id = id(), bookOrd = 1, chapter = 1, readOn = at(1))),
+            chaptersRead = listOf(TodayActivity.ChapterRead(bookOrd = 1, chapter = 1, isLogged = true)),
             sermons = listOf(TodayActivity.SermonRow(SermonEntity(id = id(), title = "s", createdAt = at(1)), 0, emptyList())),
             videos = listOf(TodayActivity.VideoRow(YouTubeVideoEntity(youtubeID = "v", title = "v", createdAt = at(1), updatedAt = at(1)), 0, emptyList())),
             showReview = true,
